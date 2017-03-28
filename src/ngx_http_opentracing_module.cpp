@@ -36,7 +36,7 @@ get_opentracing_request_processor(ngx_http_request_t *request) {
   return request_processor;
 }
 
-static ngx_int_t start_span_handler(ngx_http_request_t *request) {
+static ngx_int_t before_response_handler(ngx_http_request_t *request) {
   if (request->main->internal)
     return NGX_DECLINED;
   request->main->internal = 1;
@@ -46,7 +46,7 @@ static ngx_int_t start_span_handler(ngx_http_request_t *request) {
   return NGX_DECLINED;
 }
 
-static ngx_int_t finish_span_handler(ngx_http_request_t *request) {
+static ngx_int_t after_response_handler(ngx_http_request_t *request) {
   get_opentracing_request_processor(request).after_response(request);
 
   return NGX_DECLINED;
@@ -60,13 +60,13 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *config) {
       &core_main_config->phases[NGX_HTTP_SERVER_REWRITE_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
-  *handler = start_span_handler;
+  *handler = before_response_handler;
 
   handler = reinterpret_cast<ngx_http_handler_pt *>(
       ngx_array_push(&core_main_config->phases[NGX_HTTP_LOG_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
-  *handler = finish_span_handler;
+  *handler = after_response_handler;
   return NGX_OK;
 }
 
