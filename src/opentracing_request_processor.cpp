@@ -70,12 +70,14 @@ void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
   std::string operation_name{reinterpret_cast<char *>(request->uri.data),
                              request->uri.len};
   auto span = tracer_.StartSpan(operation_name);
-  active_spans_[request] = std::move(span);
 
   // Inject the context.
   auto carrier_writer = NgxHeaderCarrierWriter{request};
   tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
                  carrier_writer);
+
+  // Store the span
+  active_spans_[request] = std::move(span);
 }
 
 void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
