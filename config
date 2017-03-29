@@ -1,3 +1,5 @@
+# TODO: Will need a more robust build method that doesn't rely on library
+# locations and allows one to select alternative OpenTracing implementations.
 ngx_addon_name=ngx_http_opentracing_module
 HTTP_MODULES="$HTTP_MODULES ngx_http_opentracing_module"
 NGX_ADDON_SRCS="$NGX_ADDON_SRCS \

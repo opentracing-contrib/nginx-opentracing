@@ -53,7 +53,7 @@ namespace ngx_opentracing {
 static lightstep::Tracer initialize_tracer(const std::string &options) {
   // TODO: Will need a way to start an arbitrary tracer here, but to get started
   // just hard-code to the LightStep tracer. Also, `options` may encode multiple
-  // settings; for now just assume it's the access token.
+  // settings; for now assume it's the access token.
   lightstep::TracerOptions tracer_options;
   tracer_options.access_token = options;
   tracer_options.collector_host = "collector-grpc.lightstep.com";
@@ -84,8 +84,10 @@ void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
 
   // Inject the context.
   auto carrier_writer = NgxHeaderCarrierWriter{request};
-  tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
-                 carrier_writer);
+  if (!tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
+                      carrier_writer)) {
+    std::cerr << "Tracer.inject() failed\n";
+  }
 
   // Store the span
   active_spans_[request] = std::move(span);
