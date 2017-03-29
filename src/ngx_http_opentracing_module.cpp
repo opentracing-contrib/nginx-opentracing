@@ -90,6 +90,8 @@ static ngx_http_module_t ngx_http_opentracing_module_ctx = {
     nullptr                                /* merge location configuration */
 };
 
+// TODO: Need to add some additional options for more granular
+// control over what locations are instrumented.
 static ngx_command_t ngx_opentracing_commands[] = {
     {ngx_string("opentracing_tracer_options"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
