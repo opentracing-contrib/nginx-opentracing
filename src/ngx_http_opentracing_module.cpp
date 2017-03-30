@@ -71,11 +71,14 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *config) {
 }
 
 static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
-  auto main_conf = ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t));
+  auto main_conf = reinterpret_cast<opentracing_main_conf_t *>(
+      ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
   if (!main_conf)
     return nullptr;
 
   // set default options
+  main_conf->tracer_options = {0, nullptr};
+
   return main_conf;
 }
 
