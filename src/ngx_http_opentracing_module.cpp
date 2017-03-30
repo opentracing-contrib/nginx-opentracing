@@ -22,6 +22,10 @@ namespace {
 struct opentracing_main_conf_t {
   ngx_str_t tracer_options;
 };
+
+struct opentracing_loc_conf_t {
+  ngx_flag_t enable;
+};
 }
 
 static OpenTracingRequestProcessor &
@@ -36,8 +40,14 @@ get_opentracing_request_processor(ngx_http_request_t *request) {
   return request_processor;
 }
 
+static bool is_opentracing_enabled(ngx_http_request_t *request) {
+  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
+  return loc_conf->enable;
+}
+
 static ngx_int_t before_response_handler(ngx_http_request_t *request) {
-  if (request->main->internal)
+  if (!is_opentracing_enabled(request) || request->main->internal)
     return NGX_DECLINED;
   request->main->internal = 1;
 
@@ -47,6 +57,9 @@ static ngx_int_t before_response_handler(ngx_http_request_t *request) {
 }
 
 static ngx_int_t after_response_handler(ngx_http_request_t *request) {
+  if (!is_opentracing_enabled(request))
+    return NGX_DECLINED;
+
   get_opentracing_request_processor(request).after_response(request);
 
   return NGX_DECLINED;
@@ -57,7 +70,7 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *config) {
       ngx_http_conf_get_module_main_conf(config, ngx_http_core_module));
 
   auto handler = reinterpret_cast<ngx_http_handler_pt *>(ngx_array_push(
-      &core_main_config->phases[NGX_HTTP_SERVER_REWRITE_PHASE].handlers));
+      &core_main_config->phases[NGX_HTTP_PREACCESS_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
   *handler = before_response_handler;
@@ -76,10 +89,30 @@ static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
   if (!main_conf)
     return nullptr;
 
-  // set default options
   main_conf->tracer_options = {0, nullptr};
 
   return main_conf;
+}
+
+static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
+  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
+      ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
+  if (!loc_conf)
+    return nullptr;
+
+  loc_conf->enable = NGX_CONF_UNSET;
+
+  return loc_conf;
+}
+
+static char *ngx_http_opentracing_merge_loc_conf(ngx_conf_t *, void *parent,
+                                                 void *child) {
+  auto prev = reinterpret_cast<opentracing_loc_conf_t *>(parent);
+  auto conf = reinterpret_cast<opentracing_loc_conf_t *>(child);
+
+  ngx_conf_merge_value(conf->enable, prev->enable, 0);
+
+  return NGX_CONF_OK;
 }
 
 static ngx_http_module_t ngx_http_opentracing_module_ctx = {
@@ -89,17 +122,19 @@ static ngx_http_module_t ngx_http_opentracing_module_ctx = {
     nullptr,                               /* init main configuration */
     nullptr,                               /* create server configuration */
     nullptr,                               /* merge server configuration */
-    nullptr,                               /* create location configuration */
-    nullptr                                /* merge location configuration */
+    ngx_http_opentracing_create_loc_conf,  /* create location configuration */
+    ngx_http_opentracing_merge_loc_conf    /* merge location configuration */
 };
 
-// TODO: Need to add some additional options for more granular
-// control over what locations are instrumented.
 static ngx_command_t ngx_opentracing_commands[] = {
     {ngx_string("opentracing_tracer_options"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
      NGX_HTTP_MAIN_CONF_OFFSET,
      offsetof(opentracing_main_conf_t, tracer_options), nullptr},
+    {ngx_string("opentracing"),
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
+     offsetof(opentracing_loc_conf_t, enable), nullptr},
     ngx_null_command};
 
 ngx_module_t ngx_http_opentracing_module = {
