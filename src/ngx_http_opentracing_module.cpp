@@ -43,13 +43,23 @@ get_opentracing_request_processor(ngx_http_request_t *request) {
 static bool is_opentracing_enabled(ngx_http_request_t *request) {
   auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
-  return loc_conf->enable;
+  if (request == request->main)
+    return loc_conf->enable;
+  // Only trace subrequests if logging is enabled; otherwise the spans won't
+  // be finished.
+  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
+  return loc_conf->enable && core_loc_conf->log_subrequest;
 }
 
 static ngx_int_t before_response_handler(ngx_http_request_t *request) {
-  if (!is_opentracing_enabled(request) || request->main->internal)
+  std::cerr << "before: "
+            << std::string{reinterpret_cast<char *>(request->uri.data),
+                           request->uri.len}
+            << " - " << request << "\n";
+  std::cerr << "request-main->internal = " << request->main->internal << "\n";
+  if (!is_opentracing_enabled(request))
     return NGX_DECLINED;
-  request->main->internal = 1;
 
   get_opentracing_request_processor(request).before_response(request);
 
@@ -57,6 +67,10 @@ static ngx_int_t before_response_handler(ngx_http_request_t *request) {
 }
 
 static ngx_int_t after_response_handler(ngx_http_request_t *request) {
+  std::cerr << "after: "
+            << std::string{reinterpret_cast<char *>(request->uri.data),
+                           request->uri.len}
+            << " - " << request << "\n";
   if (!is_opentracing_enabled(request))
     return NGX_DECLINED;
 
