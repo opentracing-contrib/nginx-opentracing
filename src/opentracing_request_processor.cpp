@@ -12,7 +12,7 @@ static ngx_str_t ngx_copy_string(ngx_pool_t *pool, const std::string &s) {
     return {0, nullptr};
   }
   result.len = s.size();
-  std::copy_n(s.data(), result.len, result.data);
+  std::copy(s.begin(), s.end(), result.data);
   return result;
 }
 
@@ -23,7 +23,7 @@ static ngx_str_t ngx_copy_key(ngx_pool_t *pool, const std::string &s) {
     return {0, nullptr};
   }
   result.len = s.size();
-  std::transform(s.data(), s.data() + result.len, result.data,
+  std::transform(s.begin(), s.end(), result.data,
                  [](char c) { return std::tolower(c); });
   return result;
 }
@@ -36,6 +36,7 @@ static ngx_table_elt_t *insert_header(ngx_http_request_t *request,
     return nullptr;
   header->hash = 1;
   header->key = key;
+  header->lowcase_key = key.data;
   return header;
 }
 
