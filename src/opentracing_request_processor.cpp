@@ -28,61 +28,76 @@ static ngx_str_t ngx_copy_key(ngx_pool_t *pool, const std::string &s) {
   return result;
 }
 
-static ngx_table_elt_t *insert_header(ngx_http_request_t *request,
-                                      ngx_str_t key) {
+static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
+                          ngx_str_t value) {
   auto header = reinterpret_cast<ngx_table_elt_t *>(
       ngx_list_push(&request->headers_in.headers));
   if (!header)
-    return nullptr;
+    return false;
   header->hash = 1;
   header->key = key;
   header->lowcase_key = key.data;
-  return header;
+  header->value = value;
+  return true;
 }
 
-static ngx_table_elt_t *lookup_or_insert_header(ngx_http_request_t *request,
-                                                const std::string &key) {
-  auto lowercase_key = ngx_copy_key(request->pool, key);
-  if (!lowercase_key.data)
-    return nullptr;
-  ngx_uint_t hash = 0;
-  for (ngx_uint_t i = 0; i < lowercase_key.len; ++i)
-    hash = ngx_hash(hash, lowercase_key.data[i]);
-  auto main_conf = reinterpret_cast<ngx_http_core_main_conf_t *>(
-      ngx_http_get_module_main_conf(request, ngx_http_core_module));
-  auto header_offset = reinterpret_cast<ngx_http_header_t *>(
-      ngx_hash_find(&main_conf->headers_in_hash, hash, lowercase_key.data,
-                    lowercase_key.len));
-  // TODO: Should we do something different when header_offset->offset == 0?
-  if (!header_offset || header_offset->offset == 0)
-    return insert_header(request, lowercase_key);
-  return *reinterpret_cast<ngx_table_elt_t **>(
-      reinterpret_cast<char *>(&request->headers_in) + header_offset->offset);
+template <class F>
+static void for_each_header(const ngx_http_request_t *request, F f) {
+  auto headers_part = &request->headers_in.headers.part;
+  auto headers = reinterpret_cast<ngx_table_elt_t *>(headers_part->elts);
+  for (ngx_uint_t i = 0;; i++) {
+    if (i >= headers_part->nelts) {
+      if (!headers_part->next)
+        return;
+      headers_part = headers_part->next;
+      headers = reinterpret_cast<ngx_table_elt_t *>(headers_part->elts);
+      i = 0;
+    }
+    auto &header = headers[i];
+    f(header);
+  }
+}
+
+static void set_headers(ngx_http_request_t *request,
+                        std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) {
+  if (headers.empty())
+    return;
+  for_each_header(request, [&](ngx_table_elt_t &header) {
+    auto i = std::find_if(
+        headers.begin(), headers.end(),
+        [&](const std::pair<ngx_str_t, ngx_str_t> &key_value) {
+          const auto &key = key_value.first;
+          return header.key.len == key.len &&
+                 ngx_strncmp(reinterpret_cast<char *>(header.lowcase_key),
+                             reinterpret_cast<char *>(key.data), key.len) == 0;
+
+        });
+    if (i == headers.end())
+      return;
+    header.value = i->second;
+    headers.erase(i);
+  });
+  for (const auto &key_value : headers) {
+    insert_header(request, key_value.first, key_value.second);
+  }
 }
 
 namespace {
 class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter {
 public:
-  explicit NgxHeaderCarrierWriter(ngx_http_request_t *request)
-      : request_{request} {}
+  NgxHeaderCarrierWriter(ngx_http_request_t *request,
+                         std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers)
+      : request_{request}, headers_{headers} {}
 
   void Set(const std::string &key, const std::string &value) const override {
-    auto header = lookup_or_insert_header(request_, key);
-    if (!header) {
-      // TODO: How do we handle an error?
-      std::cerr << "Unable to Set\n";
-      return;
-    }
-    header->value = ngx_copy_string(request_->pool, value);
-    if (!header->value.data) {
-      // TODO: How do we handle an error?
-      std::cerr << "Unable to Set\n";
-      return;
-    }
+    // TODO: Check for cases where allocation fails.
+    headers_.emplace_back(ngx_copy_key(request_->pool, key),
+                          ngx_copy_string(request_->pool, value));
   }
 
 private:
   ngx_http_request_t *request_;
+  std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers_;
 };
 }
 
@@ -95,25 +110,13 @@ public:
   void ForeachKey(
       std::function<void(const std::string &, const std::string &value)> f)
       const {
-    auto headers_part = &request_->headers_in.headers.part;
-    auto headers =
-        reinterpret_cast<const ngx_table_elt_t *>(headers_part->elts);
-
     std::string key, value;
-    for (ngx_uint_t i = 0;; i++) {
-      if (i >= headers_part->nelts) {
-        if (!headers_part->next)
-          return;
-        headers_part = headers_part->next;
-        headers = reinterpret_cast<const ngx_table_elt_t *>(headers_part->elts);
-        i = 0;
-      }
-      const auto &header = headers[i];
-      key.assign(reinterpret_cast<char *>(header.key.data), header.key.len);
+    for_each_header(request_, [&](const ngx_table_elt_t &header) {
+      key.assign(reinterpret_cast<char *>(header.lowcase_key), header.key.len);
       value.assign(reinterpret_cast<char *>(header.value.data),
                    header.value.len);
       f(key, value);
-    }
+    });
   }
 
 private:
@@ -171,9 +174,12 @@ void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
                           request->unparsed_uri.len});
 
   // Inject the context.
-  auto carrier_writer = NgxHeaderCarrierWriter{request};
-  if (!tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
-                      carrier_writer)) {
+  std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
+  auto carrier_writer = NgxHeaderCarrierWriter{request, headers};
+  if (tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
+                     carrier_writer)) {
+    set_headers(request, headers);
+  } else {
     std::cerr << "Tracer.inject() failed\n";
   }
 }
@@ -188,11 +194,11 @@ void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   auto &span = span_iter->second;
 
   // Check for errors.
+  // TODO: Are there other places on the request to look for errors?
   auto status = uint64_t{request->err_status};
-  if (status == 0)
-    status = NGX_HTTP_OK;
-  span.SetTag("http.status_code", status);
-  if (status != NGX_HTTP_OK) {
+  if (status != NGX_OK)
+    span.SetTag("http.status_code", status);
+  if (status != NGX_HTTP_OK && status != NGX_OK) {
     span.SetTag("error", true);
     // TODO: Log error values.
   }
