@@ -78,6 +78,7 @@ static void set_headers(ngx_http_request_t *request,
     headers.erase(i);
   });
   for (const auto &key_value : headers) {
+    // TODO: Check for errors.
     insert_header(request, key_value.first, key_value.second);
   }
 }
@@ -194,13 +195,12 @@ void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   auto &span = span_iter->second;
 
   // Check for errors.
-  // TODO: Are there other places on the request to look for errors?
-  auto status = uint64_t{request->err_status};
-  if (status != NGX_OK)
-    span.SetTag("http.status_code", status);
+  // TODO: Should we also look at request->err_status?
+  auto status = uint64_t{request->headers_out.status};
+  span.SetTag("http.status_code", status);
   if (status != NGX_HTTP_OK && status != NGX_OK) {
     span.SetTag("error", true);
-    // TODO: Log error values.
+    // TODO: Log error values in request->headers_out.status_line to span.
   }
 
   // Finish the span.
