@@ -156,6 +156,52 @@ private:
 };
 }
 
+static lightstep::Span
+start_location_block_span(ngx_http_request_t *request,
+                          lightstep::Tracer &tracer,
+                          const lightstep::SpanContext &reference_span_context,
+                          lightstep::SpanReferenceType reference_type) {
+  // Start a new span for the location block.
+  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
+  std::string operation_name{reinterpret_cast<char *>(core_loc_conf->name.data),
+                             core_loc_conf->name.len};
+  lightstep::Span span;
+  if (reference_span_context.valid()) {
+    std::cerr << "starting child span " << operation_name << "...\n";
+    span = tracer.StartSpan(
+        operation_name,
+        {lightstep::SpanReference{reference_type, reference_span_context}});
+  } else {
+    std::cerr << "starting span " << operation_name << "...\n";
+    span = tracer.StartSpan(operation_name);
+  }
+  span.SetTag("component", "nginx");
+  span.SetTag("http.method",
+              std::string{reinterpret_cast<char *>(request->method_name.data),
+                          request->method_name.len});
+  span.SetTag("http.uri",
+              std::string{reinterpret_cast<char *>(request->unparsed_uri.data),
+                          request->unparsed_uri.len});
+
+  // Inject the span's context into the request headers.
+  std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
+  bool was_successful = true;
+  auto carrier_writer =
+      NgxHeaderCarrierWriter{request, headers, was_successful};
+  was_successful =
+      tracer.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
+                    carrier_writer) &&
+      was_successful;
+  if (was_successful)
+    was_successful = set_headers(request, headers);
+  if (!was_successful)
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "Tracer.inject() failed");
+
+  return span;
+}
+
 namespace ngx_opentracing {
 static lightstep::Tracer initialize_tracer(const std::string &options) {
   // TODO: Will need a way to start an arbitrary tracer here, but to get started
@@ -177,47 +223,23 @@ OpenTracingRequestProcessor::OpenTracingRequestProcessor(
 
 void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
   auto was_found = active_spans_.emplace(request, lightstep::Span{});
-  // We've already started a span for this request, so do nothing.
-  if (!was_found.second)
-    return;
-
-  // Start a new span for the request.
   auto &span = was_found.first->second;
-  auto carrier_reader = NgxHeaderCarrierReader{request};
-  auto parent_span_context =
-      tracer_.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
-  std::string operation_name{reinterpret_cast<char *>(request->uri.data),
-                             request->uri.len};
-  if (parent_span_context.valid()) {
-    std::cerr << "starting child span " << operation_name << "...\n";
-    span = tracer_.StartSpan(operation_name,
-                             {lightstep::ChildOf(parent_span_context)});
+  if (was_found.second) {
+    // No span has been created for this request yet. Check if there's any
+    // parent span context in the request headers and start a new one.
+    auto carrier_reader = NgxHeaderCarrierReader{request};
+    auto parent_span_context =
+        tracer_.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
+    span = start_location_block_span(request, tracer_, parent_span_context,
+                                     lightstep::ChildOfRef);
   } else {
-    std::cerr << "starting span " << operation_name << "...\n";
-    span = tracer_.StartSpan(operation_name);
+    // A span's already been created for the request, but nginx is entering a
+    // new location block. Finish the span for the current location block and
+    // create a new span that follows from it.
+    span.Finish();
+    span = start_location_block_span(request, tracer_, span.context(),
+                                     lightstep::FollowsFromRef);
   }
-  span.SetTag("component", "nginx");
-  span.SetTag("http.method",
-              std::string{reinterpret_cast<char *>(request->method_name.data),
-                          request->method_name.len});
-  span.SetTag("http.uri",
-              std::string{reinterpret_cast<char *>(request->unparsed_uri.data),
-                          request->unparsed_uri.len});
-
-  // Inject the span's context into the request headers.
-  std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
-  bool was_successful = true;
-  auto carrier_writer =
-      NgxHeaderCarrierWriter{request, headers, was_successful};
-  was_successful =
-      tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
-                     carrier_writer) &&
-      was_successful;
-  if (was_successful)
-    was_successful = set_headers(request, headers);
-  if (!was_successful)
-    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "Tracer.inject() failed");
 }
 
 void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
