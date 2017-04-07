@@ -8,9 +8,8 @@
 static ngx_str_t ngx_copy_string(ngx_pool_t *pool, const std::string &s) {
   ngx_str_t result;
   result.data = reinterpret_cast<unsigned char *>(ngx_palloc(pool, s.size()));
-  if (!result.data) {
+  if (!result.data)
     return {0, nullptr};
-  }
   result.len = s.size();
   std::copy(s.begin(), s.end(), result.data);
   return result;
@@ -19,9 +18,8 @@ static ngx_str_t ngx_copy_string(ngx_pool_t *pool, const std::string &s) {
 static ngx_str_t ngx_copy_key(ngx_pool_t *pool, const std::string &s) {
   ngx_str_t result;
   result.data = reinterpret_cast<unsigned char *>(ngx_palloc(pool, s.size()));
-  if (!result.data) {
+  if (!result.data)
     return {0, nullptr};
-  }
   result.len = s.size();
   std::transform(s.begin(), s.end(), result.data,
                  [](char c) { return std::tolower(c); });
@@ -66,10 +64,10 @@ static bool set_headers(ngx_http_request_t *request,
   // If header keys are already in the request, overwrite the values instead of
   // inserting a new header.
   //
-  // It may be possible in some cases to use nginx's
-  // hashes to look up the entries faster, but then we'd have to handle the
-  // special case of when a header element isn't hashed yet. Iterating over the
-  // header entries all the time keeps things simple.
+  // It may be possible in some cases to use nginx's hashes to look up the
+  // entries faster, but then we'd have to handle the special case of when a
+  // header element isn't hashed yet. Iterating over the header entries all the
+  // time keeps things simple.
   for_each_header(request, [&](ngx_table_elt_t &header) {
     auto i = std::find_if(
         headers.begin(), headers.end(),
