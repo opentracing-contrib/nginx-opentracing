@@ -53,9 +53,14 @@ static bool is_opentracing_enabled(ngx_http_request_t *request) {
 }
 
 static ngx_int_t before_response_handler(ngx_http_request_t *request) {
+  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
   std::cerr << "before: "
             << std::string{reinterpret_cast<char *>(request->uri.data),
                            request->uri.len}
+            << " - "
+            << std::string{reinterpret_cast<char *>(core_loc_conf->name.data),
+                           core_loc_conf->name.len}
             << " - " << request << "\n";
   std::cerr << "request-main->internal = " << request->main->internal << "\n";
   if (!is_opentracing_enabled(request))

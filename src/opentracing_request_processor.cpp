@@ -101,7 +101,7 @@ class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter {
 public:
   NgxHeaderCarrierWriter(ngx_http_request_t *request,
                          std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers,
-                         bool was_successful)
+                         bool &was_successful)
       : request_{request}, headers_{headers}, was_successful_{was_successful} {
     was_successful_ = true;
   }
