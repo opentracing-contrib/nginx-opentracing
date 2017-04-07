@@ -84,8 +84,8 @@ static bool set_headers(ngx_http_request_t *request,
     headers.erase(i);
   });
 
-  // Any header left in `headers` doesn't have a key in the request, so create a
-  // new entry for it.
+  // Any header left in `headers` doesn't already have a key in the request, so
+  // create a new entry for it.
   for (const auto &key_value : headers) {
     if (!insert_header(request, key_value.first, key_value.second)) {
       ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
