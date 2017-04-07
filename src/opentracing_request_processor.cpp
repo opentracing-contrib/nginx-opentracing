@@ -58,10 +58,18 @@ static void for_each_header(const ngx_http_request_t *request, F f) {
   }
 }
 
-static void set_headers(ngx_http_request_t *request,
+static bool set_headers(ngx_http_request_t *request,
                         std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) {
   if (headers.empty())
-    return;
+    return true;
+
+  // If header keys are already in the request, overwrite the values instead of
+  // inserting a new header.
+  //
+  // It may be possible in some cases to use nginx's
+  // hashes to look up the entries faster, but then we'd have to handle the
+  // special case of when a header element isn't hashed yet. Iterating over the
+  // header entries all the time keeps things simple.
   for_each_header(request, [&](ngx_table_elt_t &header) {
     auto i = std::find_if(
         headers.begin(), headers.end(),
@@ -77,28 +85,53 @@ static void set_headers(ngx_http_request_t *request,
     header.value = i->second;
     headers.erase(i);
   });
+
+  // Any header left in `headers` doesn't have a key in the request, so create a
+  // new entry for it.
   for (const auto &key_value : headers) {
-    // TODO: Check for errors.
-    insert_header(request, key_value.first, key_value.second);
+    if (!insert_header(request, key_value.first, key_value.second)) {
+      ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                    "failed to insert header");
+      return false;
+    }
   }
+  return true;
 }
 
 namespace {
 class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter {
 public:
   NgxHeaderCarrierWriter(ngx_http_request_t *request,
-                         std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers)
-      : request_{request}, headers_{headers} {}
+                         std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers,
+                         bool was_successful)
+      : request_{request}, headers_{headers}, was_successful_{was_successful} {
+    was_successful_ = true;
+  }
 
   void Set(const std::string &key, const std::string &value) const override {
-    // TODO: Check for cases where allocation fails.
-    headers_.emplace_back(ngx_copy_key(request_->pool, key),
-                          ngx_copy_string(request_->pool, value));
+    if (!was_successful_)
+      return;
+    auto ngx_key = ngx_copy_key(request_->pool, key);
+    if (!ngx_key.data) {
+      ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
+                    "failed to allocate header key");
+      was_successful_ = false;
+      return;
+    }
+    auto ngx_value = ngx_copy_string(request_->pool, value);
+    if (!ngx_value.data) {
+      ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
+                    "failed to allocate header value");
+      was_successful_ = false;
+      return;
+    }
+    headers_.emplace_back(ngx_key, ngx_value);
   }
 
 private:
   ngx_http_request_t *request_;
   std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers_;
+  bool &was_successful_;
 };
 }
 
@@ -149,10 +182,9 @@ void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
   // We've already started a span for this request, so do nothing.
   if (!was_found.second)
     return;
-  auto &span = was_found.first->second;
 
-  // TODO: Check to see if we can extract a span from the request headers
-  // to use as the parent.
+  // Start a new span for the request.
+  auto &span = was_found.first->second;
   auto carrier_reader = NgxHeaderCarrierReader{request};
   auto parent_span_context =
       tracer_.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
@@ -174,22 +206,28 @@ void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
               std::string{reinterpret_cast<char *>(request->unparsed_uri.data),
                           request->unparsed_uri.len});
 
-  // Inject the context.
+  // Inject the span's context into the request headers.
   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
-  auto carrier_writer = NgxHeaderCarrierWriter{request, headers};
-  if (tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
-                     carrier_writer)) {
-    set_headers(request, headers);
-  } else {
-    std::cerr << "Tracer.inject() failed\n";
-  }
+  bool was_successful = true;
+  auto carrier_writer =
+      NgxHeaderCarrierWriter{request, headers, was_successful};
+  was_successful =
+      tracer_.Inject(span.context(), lightstep::CarrierFormat::HTTPHeaders,
+                     carrier_writer) &&
+      was_successful;
+  if (was_successful)
+    was_successful = set_headers(request, headers);
+  if (!was_successful)
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "Tracer.inject() failed");
 }
 
 void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   // Lookup the span.
   auto span_iter = active_spans_.find(request);
   if (span_iter == std::end(active_spans_)) {
-    std::cerr << "Could not find span\n";
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "failed to find associated span for request");
     return;
   }
   auto &span = span_iter->second;
@@ -198,7 +236,10 @@ void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   // TODO: Should we also look at request->err_status?
   auto status = uint64_t{request->headers_out.status};
   span.SetTag("http.status_code", status);
-  if (status != NGX_HTTP_OK && status != NGX_OK) {
+  // TODO: Is it correct to mark the error tag when the status isn't
+  // NGX_HTTP_OK? We'd expect certain error statuses to be returned as part of
+  // normal operations.
+  if (status != NGX_HTTP_OK) {
     span.SetTag("error", true);
     // TODO: Log error values in request->headers_out.status_line to span.
   }
