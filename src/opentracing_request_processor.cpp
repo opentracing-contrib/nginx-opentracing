@@ -234,7 +234,7 @@ void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
                                      lightstep::ChildOfRef);
   } else {
     // A span's already been created for the request, but nginx is entering a
-    // new location block. Finish the span for the current location block and
+    // new location block. Finish the span for the previous location block and
     // create a new span that follows from it.
     span.Finish();
     span = start_location_block_span(request, tracer_, span.context(),
