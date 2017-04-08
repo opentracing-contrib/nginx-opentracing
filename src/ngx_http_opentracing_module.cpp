@@ -1,3 +1,4 @@
+#include "ngx_http_opentracing_conf.h"
 #include "opentracing_request_processor.h"
 #include <cstdlib>
 #include <exception>
@@ -17,16 +18,8 @@ extern ngx_module_t ngx_http_opentracing_module;
 }
 
 using ngx_opentracing::OpenTracingRequestProcessor;
-
-namespace {
-struct opentracing_main_conf_t {
-  ngx_str_t tracer_options;
-};
-
-struct opentracing_loc_conf_t {
-  ngx_flag_t enable;
-};
-}
+using ngx_opentracing::opentracing_main_conf_t;
+using ngx_opentracing::opentracing_loc_conf_t;
 
 static OpenTracingRequestProcessor &
 get_opentracing_request_processor(ngx_http_request_t *request) {
@@ -40,18 +33,6 @@ get_opentracing_request_processor(ngx_http_request_t *request) {
   return request_processor;
 }
 
-static bool is_opentracing_enabled(ngx_http_request_t *request) {
-  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
-      ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
-  if (request == request->main)
-    return loc_conf->enable;
-  // Only trace subrequests if logging is enabled; otherwise the spans won't
-  // be finished.
-  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
-      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
-  return loc_conf->enable && core_loc_conf->log_subrequest;
-}
-
 static ngx_int_t before_response_handler(ngx_http_request_t *request) {
   auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_core_module));
@@ -62,10 +43,6 @@ static ngx_int_t before_response_handler(ngx_http_request_t *request) {
             << std::string{reinterpret_cast<char *>(core_loc_conf->name.data),
                            core_loc_conf->name.len}
             << " - " << request << "\n";
-  std::cerr << "request-main->internal = " << request->main->internal << "\n";
-  if (!is_opentracing_enabled(request))
-    return NGX_DECLINED;
-
   get_opentracing_request_processor(request).before_response(request);
 
   return NGX_DECLINED;
@@ -76,8 +53,6 @@ static ngx_int_t after_response_handler(ngx_http_request_t *request) {
             << std::string{reinterpret_cast<char *>(request->uri.data),
                            request->uri.len}
             << " - " << request << "\n";
-  if (!is_opentracing_enabled(request))
-    return NGX_DECLINED;
 
   get_opentracing_request_processor(request).after_response(request);
 
@@ -113,6 +88,38 @@ static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
   return main_conf;
 }
 
+static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
+                                                 ngx_command_t *command,
+                                                 void *conf) {
+  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(conf);
+
+  auto value = reinterpret_cast<ngx_str_t *>(cf->args->elts);
+  auto operation_name = &value[1];
+
+  loc_conf->operation_name = *operation_name;
+  loc_conf->operation_name_lengths = nullptr;
+  loc_conf->operation_name_values = nullptr;
+
+  auto num_variables = ngx_http_script_variables_count(operation_name);
+  if (num_variables == 0)
+    return reinterpret_cast<char *>(NGX_CONF_OK);
+
+  ngx_http_script_compile_t script_compile;
+  ngx_memzero(&script_compile, sizeof(ngx_http_script_compile_t));
+  script_compile.cf = cf;
+  script_compile.source = operation_name;
+  script_compile.lengths = &loc_conf->operation_name_lengths;
+  script_compile.values = &loc_conf->operation_name_values;
+  script_compile.variables = num_variables;
+  script_compile.complete_lengths = 1;
+  script_compile.complete_values = 1;
+
+  if (ngx_http_script_compile(&script_compile) != NGX_OK)
+    return reinterpret_cast<char *>(NGX_CONF_ERROR);
+
+  return reinterpret_cast<char *>(NGX_CONF_OK);
+}
+
 static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
   auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
@@ -120,6 +127,7 @@ static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
     return nullptr;
 
   loc_conf->enable = NGX_CONF_UNSET;
+  loc_conf->operation_name = {0, nullptr};
 
   return loc_conf;
 }
@@ -154,6 +162,9 @@ static ngx_command_t ngx_opentracing_commands[] = {
      NGX_HTTP_MAIN_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
      offsetof(opentracing_loc_conf_t, enable), nullptr},
+    {ngx_string("opentracing_operation_name"),
+     NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1, ngx_http_opentracing_operation_name,
+     NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     ngx_null_command};
 
 ngx_module_t ngx_http_opentracing_module = {

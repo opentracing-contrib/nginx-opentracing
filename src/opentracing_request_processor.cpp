@@ -1,9 +1,41 @@
 #include "opentracing_request_processor.h"
+#include "ngx_http_opentracing_conf.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <lightstep/impl.h>
 #include <lightstep/recorder.h>
+
+extern "C" {
+extern ngx_module_t ngx_http_opentracing_module;
+}
+
+namespace ngx_opentracing {
+static bool
+is_opentracing_enabled(const ngx_http_request_t *request,
+                       const ngx_http_core_loc_conf_t *core_loc_conf,
+                       const opentracing_loc_conf_t *loc_conf) {
+  if (request == request->main)
+    return loc_conf->enable;
+  else
+    // Only trace subrequests if `log_subrequest` is enabled; otherwise the
+    // spans won't be finished.
+    return loc_conf->enable && core_loc_conf->log_subrequest;
+}
+
+static ngx_str_t expand_variables(ngx_http_request_t *request,
+                                  ngx_str_t pattern, ngx_array_t *lengths,
+                                  ngx_array_t *values) {
+  auto result = ngx_str_t{0, nullptr};
+  if (!lengths)
+    return pattern;
+  if (!ngx_http_script_run(request, &result, lengths->elts, 0, values->elts)) {
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "failed to run script");
+    return {0, nullptr};
+  }
+  return result;
+}
 
 static ngx_str_t ngx_copy_string(ngx_pool_t *pool, const std::string &s) {
   ngx_str_t result;
@@ -157,15 +189,23 @@ private:
 }
 
 static lightstep::Span
-start_location_block_span(ngx_http_request_t *request,
-                          lightstep::Tracer &tracer,
-                          const lightstep::SpanContext &reference_span_context,
-                          lightstep::SpanReferenceType reference_type) {
+start_span(ngx_http_request_t *request,
+           const ngx_http_core_loc_conf_t *core_loc_conf,
+           const opentracing_loc_conf_t *loc_conf, lightstep::Tracer &tracer,
+           const lightstep::SpanContext &reference_span_context,
+           lightstep::SpanReferenceType reference_type) {
   // Start a new span for the location block.
-  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
-      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
-  std::string operation_name{reinterpret_cast<char *>(core_loc_conf->name.data),
-                             core_loc_conf->name.len};
+  std::string operation_name;
+  if (loc_conf->operation_name.data) {
+    auto operation_name_ngx_str = expand_variables(
+        request, loc_conf->operation_name, loc_conf->operation_name_lengths,
+        loc_conf->operation_name_values);
+    operation_name.assign(reinterpret_cast<char *>(operation_name_ngx_str.data),
+                          operation_name_ngx_str.len);
+  } else {
+    operation_name.assign(reinterpret_cast<char *>(core_loc_conf->name.data),
+                          core_loc_conf->name.len);
+  }
   lightstep::Span span;
   if (reference_span_context.valid()) {
     std::cerr << "starting child span " << operation_name << "...\n";
@@ -202,7 +242,6 @@ start_location_block_span(ngx_http_request_t *request,
   return span;
 }
 
-namespace ngx_opentracing {
 static lightstep::Tracer initialize_tracer(const std::string &options) {
   // TODO: Will need a way to start an arbitrary tracer here, but to get started
   // just hard-code to the LightStep tracer. Also, `options` may encode multiple
@@ -222,34 +261,41 @@ OpenTracingRequestProcessor::OpenTracingRequestProcessor(
     : tracer_{initialize_tracer(options)} {}
 
 void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
-  auto was_found = active_spans_.emplace(request, lightstep::Span{});
-  auto &span = was_found.first->second;
-  if (was_found.second) {
+
+  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
+  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
+
+  auto span_iter = active_spans_.find(request);
+  if (span_iter == active_spans_.end()) {
+    if (!is_opentracing_enabled(request, core_loc_conf, loc_conf))
+      return;
     // No span has been created for this request yet. Check if there's any
     // parent span context in the request headers and start a new one.
     auto carrier_reader = NgxHeaderCarrierReader{request};
     auto parent_span_context =
         tracer_.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
-    span = start_location_block_span(request, tracer_, parent_span_context,
-                                     lightstep::ChildOfRef);
+    auto span = start_span(request, core_loc_conf, loc_conf, tracer_,
+                           parent_span_context, lightstep::ChildOfRef);
+    active_spans_.emplace(request, std::move(span));
   } else {
     // A span's already been created for the request, but nginx is entering a
     // new location block. Finish the span for the previous location block and
     // create a new span that follows from it.
+    auto &span = span_iter->second;
     span.Finish();
-    span = start_location_block_span(request, tracer_, span.context(),
-                                     lightstep::FollowsFromRef);
+    span = start_span(request, core_loc_conf, loc_conf, tracer_, span.context(),
+                      lightstep::FollowsFromRef);
   }
 }
 
 void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   // Lookup the span.
   auto span_iter = active_spans_.find(request);
-  if (span_iter == std::end(active_spans_)) {
-    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "failed to find associated span for request");
+  if (span_iter == std::end(active_spans_))
     return;
-  }
+
   auto &span = span_iter->second;
 
   // Check for errors.

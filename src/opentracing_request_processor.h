@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ngx_http_opentracing_conf.h"
 #include <lightstep/tracer.h>
 #include <string>
 #include <unordered_map>
