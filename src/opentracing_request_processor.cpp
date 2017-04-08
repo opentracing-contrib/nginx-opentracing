@@ -217,6 +217,7 @@ start_span(ngx_http_request_t *request,
     span = tracer.StartSpan(operation_name);
   }
   span.SetTag("component", "nginx");
+  span.SetTag("nginx.worker_pid", static_cast<uint64_t>(ngx_pid));
   span.SetTag("http.method",
               std::string{reinterpret_cast<char *>(request->method_name.data),
                           request->method_name.len});
