@@ -290,11 +290,14 @@ void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   // Check for errors.
   // TODO: Should we also look at request->err_status?
   auto status = uint64_t{request->headers_out.status};
+  const auto &status_line = request->headers_out.status_line;
   span.SetTag("http.status_code", status);
-  // TODO: Is it correct to mark the error tag when the status isn't
-  // NGX_HTTP_OK? We'd expect certain error statuses to be returned as part of
-  // normal operations.
-  if (status != NGX_HTTP_OK) {
+  if (status_line.data)
+    span.SetTag("http.status_line",
+                std::string{reinterpret_cast<char *>(status_line.data),
+                            status_line.len});
+  // Tread any 4xx and 5xx code as an error.
+  if (status >= 400) {
     span.SetTag("error", true);
     // TODO: Log error values in request->headers_out.status_line to span.
   }
