@@ -1,5 +1,7 @@
 #pragma once
 
+#include <opentracing_tracer_options.h>
+
 extern "C" {
 #include <nginx.h>
 #include <ngx_config.h>
@@ -9,7 +11,7 @@ extern "C" {
 
 namespace ngx_opentracing {
 struct opentracing_main_conf_t {
-  ngx_str_t tracer_options;
+  tracer_options_t tracer_options;
 };
 
 struct opentracing_loc_conf_t {

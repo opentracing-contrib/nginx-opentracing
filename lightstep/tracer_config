@@ -1,0 +1,13 @@
+CORE_INCS="$CORE_INCS $ngx_addon_dir/lightstep/include"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
+  $ngx_addon_dir/lightstep/src/opentracing_tracer.cpp"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
+$ngx_addon_dir/lightstep/include/opentracing_tracer_options.h \
+$ngx_addon_dir/lightstep/include/opentracing_tracer_options_command.def"
+CORE_LIBS="$CORE_LIBS \
+  -L/usr/local/lib \
+  -llightstep_core_cxx11 \
+  -llightstep_grpc_cxx11 \
+  -lgrpc++ \
+  -lgrpc \
+  -lprotobuf"

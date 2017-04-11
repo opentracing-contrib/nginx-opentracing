@@ -11,6 +11,8 @@ extern ngx_module_t ngx_http_opentracing_module;
 }
 
 namespace ngx_opentracing {
+lightstep::Tracer make_tracer(const tracer_options_t &);
+
 static bool
 is_opentracing_enabled(const ngx_http_request_t *request,
                        const ngx_http_core_loc_conf_t *core_loc_conf,
@@ -243,23 +245,9 @@ start_span(ngx_http_request_t *request,
   return span;
 }
 
-static lightstep::Tracer initialize_tracer(const std::string &options) {
-  // TODO: Will need a way to start an arbitrary tracer here, but to get started
-  // just hard-code to the LightStep tracer. Also, `options` may encode multiple
-  // settings; for now assume it's the access token.
-  lightstep::TracerOptions tracer_options;
-  tracer_options.access_token = options;
-  tracer_options.collector_host = "collector-grpc.lightstep.com";
-  tracer_options.collector_port = 443;
-  tracer_options.collector_encryption = "tls";
-  tracer_options.tracer_attributes["lightstep.component_name"] = "nginx";
-  lightstep::BasicRecorderOptions recorder_options;
-  return NewLightStepTracer(tracer_options, recorder_options);
-}
-
 OpenTracingRequestProcessor::OpenTracingRequestProcessor(
-    const std::string &options)
-    : tracer_{initialize_tracer(options)} {}
+    const tracer_options_t &options)
+    : tracer_{make_tracer(options)} {}
 
 void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
 

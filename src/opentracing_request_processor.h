@@ -15,7 +15,7 @@ extern "C" {
 namespace ngx_opentracing {
 class OpenTracingRequestProcessor {
 public:
-  explicit OpenTracingRequestProcessor(const std::string &options);
+  explicit OpenTracingRequestProcessor(const tracer_options_t &options);
 
   void before_response(ngx_http_request_t *request);
   void after_response(ngx_http_request_t *request);

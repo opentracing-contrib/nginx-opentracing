@@ -26,9 +26,7 @@ get_opentracing_request_processor(ngx_http_request_t *request) {
   static auto request_processor = [request] {
     auto conf = reinterpret_cast<opentracing_main_conf_t *>(
         ngx_http_get_module_main_conf(request, ngx_http_opentracing_module));
-    return OpenTracingRequestProcessor{
-        std::string{reinterpret_cast<char *>(conf->tracer_options.data),
-                    conf->tracer_options.len}};
+    return OpenTracingRequestProcessor{conf->tracer_options};
   }();
   return request_processor;
 }
@@ -82,9 +80,6 @@ static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
       ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
   if (!main_conf)
     return nullptr;
-
-  main_conf->tracer_options = {0, nullptr};
-
   return main_conf;
 }
 
@@ -154,6 +149,7 @@ static ngx_http_module_t ngx_http_opentracing_module_ctx = {
 };
 
 static ngx_command_t ngx_opentracing_commands[] = {
+#include <opentracing_tracer_options_command.def>
     {ngx_string("opentracing_tracer_options"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
      NGX_HTTP_MAIN_CONF_OFFSET,
