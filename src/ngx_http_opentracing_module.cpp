@@ -157,10 +157,6 @@ static ngx_http_module_t ngx_http_opentracing_module_ctx = {
 
 static ngx_command_t ngx_opentracing_commands[] = {
 #include <opentracing_tracer_options_command.def>
-    {ngx_string("opentracing_tracer_options"),
-     NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
-     offsetof(opentracing_main_conf_t, tracer_options), nullptr},
     {ngx_string("opentracing"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
