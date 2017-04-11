@@ -115,6 +115,11 @@ static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
   return reinterpret_cast<char *>(NGX_CONF_OK);
 }
 
+static char *ngx_http_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
+                                      void *conf) {
+  return reinterpret_cast<char *>(NGX_CONF_OK);
+}
+
 static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
   auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
@@ -161,6 +166,10 @@ static ngx_command_t ngx_opentracing_commands[] = {
     {ngx_string("opentracing_operation_name"),
      NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1, ngx_http_opentracing_operation_name,
      NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
+    {ngx_string("opentracing_tag"),
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_TAKE2,
+     ngx_http_opentracing_tag, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     ngx_null_command};
 
 ngx_module_t ngx_http_opentracing_module = {
