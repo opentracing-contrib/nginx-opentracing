@@ -87,6 +87,8 @@ static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
                                                  ngx_command_t *command,
                                                  void *conf) {
   auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(conf);
+  if (loc_conf->operation_name.data)
+    return const_cast<char *>("is duplicate");
 
   auto value = reinterpret_cast<ngx_str_t *>(cf->args->elts);
   auto operation_name = &value[1];
