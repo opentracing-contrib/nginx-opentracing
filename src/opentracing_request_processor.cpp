@@ -1,5 +1,5 @@
-#include "opentracing_request_processor.h"
 #include "ngx_http_opentracing_conf.h"
+#include "opentracing_request_processor.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -31,6 +31,17 @@ static ngx_str_t expand_variables(ngx_http_request_t *request,
   auto result = ngx_str_t{0, nullptr};
   if (!lengths)
     return pattern;
+  if (!ngx_http_script_run(request, &result, lengths->elts, 0, values->elts)) {
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "failed to run script");
+    return {0, nullptr};
+  }
+  return result;
+}
+
+static ngx_str_t expand_variables(ngx_http_request_t *request,
+                                  ngx_array_t *lengths, ngx_array_t *values) {
+  auto result = ngx_str_t{0, nullptr};
   if (!ngx_http_script_run(request, &result, lengths->elts, 0, values->elts)) {
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                   "failed to run script");
@@ -218,6 +229,8 @@ start_span(ngx_http_request_t *request,
     std::cerr << "starting span " << operation_name << "...\n";
     span = tracer.StartSpan(operation_name);
   }
+
+  // Set standard span tags.
   span.SetTag("component", "nginx");
   span.SetTag("nginx.worker_pid", static_cast<uint64_t>(ngx_pid));
   span.SetTag("http.method",
@@ -226,6 +239,24 @@ start_span(ngx_http_request_t *request,
   span.SetTag("http.uri",
               std::string{reinterpret_cast<char *>(request->unparsed_uri.data),
                           request->unparsed_uri.len});
+
+  // Set custom span tags.
+  opentracing_tag_t *custom_tags = nullptr;
+  size_t num_custom_tags = 0;
+  if (loc_conf->tags) {
+    custom_tags = static_cast<opentracing_tag_t *>(loc_conf->tags->elts);
+    num_custom_tags = loc_conf->tags->nelts;
+  }
+  for (size_t i = 0; i < num_custom_tags; ++i) {
+    auto key = expand_variables(request, custom_tags[i].key_lengths,
+                                custom_tags[i].key_values);
+    auto value = expand_variables(request, custom_tags[i].value_lengths,
+                                  custom_tags[i].value_values);
+    if (!key.data || !value.data)
+      continue;
+    span.SetTag(std::string{reinterpret_cast<char *>(key.data), key.len},
+                std::string{reinterpret_cast<char *>(value.data), value.len});
+  }
 
   // Inject the span's context into the request headers.
   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
@@ -250,7 +281,6 @@ OpenTracingRequestProcessor::OpenTracingRequestProcessor(
     : tracer_{make_tracer(options)} {}
 
 void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
-
   auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_core_module));
   auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
