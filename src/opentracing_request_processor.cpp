@@ -53,7 +53,7 @@ static ngx_str_t expand_variables(ngx_http_request_t *request,
 
 static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
                           ngx_str_t value) {
-  auto header = reinterpret_cast<ngx_table_elt_t *>(
+  auto header = static_cast<ngx_table_elt_t *>(
       ngx_list_push(&request->headers_in.headers));
   if (!header)
     return false;
@@ -243,9 +243,9 @@ OpenTracingRequestProcessor::OpenTracingRequestProcessor(
     : tracer_{make_tracer(options)} {}
 
 void OpenTracingRequestProcessor::before_response(ngx_http_request_t *request) {
-  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
+  auto core_loc_conf = static_cast<ngx_http_core_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_core_module));
-  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
+  auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
 
   auto span_iter = active_spans_.find(request);

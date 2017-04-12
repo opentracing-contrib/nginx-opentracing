@@ -47,7 +47,7 @@ static ngx_int_t compile_script(ngx_conf_t *cf, ngx_str_t *script,
 static OpenTracingRequestProcessor &
 get_opentracing_request_processor(ngx_http_request_t *request) {
   static auto request_processor = [request] {
-    auto conf = reinterpret_cast<opentracing_main_conf_t *>(
+    auto conf = static_cast<opentracing_main_conf_t *>(
         ngx_http_get_module_main_conf(request, ngx_http_opentracing_module));
     return OpenTracingRequestProcessor{conf->tracer_options};
   }();
@@ -55,7 +55,7 @@ get_opentracing_request_processor(ngx_http_request_t *request) {
 }
 
 static ngx_int_t before_response_handler(ngx_http_request_t *request) {
-  auto core_loc_conf = reinterpret_cast<ngx_http_core_loc_conf_t *>(
+  auto core_loc_conf = static_cast<ngx_http_core_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_core_module));
   std::cerr << "before: "
             << std::string{reinterpret_cast<char *>(request->uri.data),
@@ -81,16 +81,16 @@ static ngx_int_t after_response_handler(ngx_http_request_t *request) {
 }
 
 static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *config) {
-  auto core_main_config = reinterpret_cast<ngx_http_core_main_conf_t *>(
+  auto core_main_config = static_cast<ngx_http_core_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(config, ngx_http_core_module));
 
-  auto handler = reinterpret_cast<ngx_http_handler_pt *>(ngx_array_push(
+  auto handler = static_cast<ngx_http_handler_pt *>(ngx_array_push(
       &core_main_config->phases[NGX_HTTP_PREACCESS_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
   *handler = before_response_handler;
 
-  handler = reinterpret_cast<ngx_http_handler_pt *>(
+  handler = static_cast<ngx_http_handler_pt *>(
       ngx_array_push(&core_main_config->phases[NGX_HTTP_LOG_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
@@ -99,7 +99,7 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *config) {
 }
 
 static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
-  auto main_conf = reinterpret_cast<opentracing_main_conf_t *>(
+  auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
   if (!main_conf)
     return nullptr;
@@ -109,25 +109,25 @@ static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
 static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
                                                  ngx_command_t *command,
                                                  void *conf) {
-  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(conf);
+  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
   if (loc_conf->operation_name.data)
     return const_cast<char *>("is duplicate");
 
-  auto value = reinterpret_cast<ngx_str_t *>(cf->args->elts);
+  auto value = static_cast<ngx_str_t *>(cf->args->elts);
   auto operation_name = &value[1];
 
   loc_conf->operation_name = *operation_name;
 
   auto num_variables = ngx_http_script_variables_count(operation_name);
   if (num_variables == 0)
-    return reinterpret_cast<char *>(NGX_CONF_OK);
+    return static_cast<char *>(NGX_CONF_OK);
 
   if (compile_script(cf, num_variables, operation_name,
                      &loc_conf->operation_name_lengths,
                      &loc_conf->operation_name_values) != NGX_OK)
-    return reinterpret_cast<char *>(NGX_CONF_ERROR);
+    return static_cast<char *>(NGX_CONF_ERROR);
 
-  return reinterpret_cast<char *>(NGX_CONF_OK);
+  return static_cast<char *>(NGX_CONF_OK);
 }
 
 static char *ngx_http_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
@@ -156,7 +156,7 @@ static char *ngx_http_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
 }
 
 static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
-  auto loc_conf = reinterpret_cast<opentracing_loc_conf_t *>(
+  auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
   if (!loc_conf)
     return nullptr;
@@ -173,8 +173,8 @@ static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
 
 static char *ngx_http_opentracing_merge_loc_conf(ngx_conf_t *, void *parent,
                                                  void *child) {
-  auto prev = reinterpret_cast<opentracing_loc_conf_t *>(parent);
-  auto conf = reinterpret_cast<opentracing_loc_conf_t *>(child);
+  auto prev = static_cast<opentracing_loc_conf_t *>(parent);
+  auto conf = static_cast<opentracing_loc_conf_t *>(child);
 
   ngx_conf_merge_value(conf->enable, prev->enable, 0);
 
