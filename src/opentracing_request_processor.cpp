@@ -1,10 +1,11 @@
-#include "ngx_http_opentracing_conf.h"
 #include "opentracing_request_processor.h"
+#include "ngx_http_opentracing_conf.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <lightstep/impl.h>
 #include <lightstep/recorder.h>
+#include <ngx_opentracing_utility.h>
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -50,27 +51,6 @@ static ngx_str_t expand_variables(ngx_http_request_t *request,
   return result;
 }
 
-static ngx_str_t ngx_copy_string(ngx_pool_t *pool, const std::string &s) {
-  ngx_str_t result;
-  result.data = reinterpret_cast<unsigned char *>(ngx_palloc(pool, s.size()));
-  if (!result.data)
-    return {0, nullptr};
-  result.len = s.size();
-  std::copy(s.begin(), s.end(), result.data);
-  return result;
-}
-
-static ngx_str_t ngx_copy_key(ngx_pool_t *pool, const std::string &s) {
-  ngx_str_t result;
-  result.data = reinterpret_cast<unsigned char *>(ngx_palloc(pool, s.size()));
-  if (!result.data)
-    return {0, nullptr};
-  result.len = s.size();
-  std::transform(s.begin(), s.end(), result.data,
-                 [](char c) { return std::tolower(c); });
-  return result;
-}
-
 static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
                           ngx_str_t value) {
   auto header = reinterpret_cast<ngx_table_elt_t *>(
@@ -82,23 +62,6 @@ static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
   header->lowcase_key = key.data;
   header->value = value;
   return true;
-}
-
-template <class F>
-static void for_each_header(const ngx_http_request_t *request, F f) {
-  auto headers_part = &request->headers_in.headers.part;
-  auto headers = reinterpret_cast<ngx_table_elt_t *>(headers_part->elts);
-  for (ngx_uint_t i = 0;; i++) {
-    if (i >= headers_part->nelts) {
-      if (!headers_part->next)
-        return;
-      headers_part = headers_part->next;
-      headers = reinterpret_cast<ngx_table_elt_t *>(headers_part->elts);
-      i = 0;
-    }
-    auto &header = headers[i];
-    f(header);
-  }
 }
 
 static bool set_headers(ngx_http_request_t *request,
@@ -113,21 +76,23 @@ static bool set_headers(ngx_http_request_t *request,
   // entries faster, but then we'd have to handle the special case of when a
   // header element isn't hashed yet. Iterating over the header entries all the
   // time keeps things simple.
-  for_each_header(request, [&](ngx_table_elt_t &header) {
-    auto i = std::find_if(
-        headers.begin(), headers.end(),
-        [&](const std::pair<ngx_str_t, ngx_str_t> &key_value) {
-          const auto &key = key_value.first;
-          return header.key.len == key.len &&
-                 ngx_strncmp(reinterpret_cast<char *>(header.lowcase_key),
-                             reinterpret_cast<char *>(key.data), key.len) == 0;
+  for_each<ngx_table_elt_t>(
+      request->headers_in.headers, [&](ngx_table_elt_t &header) {
+        auto i = std::find_if(
+            headers.begin(), headers.end(),
+            [&](const std::pair<ngx_str_t, ngx_str_t> &key_value) {
+              const auto &key = key_value.first;
+              return header.key.len == key.len &&
+                     ngx_strncmp(reinterpret_cast<char *>(header.lowcase_key),
+                                 reinterpret_cast<char *>(key.data),
+                                 key.len) == 0;
 
-        });
-    if (i == headers.end())
-      return;
-    header.value = i->second;
-    headers.erase(i);
-  });
+            });
+        if (i == headers.end())
+          return;
+        header.value = i->second;
+        headers.erase(i);
+      });
 
   // Any header left in `headers` doesn't already have a key in the request, so
   // create a new entry for it.
@@ -154,14 +119,14 @@ public:
   void Set(const std::string &key, const std::string &value) const override {
     if (!was_successful_)
       return;
-    auto ngx_key = ngx_copy_key(request_->pool, key);
+    auto ngx_key = to_lower_ngx_str(request_->pool, key);
     if (!ngx_key.data) {
       ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
                     "failed to allocate header key");
       was_successful_ = false;
       return;
     }
-    auto ngx_value = ngx_copy_string(request_->pool, value);
+    auto ngx_value = to_ngx_str(request_->pool, value);
     if (!ngx_value.data) {
       ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
                     "failed to allocate header value");
@@ -188,12 +153,14 @@ public:
       std::function<void(const std::string &, const std::string &value)> f)
       const {
     std::string key, value;
-    for_each_header(request_, [&](const ngx_table_elt_t &header) {
-      key.assign(reinterpret_cast<char *>(header.lowcase_key), header.key.len);
-      value.assign(reinterpret_cast<char *>(header.value.data),
-                   header.value.len);
-      f(key, value);
-    });
+    for_each<ngx_table_elt_t>(
+        request_->headers_in.headers, [&](const ngx_table_elt_t &header) {
+          key.assign(reinterpret_cast<char *>(header.lowcase_key),
+                     header.key.len);
+          value.assign(reinterpret_cast<char *>(header.value.data),
+                       header.value.len);
+          f(key, value);
+        });
   }
 
 private:
@@ -233,12 +200,8 @@ start_span(ngx_http_request_t *request,
   // Set standard span tags.
   span.SetTag("component", "nginx");
   span.SetTag("nginx.worker_pid", static_cast<uint64_t>(ngx_pid));
-  span.SetTag("http.method",
-              std::string{reinterpret_cast<char *>(request->method_name.data),
-                          request->method_name.len});
-  span.SetTag("http.uri",
-              std::string{reinterpret_cast<char *>(request->unparsed_uri.data),
-                          request->unparsed_uri.len});
+  span.SetTag("http.method", to_string(request->method_name));
+  span.SetTag("http.uri", to_string(request->unparsed_uri));
 
   // Set custom span tags.
   opentracing_tag_t *custom_tags = nullptr;
@@ -254,8 +217,7 @@ start_span(ngx_http_request_t *request,
                                   custom_tags[i].value_values);
     if (!key.data || !value.data)
       continue;
-    span.SetTag(std::string{reinterpret_cast<char *>(key.data), key.len},
-                std::string{reinterpret_cast<char *>(value.data), value.len});
+    span.SetTag(to_string(key), to_string(value));
   }
 
   // Inject the span's context into the request headers.
@@ -323,10 +285,9 @@ void OpenTracingRequestProcessor::after_response(ngx_http_request_t *request) {
   const auto &status_line = request->headers_out.status_line;
   span.SetTag("http.status_code", status);
   if (status_line.data)
-    span.SetTag("http.status_line",
-                std::string{reinterpret_cast<char *>(status_line.data),
-                            status_line.len});
-  // Tread any 4xx and 5xx code as an error.
+    span.SetTag("http.status_line", to_string(status_line));
+
+  // Treat any 4xx and 5xx code as an error.
   if (status >= 400) {
     span.SetTag("error", true);
     // TODO: Log error values in request->headers_out.status_line to span.

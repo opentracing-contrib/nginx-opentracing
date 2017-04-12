@@ -2,13 +2,21 @@
 # locations and allows one to select alternative OpenTracing implementations.
 ngx_addon_name=ngx_http_opentracing_module
 HTTP_MODULES="$HTTP_MODULES ngx_http_opentracing_module"
+
+CORE_INCS="$CORE_INCS $ngx_addon_dir/utility/include"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
+  $ngx_addon_dir/utility/src/ngx_opentracing_utility.cpp"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
+  $ngx_addon_dir/utility/include/ngx_opentracing_utility.h"
+
 . $ngx_addon_dir/lightstep/tracer_config
+
 NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
   $ngx_addon_dir/src/ngx_http_opentracing_module.cpp \
   $ngx_addon_dir/src/opentracing_request_processor.cpp"
 NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
-$ngx_addon_dir/src/ngx_http_opentracing_conf.h \
-$ngx_addon_dir/src/opentracing_request_processor.h"
+  $ngx_addon_dir/src/ngx_http_opentracing_conf.h \
+  $ngx_addon_dir/src/opentracing_request_processor.h"
 CORE_INCS="$CORE_INCS /usr/local/include"
 CORE_LIBS="$CORE_LIBS \
   -lstdc++"
