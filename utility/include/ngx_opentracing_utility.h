@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include <string>
 #include <algorithm>
 #include <cctype>
+#include <string>
 
 extern "C" {
 #include <ngx_core.h>
@@ -35,8 +35,7 @@ ngx_str_t to_lower_ngx_str(ngx_pool_t *pool, const std::string &s);
 // for_each
 //------------------------------------------------------------------------------
 // Apply `f` to each element of an ngx_list_t.
-template <class T, class F>
-void for_each(const ngx_list_t& list, F f) {
+template <class T, class F> void for_each(const ngx_list_t &list, F f) {
   auto part = &list.part;
   auto elements = static_cast<T *>(part->elts);
   for (ngx_uint_t i = 0;; i++) {
@@ -49,5 +48,13 @@ void for_each(const ngx_list_t& list, F f) {
     }
     f(elements[i]);
   }
+}
+
+// Apply `f` to each element of an ngx_array_t.
+template <class T, class F> void for_each(const ngx_array_t &array, F f) {
+  auto elements = static_cast<T *>(array.elts);
+  auto n = array.nelts;
+  for (size_t i = 0; i < n; ++i)
+    f(elements[i]);
 }
 } // namespace ngx_opentracing

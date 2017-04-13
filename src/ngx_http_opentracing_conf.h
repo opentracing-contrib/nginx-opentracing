@@ -10,15 +10,16 @@ extern "C" {
 }
 
 namespace ngx_opentracing {
-struct opentracing_main_conf_t {
-  tracer_options_t tracer_options;
-};
-
 struct opentracing_tag_t {
   ngx_array_t *key_lengths;
   ngx_array_t *key_values;
   ngx_array_t *value_lengths;
   ngx_array_t *value_values;
+};
+
+struct opentracing_main_conf_t {
+  tracer_options_t tracer_options;
+  ngx_array_t *tags;
 };
 
 struct opentracing_loc_conf_t {

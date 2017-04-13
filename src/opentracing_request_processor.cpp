@@ -168,12 +168,23 @@ private:
 };
 }
 
+static void add_script_tag(ngx_http_request_t *request, lightstep::Span &span,
+                           const opentracing_tag_t &tag) {
+  auto key = expand_variables(request, tag.key_lengths, tag.key_values);
+  auto value = expand_variables(request, tag.value_lengths, tag.value_values);
+  if (key.data && value.data)
+    span.SetTag(to_string(key), to_string(value));
+}
+
 static lightstep::Span
 start_span(ngx_http_request_t *request,
            const ngx_http_core_loc_conf_t *core_loc_conf,
            const opentracing_loc_conf_t *loc_conf, lightstep::Tracer &tracer,
            const lightstep::SpanContext &reference_span_context,
            lightstep::SpanReferenceType reference_type) {
+  auto main_conf = static_cast<opentracing_main_conf_t *>(
+      ngx_http_get_module_main_conf(request, ngx_http_opentracing_module));
+
   // Start a new span for the location block.
   std::string operation_name;
   if (loc_conf->operation_name.data) {
@@ -197,28 +208,19 @@ start_span(ngx_http_request_t *request,
     span = tracer.StartSpan(operation_name);
   }
 
-  // Set standard span tags.
-  span.SetTag("component", "nginx");
-  span.SetTag("nginx.worker_pid", static_cast<uint64_t>(ngx_pid));
-  span.SetTag("http.method", to_string(request->method_name));
-  span.SetTag("http.uri", to_string(request->unparsed_uri));
+  // Set default span tags.
+  if (main_conf->tags)
+    for_each<opentracing_tag_t>(*main_conf->tags,
+                                [&](const opentracing_tag_t &tag) {
+                                  add_script_tag(request, span, tag);
+                                });
 
   // Set custom span tags.
-  opentracing_tag_t *custom_tags = nullptr;
-  size_t num_custom_tags = 0;
-  if (loc_conf->tags) {
-    custom_tags = static_cast<opentracing_tag_t *>(loc_conf->tags->elts);
-    num_custom_tags = loc_conf->tags->nelts;
-  }
-  for (size_t i = 0; i < num_custom_tags; ++i) {
-    auto key = expand_variables(request, custom_tags[i].key_lengths,
-                                custom_tags[i].key_values);
-    auto value = expand_variables(request, custom_tags[i].value_lengths,
-                                  custom_tags[i].value_values);
-    if (!key.data || !value.data)
-      continue;
-    span.SetTag(to_string(key), to_string(value));
-  }
+  if (loc_conf->tags)
+    for_each<opentracing_tag_t>(*loc_conf->tags,
+                                [&](const opentracing_tag_t &tag) {
+                                  add_script_tag(request, span, tag);
+                                });
 
   // Inject the span's context into the request headers.
   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
