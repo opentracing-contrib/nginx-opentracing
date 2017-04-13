@@ -17,6 +17,7 @@ ngx_int_t NgxScript::compile(ngx_conf_t *cf, const ngx_str_t &pattern) {
   values_ = nullptr;
 
   auto num_variables = ngx_http_script_variables_count(&pattern_);
+  // As an optimization, don't compile the script if there are no variables.
   if (num_variables == 0)
     return NGX_OK;
 
