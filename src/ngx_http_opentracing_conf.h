@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ngx_script.h"
 #include <opentracing_tracer_options.h>
 
 extern "C" {
@@ -11,10 +12,8 @@ extern "C" {
 
 namespace ngx_opentracing {
 struct opentracing_tag_t {
-  ngx_array_t *key_lengths;
-  ngx_array_t *key_values;
-  ngx_array_t *value_lengths;
-  ngx_array_t *value_values;
+  NgxScript key_script;
+  NgxScript value_script;
 };
 
 struct opentracing_main_conf_t {
@@ -24,9 +23,7 @@ struct opentracing_main_conf_t {
 
 struct opentracing_loc_conf_t {
   ngx_flag_t enable;
-  ngx_str_t operation_name;
-  ngx_array_t *operation_name_lengths;
-  ngx_array_t *operation_name_values;
+  NgxScript operation_name_script;
   ngx_array_t *tags;
 };
 } // namespace ngx_opentracing

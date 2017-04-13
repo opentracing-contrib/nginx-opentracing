@@ -30,28 +30,6 @@ const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
     {ngx_string("http.method"), ngx_string("$request_method")},
     {ngx_string("http.url"), ngx_string("$scheme://$http_host$request_uri")}};
 
-static ngx_int_t compile_script(ngx_conf_t *cf, ngx_uint_t num_variables,
-                                ngx_str_t *script, ngx_array_t **lengths,
-                                ngx_array_t **values) {
-  ngx_http_script_compile_t script_compile;
-  ngx_memzero(&script_compile, sizeof(ngx_http_script_compile_t));
-  script_compile.cf = cf;
-  script_compile.source = script;
-  script_compile.lengths = lengths;
-  script_compile.values = values;
-  script_compile.variables = num_variables;
-  script_compile.complete_lengths = 1;
-  script_compile.complete_values = 1;
-
-  return ngx_http_script_compile(&script_compile);
-}
-
-static ngx_int_t compile_script(ngx_conf_t *cf, ngx_str_t *script,
-                                ngx_array_t **lengths, ngx_array_t **values) {
-  auto num_variables = ngx_http_script_variables_count(script);
-  return compile_script(cf, num_variables, script, lengths, values);
-}
-
 static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
                                  ngx_str_t key, ngx_str_t value) {
   if (!tags)
@@ -62,12 +40,9 @@ static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
     return static_cast<char *>(NGX_CONF_ERROR);
 
   ngx_memzero(tag, sizeof(opentracing_tag_t));
-
-  if (compile_script(cf, &key, &tag->key_lengths, &tag->key_values) != NGX_OK)
+  if (tag->key_script.compile(cf, key) != NGX_OK)
     return static_cast<char *>(NGX_CONF_ERROR);
-
-  if (compile_script(cf, &value, &tag->value_lengths, &tag->value_values) !=
-      NGX_OK)
+  if (tag->value_script.compile(cf, value) != NGX_OK)
     return static_cast<char *>(NGX_CONF_ERROR);
 
   return static_cast<char *>(NGX_CONF_OK);
@@ -156,21 +131,13 @@ static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
                                                  ngx_command_t *command,
                                                  void *conf) {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
-  if (loc_conf->operation_name.data)
+  if (loc_conf->operation_name_script.is_valid())
     return const_cast<char *>("is duplicate");
 
   auto value = static_cast<ngx_str_t *>(cf->args->elts);
   auto operation_name = &value[1];
 
-  loc_conf->operation_name = *operation_name;
-
-  auto num_variables = ngx_http_script_variables_count(operation_name);
-  if (num_variables == 0)
-    return static_cast<char *>(NGX_CONF_OK);
-
-  if (compile_script(cf, num_variables, operation_name,
-                     &loc_conf->operation_name_lengths,
-                     &loc_conf->operation_name_values) != NGX_OK)
+  if (loc_conf->operation_name_script.compile(cf, *operation_name) != NGX_OK)
     return static_cast<char *>(NGX_CONF_ERROR);
 
   return static_cast<char *>(NGX_CONF_OK);
@@ -192,11 +159,6 @@ static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
     return nullptr;
 
   loc_conf->enable = NGX_CONF_UNSET;
-  loc_conf->operation_name = {0, nullptr};
-  loc_conf->operation_name_lengths = nullptr;
-  loc_conf->operation_name_values = nullptr;
-
-  loc_conf->tags = nullptr;
 
   return loc_conf;
 }

@@ -13,9 +13,11 @@ NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
 
 NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
   $ngx_addon_dir/src/ngx_http_opentracing_module.cpp \
+  $ngx_addon_dir/src/ngx_script.cpp \
   $ngx_addon_dir/src/opentracing_request_processor.cpp"
 NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
   $ngx_addon_dir/src/ngx_http_opentracing_conf.h \
+  $ngx_addon_dir/src/ngx_script.h \
   $ngx_addon_dir/src/opentracing_request_processor.h"
 CORE_INCS="$CORE_INCS /usr/local/include"
 CORE_LIBS="$CORE_LIBS \

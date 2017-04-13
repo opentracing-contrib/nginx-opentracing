@@ -26,31 +26,6 @@ is_opentracing_enabled(const ngx_http_request_t *request,
     return loc_conf->enable && core_loc_conf->log_subrequest;
 }
 
-static ngx_str_t expand_variables(ngx_http_request_t *request,
-                                  ngx_str_t pattern, ngx_array_t *lengths,
-                                  ngx_array_t *values) {
-  auto result = ngx_str_t{0, nullptr};
-  if (!lengths)
-    return pattern;
-  if (!ngx_http_script_run(request, &result, lengths->elts, 0, values->elts)) {
-    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "failed to run script");
-    return {0, nullptr};
-  }
-  return result;
-}
-
-static ngx_str_t expand_variables(ngx_http_request_t *request,
-                                  ngx_array_t *lengths, ngx_array_t *values) {
-  auto result = ngx_str_t{0, nullptr};
-  if (!ngx_http_script_run(request, &result, lengths->elts, 0, values->elts)) {
-    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "failed to run script");
-    return {0, nullptr};
-  }
-  return result;
-}
-
 static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
                           ngx_str_t value) {
   auto header = static_cast<ngx_table_elt_t *>(
@@ -170,8 +145,8 @@ private:
 
 static void add_script_tag(ngx_http_request_t *request, lightstep::Span &span,
                            const opentracing_tag_t &tag) {
-  auto key = expand_variables(request, tag.key_lengths, tag.key_values);
-  auto value = expand_variables(request, tag.value_lengths, tag.value_values);
+  auto key = tag.key_script.run(request);
+  auto value = tag.value_script.run(request);
   if (key.data && value.data)
     span.SetTag(to_string(key), to_string(value));
 }
@@ -187,16 +162,10 @@ start_span(ngx_http_request_t *request,
 
   // Start a new span for the location block.
   std::string operation_name;
-  if (loc_conf->operation_name.data) {
-    auto operation_name_ngx_str = expand_variables(
-        request, loc_conf->operation_name, loc_conf->operation_name_lengths,
-        loc_conf->operation_name_values);
-    operation_name.assign(reinterpret_cast<char *>(operation_name_ngx_str.data),
-                          operation_name_ngx_str.len);
-  } else {
-    operation_name.assign(reinterpret_cast<char *>(core_loc_conf->name.data),
-                          core_loc_conf->name.len);
-  }
+  if (loc_conf->operation_name_script.is_valid())
+    operation_name = to_string(loc_conf->operation_name_script.run(request));
+  else
+    operation_name = to_string(core_loc_conf->name);
   lightstep::Span span;
   if (reference_span_context.valid()) {
     std::cerr << "starting child span " << operation_name << "...\n";
