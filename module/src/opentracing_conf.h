@@ -1,6 +1,9 @@
 #pragma once
 
+// Customization point: A tracer implenetation will expose this file and define
+// a struct `tracer_options_t` to hold specific options for that tracer.
 #include <ngx_opentracing_tracer_options.h>
+
 #include "ngx_script.h"
 
 extern "C" {

@@ -8,9 +8,6 @@ extern "C" {
 }
 
 namespace ngx_opentracing {
-//------------------------------------------------------------------------------
-// NgxScript
-//------------------------------------------------------------------------------
 class NgxScript {
  public:
   // Note: Constructor is compatible with begin zero initialized.

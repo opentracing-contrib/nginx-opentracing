@@ -8,6 +8,8 @@ extern ngx_module_t ngx_http_opentracing_module;
 }
 
 namespace ngx_opentracing {
+// Customization point: A tracer implementation needs to define this function
+// that returns an instance of its specific tracer.
 lightstep::Tracer make_tracer(const tracer_options_t &options);
 
 //------------------------------------------------------------------------------
