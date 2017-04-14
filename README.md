@@ -15,4 +15,5 @@ Building
 $ tar zxvf nginx-1.0.x.tar.gz
 $ cd nginx-1.0.x
 $ ./configure --add-module=/absolute/path/to/nginx-opentracing
+$ make && sudo make install
 ```
