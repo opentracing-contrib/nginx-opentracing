@@ -1,5 +1,5 @@
 #include "ngx_http_opentracing_conf.h"
-#include "opentracing_request_processor.h"
+#include "opentracing_handler.h"
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -18,10 +18,11 @@ extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
 }
 
-using ngx_opentracing::OpenTracingRequestProcessor;
 using ngx_opentracing::opentracing_main_conf_t;
 using ngx_opentracing::opentracing_loc_conf_t;
 using ngx_opentracing::opentracing_tag_t;
+using ngx_opentracing::on_enter_block;
+using ngx_opentracing::on_log_request;
 
 const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
     {ngx_string("component"), ngx_string("nginx")},
@@ -48,42 +49,6 @@ static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
   return static_cast<char *>(NGX_CONF_OK);
 }
 
-static OpenTracingRequestProcessor &
-get_opentracing_request_processor(ngx_http_request_t *request) {
-  static auto request_processor = [request] {
-    auto conf = static_cast<opentracing_main_conf_t *>(
-        ngx_http_get_module_main_conf(request, ngx_http_opentracing_module));
-    return OpenTracingRequestProcessor{conf->tracer_options};
-  }();
-  return request_processor;
-}
-
-static ngx_int_t before_response_handler(ngx_http_request_t *request) {
-  auto core_loc_conf = static_cast<ngx_http_core_loc_conf_t *>(
-      ngx_http_get_module_loc_conf(request, ngx_http_core_module));
-  std::cerr << "before: "
-            << std::string{reinterpret_cast<char *>(request->uri.data),
-                           request->uri.len}
-            << " - "
-            << std::string{reinterpret_cast<char *>(core_loc_conf->name.data),
-                           core_loc_conf->name.len}
-            << " - " << request << "\n";
-  get_opentracing_request_processor(request).before_response(request);
-
-  return NGX_DECLINED;
-}
-
-static ngx_int_t after_response_handler(ngx_http_request_t *request) {
-  std::cerr << "after: "
-            << std::string{reinterpret_cast<char *>(request->uri.data),
-                           request->uri.len}
-            << " - " << request << "\n";
-
-  get_opentracing_request_processor(request).after_response(request);
-
-  return NGX_DECLINED;
-}
-
 static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *cf) {
   auto core_main_config = static_cast<ngx_http_core_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module));
@@ -95,13 +60,13 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *cf) {
       &core_main_config->phases[NGX_HTTP_PREACCESS_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
-  *handler = before_response_handler;
+  *handler = on_enter_block;
 
   handler = static_cast<ngx_http_handler_pt *>(
       ngx_array_push(&core_main_config->phases[NGX_HTTP_LOG_PHASE].handlers));
   if (handler == nullptr)
     return NGX_ERROR;
-  *handler = after_response_handler;
+  *handler = on_log_request;
 
   // Add default span tags.
   const auto num_default_tags =
