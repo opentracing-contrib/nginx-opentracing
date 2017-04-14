@@ -24,6 +24,9 @@ using ngx_opentracing::opentracing_tag_t;
 using ngx_opentracing::on_enter_block;
 using ngx_opentracing::on_log_request;
 
+//------------------------------------------------------------------------------
+// kDefaultOpentracingTags
+//------------------------------------------------------------------------------
 const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
     {ngx_string("component"), ngx_string("nginx")},
     {ngx_string("nginx.worker_pid"), ngx_string("$pid")},
@@ -31,6 +34,9 @@ const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
     {ngx_string("http.method"), ngx_string("$request_method")},
     {ngx_string("http.url"), ngx_string("$scheme://$http_host$request_uri")}};
 
+//------------------------------------------------------------------------------
+// add_opentracing_tag
+//------------------------------------------------------------------------------
 static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
                                  ngx_str_t key, ngx_str_t value) {
   if (!tags) return static_cast<char *>(NGX_CONF_ERROR);
@@ -47,7 +53,22 @@ static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
   return static_cast<char *>(NGX_CONF_OK);
 }
 
-static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *cf) {
+//------------------------------------------------------------------------------
+// set_opentracing_tag
+//------------------------------------------------------------------------------
+static char *set_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
+                                 void *conf) {
+  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
+  if (!loc_conf->tags)
+    loc_conf->tags = ngx_array_create(cf->pool, 1, sizeof(opentracing_tag_t));
+  auto values = static_cast<ngx_str_t *>(cf->args->elts);
+  return add_opentracing_tag(cf, loc_conf->tags, values[1], values[2]);
+}
+
+//------------------------------------------------------------------------------
+// opentracing_module_init
+//------------------------------------------------------------------------------
+static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
   auto core_main_config = static_cast<ngx_http_core_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module));
   auto main_conf = static_cast<opentracing_main_conf_t *>(
@@ -78,16 +99,22 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *cf) {
   return NGX_OK;
 }
 
-static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
+//------------------------------------------------------------------------------
+// create_opentracing_main_conf
+//------------------------------------------------------------------------------
+static void *create_opentracing_main_conf(ngx_conf_t *conf) {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
   if (!main_conf) return nullptr;
   return main_conf;
 }
 
-static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
-                                                 ngx_command_t *command,
-                                                 void *conf) {
+//------------------------------------------------------------------------------
+// set_opentracing_operation_name
+//------------------------------------------------------------------------------
+static char *set_opentracing_operation_name(ngx_conf_t *cf,
+                                            ngx_command_t *command,
+                                            void *conf) {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
   if (loc_conf->operation_name_script.is_valid())
     return const_cast<char *>("is duplicate");
@@ -101,16 +128,10 @@ static char *ngx_http_opentracing_operation_name(ngx_conf_t *cf,
   return static_cast<char *>(NGX_CONF_OK);
 }
 
-static char *ngx_http_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
-                                      void *conf) {
-  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
-  if (!loc_conf->tags)
-    loc_conf->tags = ngx_array_create(cf->pool, 1, sizeof(opentracing_tag_t));
-  auto values = static_cast<ngx_str_t *>(cf->args->elts);
-  return add_opentracing_tag(cf, loc_conf->tags, values[1], values[2]);
-}
-
-static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
+//------------------------------------------------------------------------------
+// create_opentracing_loc_conf
+//------------------------------------------------------------------------------
+static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
   if (!loc_conf) return nullptr;
@@ -120,8 +141,11 @@ static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
   return loc_conf;
 }
 
-static char *ngx_http_opentracing_merge_loc_conf(ngx_conf_t *, void *parent,
-                                                 void *child) {
+//------------------------------------------------------------------------------
+// merge_opentracing_loc_conf
+//------------------------------------------------------------------------------
+static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
+                                        void *child) {
   auto prev = static_cast<opentracing_loc_conf_t *>(parent);
   auto conf = static_cast<opentracing_loc_conf_t *>(child);
 
@@ -146,42 +170,51 @@ static char *ngx_http_opentracing_merge_loc_conf(ngx_conf_t *, void *parent,
   return NGX_CONF_OK;
 }
 
-static ngx_http_module_t ngx_http_opentracing_module_ctx = {
-    nullptr,                               /* preconfiguration */
-    ngx_http_opentracing_init,             /* postconfiguration */
-    ngx_http_opentracing_create_main_conf, /* create main configuration */
-    nullptr,                               /* init main configuration */
-    nullptr,                               /* create server configuration */
-    nullptr,                               /* merge server configuration */
-    ngx_http_opentracing_create_loc_conf,  /* create location configuration */
-    ngx_http_opentracing_merge_loc_conf    /* merge location configuration */
+//------------------------------------------------------------------------------
+// opentracing_module_ctx
+//------------------------------------------------------------------------------
+static ngx_http_module_t opentracing_module_ctx = {
+    nullptr,                      /* preconfiguration */
+    opentracing_module_init,      /* postconfiguration */
+    create_opentracing_main_conf, /* create main configuration */
+    nullptr,                      /* init main configuration */
+    nullptr,                      /* create server configuration */
+    nullptr,                      /* merge server configuration */
+    create_opentracing_loc_conf,  /* create location configuration */
+    merge_opentracing_loc_conf    /* merge location configuration */
 };
 
-static ngx_command_t ngx_opentracing_commands[] = {
+//------------------------------------------------------------------------------
+// opentracing_commands
+//------------------------------------------------------------------------------
+static ngx_command_t opentracing_commands[] = {
 #include <ngx_opentracing_tracer_commands.def>
     {ngx_string("opentracing"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
      offsetof(opentracing_loc_conf_t, enable), nullptr},
     {ngx_string("opentracing_operation_name"),
-     NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1, ngx_http_opentracing_operation_name,
+     NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1, set_opentracing_operation_name,
      NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     {ngx_string("opentracing_tag"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
          NGX_CONF_TAKE2,
-     ngx_http_opentracing_tag, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
+     set_opentracing_tag, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     ngx_null_command};
 
+//------------------------------------------------------------------------------
+// ngx_http_opentracing_module
+//------------------------------------------------------------------------------
 ngx_module_t ngx_http_opentracing_module = {
     NGX_MODULE_V1,
-    &ngx_http_opentracing_module_ctx, /* module context */
-    ngx_opentracing_commands,         /* module directives */
-    NGX_HTTP_MODULE,                  /* module type */
-    nullptr,                          /* init master */
-    nullptr,                          /* init module */
-    nullptr,                          /* init process */
-    nullptr,                          /* init thread */
-    nullptr,                          /* exit thread */
-    nullptr,                          /* exit process */
-    nullptr,                          /* exit master */
+    &opentracing_module_ctx, /* module context */
+    opentracing_commands,    /* module directives */
+    NGX_HTTP_MODULE,         /* module type */
+    nullptr,                 /* init master */
+    nullptr,                 /* init module */
+    nullptr,                 /* init process */
+    nullptr,                 /* init thread */
+    nullptr,                 /* exit thread */
+    nullptr,                 /* exit process */
+    nullptr,                 /* exit master */
     NGX_MODULE_V1_PADDING};
