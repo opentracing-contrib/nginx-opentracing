@@ -17,8 +17,7 @@ static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
                           ngx_str_t value) {
   auto header = static_cast<ngx_table_elt_t *>(
       ngx_list_push(&request->headers_in.headers));
-  if (!header)
-    return false;
+  if (!header) return false;
   header->hash = 1;
   header->key = key;
   header->lowcase_key = key.data;
@@ -31,8 +30,7 @@ static bool insert_header(ngx_http_request_t *request, ngx_str_t key,
 //------------------------------------------------------------------------------
 static bool set_headers(ngx_http_request_t *request,
                         std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) {
-  if (headers.empty())
-    return true;
+  if (headers.empty()) return true;
 
   // If header keys are already in the request, overwrite the values instead of
   // inserting a new header.
@@ -53,8 +51,7 @@ static bool set_headers(ngx_http_request_t *request,
                                  key.len) == 0;
 
             });
-        if (i == headers.end())
-          return;
+        if (i == headers.end()) return;
         header.value = i->second;
         headers.erase(i);
       });
@@ -76,7 +73,7 @@ static bool set_headers(ngx_http_request_t *request,
 //------------------------------------------------------------------------------
 namespace {
 class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter {
-public:
+ public:
   NgxHeaderCarrierWriter(ngx_http_request_t *request,
                          std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers,
                          bool &was_successful)
@@ -85,8 +82,7 @@ public:
   }
 
   void Set(const std::string &key, const std::string &value) const override {
-    if (!was_successful_)
-      return;
+    if (!was_successful_) return;
     auto ngx_key = to_lower_ngx_str(request_->pool, key);
     if (!ngx_key.data) {
       ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
@@ -104,7 +100,7 @@ public:
     headers_.emplace_back(ngx_key, ngx_value);
   }
 
-private:
+ private:
   ngx_http_request_t *request_;
   std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers_;
   bool &was_successful_;
@@ -124,10 +120,9 @@ void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
       tracer.Inject(span_context, lightstep::CarrierFormat::HTTPHeaders,
                     carrier_writer) &&
       was_successful;
-  if (was_successful)
-    was_successful = set_headers(request, headers);
+  if (was_successful) was_successful = set_headers(request, headers);
   if (!was_successful)
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                   "Tracer.inject() failed");
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

@@ -10,4 +10,4 @@ extern "C" {
 namespace ngx_opentracing {
 ngx_int_t on_enter_block(ngx_http_request_t *request);
 ngx_int_t on_log_request(ngx_http_request_t *request);
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

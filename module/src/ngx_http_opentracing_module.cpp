@@ -1,13 +1,13 @@
-#include "ngx_http_opentracing_conf.h"
-#include "opentracing_handler.h"
-#include <cstdlib>
-#include <exception>
-#include <iostream>
 #include <lightstep/impl.h>
 #include <lightstep/recorder.h>
 #include <lightstep/tracer.h>
+#include <cstdlib>
+#include <exception>
+#include <iostream>
 #include <unordered_map>
 #include <utility>
+#include "opentracing_conf.h"
+#include "opentracing_handler.h"
 
 extern "C" {
 #include <nginx.h>
@@ -33,12 +33,10 @@ const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
 
 static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
                                  ngx_str_t key, ngx_str_t value) {
-  if (!tags)
-    return static_cast<char *>(NGX_CONF_ERROR);
+  if (!tags) return static_cast<char *>(NGX_CONF_ERROR);
 
   auto tag = static_cast<opentracing_tag_t *>(ngx_array_push(tags));
-  if (!tag)
-    return static_cast<char *>(NGX_CONF_ERROR);
+  if (!tag) return static_cast<char *>(NGX_CONF_ERROR);
 
   ngx_memzero(tag, sizeof(opentracing_tag_t));
   if (tag->key_script.compile(cf, key) != NGX_OK)
@@ -58,25 +56,21 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *cf) {
   // Add handlers to create tracing data.
   auto handler = static_cast<ngx_http_handler_pt *>(ngx_array_push(
       &core_main_config->phases[NGX_HTTP_PREACCESS_PHASE].handlers));
-  if (handler == nullptr)
-    return NGX_ERROR;
+  if (handler == nullptr) return NGX_ERROR;
   *handler = on_enter_block;
 
   handler = static_cast<ngx_http_handler_pt *>(
       ngx_array_push(&core_main_config->phases[NGX_HTTP_LOG_PHASE].handlers));
-  if (handler == nullptr)
-    return NGX_ERROR;
+  if (handler == nullptr) return NGX_ERROR;
   *handler = on_log_request;
 
   // Add default span tags.
   const auto num_default_tags =
       sizeof(kDefaultOpenTracingTags) / sizeof(kDefaultOpenTracingTags[0]);
-  if (num_default_tags == 0)
-    return NGX_OK;
+  if (num_default_tags == 0) return NGX_OK;
   main_conf->tags =
       ngx_array_create(cf->pool, num_default_tags, sizeof(opentracing_tag_t));
-  if (!main_conf->tags)
-    return NGX_ERROR;
+  if (!main_conf->tags) return NGX_ERROR;
   for (const auto &tag : kDefaultOpenTracingTags)
     if (add_opentracing_tag(cf, main_conf->tags, tag.first, tag.second) !=
         NGX_CONF_OK)
@@ -87,8 +81,7 @@ static ngx_int_t ngx_http_opentracing_init(ngx_conf_t *cf) {
 static void *ngx_http_opentracing_create_main_conf(ngx_conf_t *conf) {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
-  if (!main_conf)
-    return nullptr;
+  if (!main_conf) return nullptr;
   return main_conf;
 }
 
@@ -120,8 +113,7 @@ static char *ngx_http_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
 static void *ngx_http_opentracing_create_loc_conf(ngx_conf_t *conf) {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
-  if (!loc_conf)
-    return nullptr;
+  if (!loc_conf) return nullptr;
 
   loc_conf->enable = NGX_CONF_UNSET;
 
@@ -146,11 +138,9 @@ static char *ngx_http_opentracing_merge_loc_conf(ngx_conf_t *, void *parent,
     std::swap(prev->tags, conf->tags);
     auto tags = static_cast<opentracing_tag_t *>(
         ngx_array_push_n(conf->tags, prev->tags->nelts));
-    if (!tags)
-      return static_cast<char *>(NGX_CONF_ERROR);
+    if (!tags) return static_cast<char *>(NGX_CONF_ERROR);
     auto prev_tags = static_cast<opentracing_tag_t *>(prev->tags->elts);
-    for (size_t i = 0; i < prev->tags->nelts; ++i)
-      tags[i] = prev_tags[i];
+    for (size_t i = 0; i < prev->tags->nelts; ++i) tags[i] = prev_tags[i];
   }
 
   return NGX_CONF_OK;
@@ -168,7 +158,7 @@ static ngx_http_module_t ngx_http_opentracing_module_ctx = {
 };
 
 static ngx_command_t ngx_opentracing_commands[] = {
-#include <opentracing_tracer_options_command.def>
+#include <ngx_opentracing_tracer_commands.def>
     {ngx_string("opentracing"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,

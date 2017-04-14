@@ -15,7 +15,7 @@ namespace ngx_opentracing {
 //------------------------------------------------------------------------------
 namespace {
 class NgxHeaderCarrierReader : public lightstep::BasicCarrierReader {
-public:
+ public:
   explicit NgxHeaderCarrierReader(const ngx_http_request_t *request)
       : request_{request} {}
 
@@ -33,7 +33,7 @@ public:
         });
   }
 
-private:
+ private:
   const ngx_http_request_t *request_;
 };
 }
@@ -46,4 +46,4 @@ lightstep::SpanContext extract_span_context(lightstep::Tracer &tracer,
   auto carrier_reader = NgxHeaderCarrierReader{request};
   return tracer.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

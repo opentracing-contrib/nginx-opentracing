@@ -15,4 +15,4 @@ struct tracer_options_t {
   ngx_str_t collector_encryption;
   ngx_str_t collector_port;
 };
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

@@ -18,8 +18,7 @@ ngx_int_t NgxScript::compile(ngx_conf_t *cf, const ngx_str_t &pattern) {
 
   auto num_variables = ngx_http_script_variables_count(&pattern_);
   // As an optimization, don't compile the script if there are no variables.
-  if (num_variables == 0)
-    return NGX_OK;
+  if (num_variables == 0) return NGX_OK;
 
   ngx_http_script_compile_t script_compile;
   ngx_memzero(&script_compile, sizeof(ngx_http_script_compile_t));
@@ -41,8 +40,7 @@ ngx_str_t NgxScript::run(ngx_http_request_t *request) const {
   assert(is_valid());
 
   // If the script has no variables, we can just return the pattern.
-  if (!lengths_)
-    return pattern_;
+  if (!lengths_) return pattern_;
 
   ngx_str_t result = {0, nullptr};
   if (!ngx_http_script_run(request, &result, lengths_->elts, 0,
@@ -53,4 +51,4 @@ ngx_str_t NgxScript::run(ngx_http_request_t *request) const {
   }
   return result;
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

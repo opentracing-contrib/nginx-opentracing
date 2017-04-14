@@ -1,7 +1,7 @@
 #include <lightstep/impl.h>
 #include <lightstep/recorder.h>
+#include <ngx_opentracing_tracer_options.h>
 #include <ngx_opentracing_utility.h>
-#include <opentracing_tracer_options.h>
 #include <string>
 
 namespace ngx_opentracing {
@@ -35,4 +35,4 @@ lightstep::Tracer make_tracer(const tracer_options_t &options) {
   lightstep::BasicRecorderOptions recorder_options;
   return NewLightStepTracer(tracer_options, recorder_options);
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

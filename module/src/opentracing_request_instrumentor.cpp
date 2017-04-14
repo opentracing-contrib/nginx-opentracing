@@ -1,6 +1,6 @@
-#include "request_instrumentation.h"
-#include <iostream>
+#include "opentracing_request_instrumentor.h"
 #include <ngx_opentracing_utility.h>
+#include <iostream>
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -16,12 +16,11 @@ void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
 //------------------------------------------------------------------------------
 // start_span
 //------------------------------------------------------------------------------
-static lightstep::Span
-start_span(ngx_http_request_t *request,
-           const ngx_http_core_loc_conf_t *core_loc_conf,
-           const opentracing_loc_conf_t *loc_conf, lightstep::Tracer &tracer,
-           const lightstep::SpanContext &reference_span_context,
-           lightstep::SpanReferenceType reference_type) {
+static lightstep::Span start_span(
+    ngx_http_request_t *request, const ngx_http_core_loc_conf_t *core_loc_conf,
+    const opentracing_loc_conf_t *loc_conf, lightstep::Tracer &tracer,
+    const lightstep::SpanContext &reference_span_context,
+    lightstep::SpanReferenceType reference_type) {
   // Start a new span for the location block.
   std::string operation_name;
   if (loc_conf->operation_name_script.is_valid())
@@ -43,9 +42,9 @@ start_span(ngx_http_request_t *request,
 }
 
 //------------------------------------------------------------------------------
-// RequestInstrumentation
+// OpenTracingRequestInstrumentor
 //------------------------------------------------------------------------------
-RequestInstrumentation::RequestInstrumentation(
+OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
     ngx_http_request_t *request, ngx_http_core_loc_conf_t *core_loc_conf,
     opentracing_loc_conf_t *loc_conf)
     : request_{request} {
@@ -61,7 +60,7 @@ RequestInstrumentation::RequestInstrumentation(
 //------------------------------------------------------------------------------
 // on_enter_block
 //------------------------------------------------------------------------------
-void RequestInstrumentation::on_enter_block(
+void OpenTracingRequestInstrumentor::on_enter_block(
     ngx_http_core_loc_conf_t *core_loc_conf, opentracing_loc_conf_t *loc_conf) {
   on_exit_block();
 
@@ -80,14 +79,13 @@ static void add_script_tag(ngx_http_request_t *request, lightstep::Span &span,
                            const opentracing_tag_t &tag) {
   auto key = tag.key_script.run(request);
   auto value = tag.value_script.run(request);
-  if (key.data && value.data)
-    span.SetTag(to_string(key), to_string(value));
+  if (key.data && value.data) span.SetTag(to_string(key), to_string(value));
 }
 
 //------------------------------------------------------------------------------
 // on_exit_block
 //------------------------------------------------------------------------------
-void RequestInstrumentation::on_exit_block() {
+void OpenTracingRequestInstrumentor::on_exit_block() {
   // Set default and custom tags for the block. Many nginx variables won't be
   // available when a block is first entered, so set tags when the block is
   // exited instead.
@@ -106,7 +104,7 @@ void RequestInstrumentation::on_exit_block() {
 //------------------------------------------------------------------------------
 // on_log_request
 //------------------------------------------------------------------------------
-void RequestInstrumentation::on_log_request() {
+void OpenTracingRequestInstrumentor::on_log_request() {
   on_exit_block();
 
   // Check for errors.
@@ -124,4 +122,4 @@ void RequestInstrumentation::on_log_request() {
 
   span_.Finish();
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

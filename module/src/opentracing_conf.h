@@ -1,7 +1,7 @@
 #pragma once
 
+#include <ngx_opentracing_tracer_options.h>
 #include "ngx_script.h"
-#include <opentracing_tracer_options.h>
 
 extern "C" {
 #include <nginx.h>
@@ -26,4 +26,4 @@ struct opentracing_loc_conf_t {
   NgxScript operation_name_script;
   ngx_array_t *tags;
 };
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

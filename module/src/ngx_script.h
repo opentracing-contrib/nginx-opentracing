@@ -12,7 +12,7 @@ namespace ngx_opentracing {
 // NgxScript
 //------------------------------------------------------------------------------
 class NgxScript {
-public:
+ public:
   // Note: Constructor is compatible with begin zero initialized.
   NgxScript();
 
@@ -21,9 +21,9 @@ public:
   ngx_int_t compile(ngx_conf_t *cf, const ngx_str_t &pattern);
   ngx_str_t run(ngx_http_request_t *request) const;
 
-private:
+ private:
   ngx_str_t pattern_;
   ngx_array_t *lengths_;
   ngx_array_t *values_;
 };
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

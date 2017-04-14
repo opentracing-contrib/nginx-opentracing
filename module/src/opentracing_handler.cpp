@@ -1,7 +1,7 @@
 #include "opentracing_handler.h"
-#include "ngx_http_opentracing_conf.h"
-#include "request_instrumentation.h"
 #include <lightstep/tracer.h>
+#include "opentracing_conf.h"
+#include "opentracing_request_instrumentor.h"
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -24,7 +24,7 @@ static lightstep::Tracer make_tracer(const ngx_http_request_t *request) {
 //------------------------------------------------------------------------------
 namespace {
 class OpenTracingContext {
-public:
+ public:
   explicit OpenTracingContext(const ngx_http_request_t *request) {
     lightstep::Tracer::InitGlobal(make_tracer(request));
   }
@@ -32,17 +32,17 @@ public:
   void on_enter_block(ngx_http_request_t *request);
   void on_log_request(ngx_http_request_t *request);
 
-private:
-  std::unordered_map<const ngx_http_request_t *, RequestInstrumentation>
-      active_instrumentations_;
+ private:
+  std::unordered_map<const ngx_http_request_t *, OpenTracingRequestInstrumentor>
+      active_instrumentors_;
 };
 }
 
 //------------------------------------------------------------------------------
 // get_handler_context
 //------------------------------------------------------------------------------
-static OpenTracingContext &
-get_handler_context(const ngx_http_request_t *request) {
+static OpenTracingContext &get_handler_context(
+    const ngx_http_request_t *request) {
   static OpenTracingContext handler_context{request};
   return handler_context;
 }
@@ -50,10 +50,10 @@ get_handler_context(const ngx_http_request_t *request) {
 //------------------------------------------------------------------------------
 // is_opentracing_enabled
 //------------------------------------------------------------------------------
-static bool
-is_opentracing_enabled(const ngx_http_request_t *request,
-                       const ngx_http_core_loc_conf_t *core_loc_conf,
-                       const opentracing_loc_conf_t *loc_conf) {
+static bool is_opentracing_enabled(
+    const ngx_http_request_t *request,
+    const ngx_http_core_loc_conf_t *core_loc_conf,
+    const opentracing_loc_conf_t *loc_conf) {
   // Check if this is a main request instead of a subrequest.
   if (request == request->main)
     return loc_conf->enable;
@@ -72,14 +72,14 @@ void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
 
-  auto instrumentation_iter = active_instrumentations_.find(request);
-  if (instrumentation_iter == active_instrumentations_.end()) {
-    if (!is_opentracing_enabled(request, core_loc_conf, loc_conf))
-      return;
-    active_instrumentations_.emplace(
-        request, RequestInstrumentation{request, core_loc_conf, loc_conf});
+  auto instrumentor_iter = active_instrumentors_.find(request);
+  if (instrumentor_iter == active_instrumentors_.end()) {
+    if (!is_opentracing_enabled(request, core_loc_conf, loc_conf)) return;
+    active_instrumentors_.emplace(
+        request,
+        OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf});
   } else {
-    instrumentation_iter->second.on_enter_block(core_loc_conf, loc_conf);
+    instrumentor_iter->second.on_enter_block(core_loc_conf, loc_conf);
   }
 }
 
@@ -92,15 +92,14 @@ ngx_int_t on_enter_block(ngx_http_request_t *request) {
 // on_log_request
 //------------------------------------------------------------------------------
 void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
-  auto instrumentation_iter = active_instrumentations_.find(request);
-  if (instrumentation_iter == active_instrumentations_.end())
-    return;
-  instrumentation_iter->second.on_log_request();
-  active_instrumentations_.erase(instrumentation_iter);
+  auto instrumentor_iter = active_instrumentors_.find(request);
+  if (instrumentor_iter == active_instrumentors_.end()) return;
+  instrumentor_iter->second.on_log_request();
+  active_instrumentors_.erase(instrumentor_iter);
 }
 
 ngx_int_t on_log_request(ngx_http_request_t *request) {
   get_handler_context(request).on_log_request(request);
   return NGX_DECLINED;
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing
