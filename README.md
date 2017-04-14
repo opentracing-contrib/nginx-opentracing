@@ -5,8 +5,8 @@ Enable requests served by nginx for distributed tracing via [The OpenTracing Pro
 
 Dependencies
 ------------
-- nginx-opentracing currently only works with LightStep's tracer. See 
-[here](http://lightstep.com/#request-access) to request access and [here](https://github.com/lightstep/lightstep-tracer-cpp) to install LightStep's C++ tracer.
+- nginx-opentracing currently only works with LightStep's C++ tracer. See 
+[here](http://lightstep.com/#request-access) to request access and [here](https://github.com/lightstep/lightstep-tracer-cpp) to install.
 - Source for [Nginx 1.0.x](http://nginx.org/).
 
 Building
