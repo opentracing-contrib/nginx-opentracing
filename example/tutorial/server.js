@@ -3,7 +3,10 @@ const program = require('commander');
 const formidable = require('express-formidable');
 const sqlite3 = require('sqlite3');
 const fs = require('fs');
+const uuid = require('uuid/v1');
+const sharp = require('sharp');
 
+const dataRoot = './zoo-data';
 var db = new sqlite3.Database('zoo.sqlite')
 var app = express();
 
@@ -23,23 +26,28 @@ app.get('/', function (req, res) {
 });
 
 app.post('/upload/animal', (req, res) => {
-  fs.readFile(req.files.profile_pic.path, 'base64', function(err, data) {
-    if (err) {
-      return console.log(err);
-    }
-    db.serialize(function() {
-      var stmt = db.prepare('insert into animals values (?, ?, ?, ?)');
-      stmt.run(
-          req.fields.name,
-          req.fields.habitat,
-          req.fields.description,
-          data
-      );
-      stmt.finalize();
-      console.log(req.fields.name);
-      console.log(req.files.profile_pic.path);
-    });
-  });
+  console.log(req.files.profile_pic.type);
+  console.log(req.fields.name);
+  console.log(req.files.profile_pic.path);
+  filename = dataRoot + '/' + uuid() + '.jpeg';
+  sharp(req.files.profile_pic.path)
+    .toFile(filename);
+  // fs.readFile(req.files.profile_pic.path, 'base64', function(err, data) {
+  //   if (err) {
+  //     return console.log(err);
+  //   }
+  //   db.serialize(function() {
+  //     var stmt = db.prepare('insert into animals values (?, ?, ?, ?, ?)');
+  //     stmt.run(
+  //         req.fields.name,
+  //         req.fields.habitat,
+  //         req.fields.description,
+  //         req.files.profile_pic.type,
+  //         data
+  //     );
+  //     stmt.finalize();
+  //   });
+  // });
 });
 
 app.listen(program.port, function() {
