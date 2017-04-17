@@ -28,13 +28,15 @@ http {
   # Enable tracing for all requests.
   opentracing on;
 
-  # Optionally, append additional information to spans.
+  # Optionally, set additional tags.
   opentracing_tag http_user_agent $http_user_agent;
 
   location ~ \.php$ {
     # The operation name used for spans defaults to the name of the location
     # block, but you can use this directive to customize it.
     opentracing_operation_name $uri;
+
+    fastcgi_pass 127.0.0.1:1025;
   }
 }
 ```
