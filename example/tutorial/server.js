@@ -6,11 +6,16 @@ const fs = require('fs');
 const uuid = require('uuid/v1');
 const sharp = require('sharp');
 
-const dataRoot = './zoo-data';
-var db = new sqlite3.Database('zoo.sqlite')
+const common = require('./common')
+
+const thumbnailWidth = 320;
+const thumbnailHeight = 200;
+
+var db = new sqlite3.Database(common.databasePath);
 var app = express();
 
 app.use(formidable());
+app.set('view engine', 'pug');
 
 program
   .option('p, --port <n>', 'Port', parseInt)
@@ -22,32 +27,36 @@ if (typeof program.port === 'undefined') {
 }
 
 app.get('/', function (req, res) {
-  res.send('Hello World!');
+  // res.render('index', {title: 'Hey', message: 'Hello there!'});
+  res.render('index', {title: 'Hey', message: 'Hello there!',
+    name:'Pangy', animal:'The Pangolin', description:'Lives in Africa. Likes to eats ants.'});
 });
 
 app.post('/upload/animal', (req, res) => {
   console.log(req.files.profile_pic.type);
   console.log(req.fields.name);
   console.log(req.files.profile_pic.path);
-  filename = dataRoot + '/' + uuid() + '.jpeg';
-  sharp(req.files.profile_pic.path)
-    .toFile(filename);
-  // fs.readFile(req.files.profile_pic.path, 'base64', function(err, data) {
-  //   if (err) {
-  //     return console.log(err);
-  //   }
-  //   db.serialize(function() {
-  //     var stmt = db.prepare('insert into animals values (?, ?, ?, ?, ?)');
-  //     stmt.run(
-  //         req.fields.name,
-  //         req.fields.habitat,
-  //         req.fields.description,
-  //         req.files.profile_pic.type,
-  //         data
-  //     );
-  //     stmt.finalize();
-  //   });
-  // });
+
+  filename = common.imageRoot + uuid() + '.jpeg';
+  thumbnailFilename = common.imageRoot + uuid() + '.jpeg';
+  profilePic = sharp(req.files.profile_pic.path);
+  profilePic.toFile(filename);
+  profilePic.resize(thumbnailWidth, thumbnailHeight).toFile(thumbnailFilename);
+
+  db.serialize(function() {
+    var stmt = db.prepare('insert into animals values (?, ?, ?, ?, ?, ?)');
+    stmt.run(
+        req.fields.animal,
+        req.fields.name,
+        req.fields.habitat,
+        req.fields.description,
+        filename,
+        thumbnailFilename
+    );
+    stmt.finalize();
+  });
+
+  res.send('Welcome!');
 });
 
 app.listen(program.port, function() {
