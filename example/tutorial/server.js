@@ -15,7 +15,7 @@ var db = new sqlite3.Database(common.databasePath);
 var app = express();
 
 app.use(formidable());
-app.use(express.static(common.imageRoot));
+app.use('/images', express.static(common.imageRoot));
 app.set('view engine', 'pug');
 
 program
@@ -28,42 +28,68 @@ if (typeof program.port === 'undefined') {
 }
 
 app.get('/', function (req, res) {
-  // res.render('index', {title: 'Hey', message: 'Hello there!'});
-  res.render('index', {title: 'Hey', message: 'Hello there!',
-    name:'Pangy', animal:'The Pangolin', description:'Lives in Africa. Likes to eats ants.',
-    profile_pic:'http://localhost:3000/' + '143d5fb0-23ec-11e7-bece-cb1df7435236.jpeg'});
+  db.all('select uuid, name from animals order by name',
+    function (err, rows) {
+      console.log(err);
+      console.log(rows);
+      // TODO: Check errors.
+      var animals = rows.map(function (row) {
+        return {
+          name: row.name,
+          profile: 'http://localhost:3000/animal?id=' + row.uuid,
+          thumbnail_pic: '/images/' + row.uuid + '_thumb.jpg'
+        };
+      });
+      var table = [];
+      while (animals[0]) {
+        table.push(animals.splice(0, 3));
+      }
+      res.render('index', { animals: table });
+    });
 });
 
 app.get('/animal', function (req, res) {
-  res.send(req.query.id);
-});
-
-app.post('/upload/animal', (req, res) => {
-  console.log(req.files.profile_pic.type);
-  console.log(req.fields.name);
-  console.log(req.files.profile_pic.path);
-
-  filename = common.imageRoot + uuid() + '.jpeg';
-  thumbnailFilename = common.imageRoot + uuid() + '.jpeg';
-  profilePic = sharp(req.files.profile_pic.path);
-  profilePic.toFile(filename);
-  profilePic.resize(thumbnailWidth, thumbnailHeight).toFile(thumbnailFilename);
-
-  db.serialize(function() {
-    var stmt = db.prepare('insert into animals values (?, ?, ?, ?, ?, ?)');
-    stmt.run(
-        req.fields.animal,
-        req.fields.name,
-        req.fields.habitat,
-        req.fields.description,
-        filename,
-        thumbnailFilename
-    );
-    stmt.finalize();
+  stmt = db.prepare(
+      'select name, animal, description from animals where uuid = ?')
+  stmt.get(req.query.id, function (err, row) {
+    // TODO: Check for errors.
+    res.render('animal', {
+      title: row.name,
+      name: row.name,
+      animal: row.animal,
+      description: row.description,
+      profile_pic: 'http://localhost:3000/images/' + req.query.id + '.jpg'
+    });
   });
-
-  res.send('Welcome!');
 });
+
+// app.post('/upload/animal', (req, res) => {
+//   console.log(req.files.profile_pic.type);
+//   console.log(req.fields.name);
+//   console.log(req.files.profile_pic.path);
+
+//   id = uuid()
+
+//   profileFilename = common.imageRoot + id + '.jpg';
+//   thumbnailFilename = common.imageRoot + id + '_thumb.jpg';
+//   profilePic = sharp(req.files.profile_pic.path);
+//   profilePic.toFile(profileFilename);
+//   profilePic.resize(thumbnailWidth, thumbnailHeight).toFile(thumbnailFilename);
+
+//   db.serialize(function() {
+//     var stmt = db.prepare('insert into animals values (?, ?, ?, ?, ?)');
+//     stmt.run(
+//         id,
+//         req.fields.animal,
+//         req.fields.name,
+//         req.fields.habitat,
+//         req.fields.description
+//     );
+//     stmt.finalize();
+//   });
+
+//   res.redirect('/animal?id=' + id);
+// });
 
 app.listen(program.port, function() {
   console.log('Listening on ' + program.port.toString());

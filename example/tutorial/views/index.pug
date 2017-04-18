@@ -1,14 +1,14 @@
 html
   head
-    title= title
+    title='Virtual Zoo'
   body
-    table 
-      tr
-        td(align='center', valign='center')
-          dl
-            dt=name
-            dt=animal
-            dd= description
-          br
-          | <img src="#{profile_pic}">
+    table
+      each row in animals
+        tr
+          each animal in row
+            td(align='center', valign='center') 
+              a(href=animal.profile)
+                img(src=animal.thumbnail_pic)
+              br
+              | #{animal.name}
 
