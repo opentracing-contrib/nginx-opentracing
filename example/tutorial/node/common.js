@@ -1,0 +1,1 @@
+exports.databaseName = 'zoo.sqlite';
