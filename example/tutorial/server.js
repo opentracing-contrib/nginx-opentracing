@@ -15,6 +15,7 @@ var db = new sqlite3.Database(common.databasePath);
 var app = express();
 
 app.use(formidable());
+app.use(express.static(common.imageRoot));
 app.set('view engine', 'pug');
 
 program
@@ -29,7 +30,12 @@ if (typeof program.port === 'undefined') {
 app.get('/', function (req, res) {
   // res.render('index', {title: 'Hey', message: 'Hello there!'});
   res.render('index', {title: 'Hey', message: 'Hello there!',
-    name:'Pangy', animal:'The Pangolin', description:'Lives in Africa. Likes to eats ants.'});
+    name:'Pangy', animal:'The Pangolin', description:'Lives in Africa. Likes to eats ants.',
+    profile_pic:'http://localhost:3000/' + '143d5fb0-23ec-11e7-bece-cb1df7435236.jpeg'});
+});
+
+app.get('/animal', function (req, res) {
+  res.send(req.query.id);
 });
 
 app.post('/upload/animal', (req, res) => {
