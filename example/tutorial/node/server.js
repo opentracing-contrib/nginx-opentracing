@@ -48,7 +48,7 @@ tracer = new lightstep.Tracer({
 var db = new sqlite3.Database(databasePath);
 
 function traceCallback(parentSpan, operationName, callback) {
-  span = tracer.startSpan(operationName, {childOf: parentSpan});
+  var span = tracer.startSpan(operationName, {childOf: parentSpan});
   return function () {
     span.finish();
     return callback.apply(this, arguments);
@@ -121,7 +121,7 @@ app.post('/upload/animal', (req, res) => {
       req.fields.name,
       traceCallback(req.span, stmtPattern, function (err) {
         // TODO: Check for errors.
-        res.redirect('/');
+        res.redirect(303, '/');
       }));
 });
 
