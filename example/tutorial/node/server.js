@@ -42,22 +42,30 @@ const accessToken = program.access_token;
 
 tracer = new lightstep.Tracer({
   access_token: accessToken,
-  component_name : 'zoo-backend'
+  component_name : 'virtual-zoo'
 });
 
 var db = new sqlite3.Database(databasePath);
 
-var app = express();
+function traceCallback(parentSpan, operationName, callback) {
+  span = tracer.startSpan(operationName, {childOf: parentSpan});
+  return function () {
+    span.finish();
+    return callback.apply(this, arguments);
+  };
+}
 
-app.use(tracing_middleware.middleware({tracer: tracer}));
+var app = express();
+app.use(tracing_middleware.middleware({tracer: tracer }));
 app.use(formidable());
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
 
 app.get('/', function (req, res) {
-  db.all('select uuid, name from animals order by name',
-    function (err, rows) {
+  stmt = 'select uuid, name from animals order by name';
+  db.all(stmt,
+    traceCallback(req.span, stmt, function (err, rows) {
       console.log(err);
       // TODO: Check errors.
       var animals = rows.map(function (row) {
@@ -72,7 +80,7 @@ app.get('/', function (req, res) {
         table.push(animals.splice(0, 3));
       }
       res.render('index', { animals: table });
-    });
+    }));
 });
 
 app.get('/animal', function (req, res) {
@@ -99,19 +107,22 @@ app.post('/upload/animal', (req, res) => {
   profileFilename = imageRoot + id + '.jpg';
   thumbnailFilename = imageRoot + id + '_thumb.jpg';
   profilePic = sharp(req.files.profile_pic.path);
-  profilePic.toFile(profileFilename);
-  profilePic.resize(thumbnailWidth, thumbnailHeight).toFile(thumbnailFilename);
+  profilePic.toFile(profileFilename,
+      traceCallback(req.span, 'copyProfilePic', function (err) {}));
 
-  var stmt = db.prepare('insert into animals values (?, ?, ?)');
+  profilePic.resize(thumbnailWidth, thumbnailHeight).toFile(thumbnailFilename,
+      traceCallback(req.span, 'resizeProfilePic', function (err) {}));
+
+  var stmtPattern = 'insert into animals values (?, ?, ?)';
+  var stmt = db.prepare(stmtPattern);
   stmt.run(
       id,
       req.fields.animal,
       req.fields.name,
-      function (err) {
+      traceCallback(req.span, stmtPattern, function (err) {
         // TODO: Check for errors.
         res.redirect('/');
-      });
-
+      }));
 });
 
 app.listen(program.port, function() {
