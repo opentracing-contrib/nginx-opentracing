@@ -18,7 +18,7 @@ node node/setup.js --data_root $DATA_ROOT
 rm  nginx/upstream_params
 for i in {1..3}; do
   let port="3000+$i"
-  node node/server.js --port $port --data_root $DATA_ROOT &
+  node node/server.js --port $port --data_root $DATA_ROOT --access_token $LIGHTSTEP_ACCESS_TOKEN&
   echo $! >> $DATA_ROOT/backend_pids
   echo "server localhost:$port;" >> nginx/upstream_params
 done

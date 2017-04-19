@@ -1,6 +1,8 @@
 const express = require('express');
 const program = require('commander');
 const formidable = require('express-formidable');
+const lightstep = require('lightstep-tracer');
+const opentracing = require('opentracing');
 const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const uuid = require('uuid/v1');
@@ -8,6 +10,7 @@ const sharp = require('sharp');
 const path = require('path');
 
 const common = require('./common')
+const tracing_middleware = require('./opentracing-express')
 
 const thumbnailWidth = 320;
 const thumbnailHeight = 200;
@@ -15,6 +18,7 @@ const thumbnailHeight = 200;
 program
   .option('p, --port <n>', 'Port', parseInt)
   .option('r, --data_root <data_root>', 'Data Root')
+  .option('a, --access_token <access_token>', 'Access Token')
   .parse(process.argv);
 
 if (typeof program.port === 'undefined') {
@@ -23,17 +27,29 @@ if (typeof program.port === 'undefined') {
 }
 
 if (typeof program.data_root === 'undefined') {
-  console.error('no daa_root given!');
+  console.error('no data_root given!');
+  process.exit(1);
+}
+
+if (typeof program.access_token === 'undefined') {
+  console.error('no access_token given!');
   process.exit(1);
 }
 
 const databasePath = path.join(program.data_root, common.databaseName);
 const imageRoot = path.join(program.data_root, '/images/');
+const accessToken = program.access_token;
+
+tracer = new lightstep.Tracer({
+  access_token: accessToken,
+  component_name : 'zoo-backend'
+});
 
 var db = new sqlite3.Database(databasePath);
 
 var app = express();
 
+app.use(tracing_middleware.middleware({tracer: tracer}));
 app.use(formidable());
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
@@ -43,7 +59,6 @@ app.get('/', function (req, res) {
   db.all('select uuid, name from animals order by name',
     function (err, rows) {
       console.log(err);
-      console.log(rows);
       // TODO: Check errors.
       var animals = rows.map(function (row) {
         return {
