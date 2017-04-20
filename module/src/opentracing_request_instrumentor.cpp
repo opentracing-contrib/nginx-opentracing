@@ -139,8 +139,8 @@ void OpenTracingRequestInstrumentor::on_log_request() {
   span_.SetTag("http.status_code", status);
   if (status_line.data)
     span_.SetTag("http.status_line", to_string(status_line));
-  // Treat any 4xx and 5xx code as an error.
-  if (status >= 400) {
+  // Treat any 5xx code as an error.
+  if (status >= 500) {
     span_.SetTag("error", true);
     // TODO: Log error values in request->headers_out.status_line to span.
   }
