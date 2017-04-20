@@ -117,7 +117,8 @@ void OpenTracingRequestInstrumentor::on_change_block(
                                   request_span_.context()}});
 
   // As an optimization, avoid injecting the request span context if neither the
-  // previous or current location block are traced since it won't have changed.
+  // previous nor current location blocks are traced since the active span
+  // context will be the same.
   if (prev_loc_conf->enable_locations || loc_conf->enable_locations)
     set_request_span_context(tracer);
 }
