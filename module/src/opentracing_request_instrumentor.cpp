@@ -14,6 +14,41 @@ void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
                          const lightstep::SpanContext span_context);
 
 //------------------------------------------------------------------------------
+// get_loc_operation_name
+//------------------------------------------------------------------------------
+static std::string get_loc_operation_name(
+    ngx_http_request_t *request, const ngx_http_core_loc_conf_t *core_loc_conf,
+    const opentracing_loc_conf_t *loc_conf) {
+  if (loc_conf->operation_name_script.is_valid())
+    return to_string(loc_conf->operation_name_script.run(request));
+  else
+    return to_string(core_loc_conf->name);
+}
+
+//------------------------------------------------------------------------------
+// get_request_operation_name
+//------------------------------------------------------------------------------
+static std::string get_request_operation_name(
+    ngx_http_request_t *request, const ngx_http_core_loc_conf_t *core_loc_conf,
+    const opentracing_loc_conf_t *loc_conf) {
+  return get_loc_operation_name(request, core_loc_conf, loc_conf);
+}
+
+//------------------------------------------------------------------------------
+// add_script_tags
+//------------------------------------------------------------------------------
+static void add_script_tags(ngx_array_t *tags, ngx_http_request_t *request,
+                            lightstep::Span &span) {
+  if (!tags) return;
+  auto add_tag = [&](const opentracing_tag_t &tag) {
+    auto key = tag.key_script.run(request);
+    auto value = tag.value_script.run(request);
+    if (key.data && value.data) span.SetTag(to_string(key), to_string(value));
+  };
+  for_each<opentracing_tag_t>(*tags, add_tag);
+}
+
+//------------------------------------------------------------------------------
 // start_span
 //------------------------------------------------------------------------------
 static lightstep::Span start_span(
@@ -47,14 +82,22 @@ static lightstep::Span start_span(
 OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
     ngx_http_request_t *request, ngx_http_core_loc_conf_t *core_loc_conf,
     opentracing_loc_conf_t *loc_conf)
-    : request_{request} {
+    : request_{request}, loc_conf_{loc_conf} {
   main_conf_ = static_cast<opentracing_main_conf_t *>(
       ngx_http_get_module_main_conf(request_, ngx_http_opentracing_module));
-  loc_conf_ = loc_conf;
   auto tracer = lightstep::Tracer::Global();
   auto parent_span_context = extract_span_context(tracer, request_);
-  span_ = start_span(request_, core_loc_conf, loc_conf_, tracer,
-                     parent_span_context, lightstep::ChildOfRef);
+
+  request_span_ = tracer.StartSpan(
+      get_request_operation_name(request_, core_loc_conf, loc_conf_),
+      {lightstep::SpanReference{lightstep::ChildOfRef, parent_span_context}});
+
+  span_ = tracer.StartSpan(
+      get_loc_operation_name(request_, core_loc_conf, loc_conf_),
+      {lightstep::SpanReference{lightstep::ChildOfRef,
+                                request_span_.context()}});
+
+  inject_span_context(tracer, request_, span_.context());
 }
 
 //------------------------------------------------------------------------------
@@ -73,32 +116,14 @@ void OpenTracingRequestInstrumentor::on_enter_block(
 }
 
 //------------------------------------------------------------------------------
-// add_script_tag
-//------------------------------------------------------------------------------
-static void add_script_tag(ngx_http_request_t *request, lightstep::Span &span,
-                           const opentracing_tag_t &tag) {
-  auto key = tag.key_script.run(request);
-  auto value = tag.value_script.run(request);
-  if (key.data && value.data) span.SetTag(to_string(key), to_string(value));
-}
-
-//------------------------------------------------------------------------------
 // on_exit_block
 //------------------------------------------------------------------------------
 void OpenTracingRequestInstrumentor::on_exit_block() {
   // Set default and custom tags for the block. Many nginx variables won't be
   // available when a block is first entered, so set tags when the block is
   // exited instead.
-  if (main_conf_->tags)
-    for_each<opentracing_tag_t>(*main_conf_->tags,
-                                [&](const opentracing_tag_t &tag) {
-                                  add_script_tag(request_, span_, tag);
-                                });
-  if (loc_conf_->tags)
-    for_each<opentracing_tag_t>(*loc_conf_->tags,
-                                [&](const opentracing_tag_t &tag) {
-                                  add_script_tag(request_, span_, tag);
-                                });
+  add_script_tags(main_conf_->tags, request_, span_);
+  add_script_tags(loc_conf_->tags, request_, span_);
 }
 
 //------------------------------------------------------------------------------
@@ -120,6 +145,9 @@ void OpenTracingRequestInstrumentor::on_log_request() {
     // TODO: Log error values in request->headers_out.status_line to span.
   }
 
+  add_script_tags(main_conf_->tags, request_, request_span_);
+
   span_.Finish();
+  request_span_.Finish();
 }
 }  // namespace ngx_opentracing
