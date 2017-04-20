@@ -26,6 +26,7 @@ struct opentracing_main_conf_t {
 
 struct opentracing_loc_conf_t {
   ngx_flag_t enable;
+  ngx_flag_t enable_locations;
   NgxScript operation_name_script;
   ngx_array_t *tags;
 };

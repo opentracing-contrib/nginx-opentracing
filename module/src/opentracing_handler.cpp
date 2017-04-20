@@ -81,7 +81,7 @@ void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
         request,
         OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf});
   } else {
-    instrumentor_iter->second.on_enter_block(core_loc_conf, loc_conf);
+    instrumentor_iter->second.on_change_block(core_loc_conf, loc_conf);
   }
 }
 

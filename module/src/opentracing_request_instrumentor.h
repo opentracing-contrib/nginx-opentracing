@@ -17,8 +17,8 @@ class OpenTracingRequestInstrumentor {
                                  ngx_http_core_loc_conf_t *core_loc_conf,
                                  opentracing_loc_conf_t *loc_conf);
 
-  void on_enter_block(ngx_http_core_loc_conf_t *core_loc_conf,
-                      opentracing_loc_conf_t *loc_conf);
+  void on_change_block(ngx_http_core_loc_conf_t *core_loc_conf,
+                       opentracing_loc_conf_t *loc_conf);
 
   void on_log_request();
 
@@ -30,5 +30,6 @@ class OpenTracingRequestInstrumentor {
   lightstep::Span span_;
 
   void on_exit_block();
+  void set_request_span_context(lightstep::Tracer &tracer);
 };
 }  // namespace ngx_opentracing

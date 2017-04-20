@@ -49,31 +49,21 @@ static void add_script_tags(ngx_array_t *tags, ngx_http_request_t *request,
 }
 
 //------------------------------------------------------------------------------
-// start_span
+// add_status_tags
 //------------------------------------------------------------------------------
-static lightstep::Span start_span(
-    ngx_http_request_t *request, const ngx_http_core_loc_conf_t *core_loc_conf,
-    const opentracing_loc_conf_t *loc_conf, lightstep::Tracer &tracer,
-    const lightstep::SpanContext &reference_span_context,
-    lightstep::SpanReferenceType reference_type) {
-  // Start a new span for the location block.
-  std::string operation_name;
-  if (loc_conf->operation_name_script.is_valid())
-    operation_name = to_string(loc_conf->operation_name_script.run(request));
-  else
-    operation_name = to_string(core_loc_conf->name);
-  lightstep::Span span;
-  if (reference_span_context.valid())
-    span = tracer.StartSpan(
-        operation_name,
-        {lightstep::SpanReference{reference_type, reference_span_context}});
-  else
-    span = tracer.StartSpan(operation_name);
-
-  // Inject the span's context into the request headers.
-  inject_span_context(tracer, request, span.context());
-
-  return span;
+static void add_status_tags(const ngx_http_request_t *request,
+                            lightstep::Span &span) {
+  // Check for errors.
+  // TODO: Should we also look at request->err_status?
+  auto status = uint64_t{request->headers_out.status};
+  const auto &status_line = request->headers_out.status_line;
+  span.SetTag("http.status_code", status);
+  if (status_line.data) span.SetTag("http.status_line", to_string(status_line));
+  // Treat any 5xx code as an error.
+  if (status >= 500) {
+    span.SetTag("error", true);
+    // TODO: Log error values in request->headers_out.status_line to span.
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -97,22 +87,35 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
       {lightstep::SpanReference{lightstep::ChildOfRef,
                                 request_span_.context()}});
 
-  inject_span_context(tracer, request_, span_.context());
+  set_request_span_context(tracer);
 }
 
 //------------------------------------------------------------------------------
-// on_enter_block
+// on_change_block
 //------------------------------------------------------------------------------
-void OpenTracingRequestInstrumentor::on_enter_block(
+void OpenTracingRequestInstrumentor::on_change_block(
     ngx_http_core_loc_conf_t *core_loc_conf, opentracing_loc_conf_t *loc_conf) {
   on_exit_block();
-
-  span_.Finish();
+  auto prev_loc_conf = loc_conf_;
+  loc_conf_ = loc_conf;
 
   auto tracer = lightstep::Tracer::Global();
-  span_ = start_span(request_, core_loc_conf, loc_conf, tracer, span_.context(),
-                     lightstep::FollowsFromRef);
-  loc_conf_ = loc_conf;
+  if (prev_loc_conf->enable_locations && loc_conf->enable_locations)
+    span_ = tracer.StartSpan(
+        get_loc_operation_name(request_, core_loc_conf, loc_conf),
+        {lightstep::SpanReference{lightstep::ChildOfRef,
+                                  request_span_.context()},
+         lightstep::SpanReference{lightstep::FollowsFromRef, span_.context()}});
+  else if (loc_conf->enable_locations)
+    span_ = tracer.StartSpan(
+        get_loc_operation_name(request_, core_loc_conf, loc_conf),
+        {lightstep::SpanReference{lightstep::ChildOfRef,
+                                  request_span_.context()}});
+
+  // As an optimization, avoid injecting the request span context if neither the
+  // previous or current location block are traced since it won't have changed.
+  if (prev_loc_conf->enable_locations || loc_conf->enable_locations)
+    set_request_span_context(tracer);
 }
 
 //------------------------------------------------------------------------------
@@ -122,8 +125,25 @@ void OpenTracingRequestInstrumentor::on_exit_block() {
   // Set default and custom tags for the block. Many nginx variables won't be
   // available when a block is first entered, so set tags when the block is
   // exited instead.
-  add_script_tags(main_conf_->tags, request_, span_);
-  add_script_tags(loc_conf_->tags, request_, span_);
+  if (loc_conf_->enable_locations) {
+    add_script_tags(main_conf_->tags, request_, span_);
+    add_script_tags(loc_conf_->tags, request_, span_);
+    add_status_tags(request_, span_);
+    span_.Finish();
+  } else {
+    add_script_tags(loc_conf_->tags, request_, request_span_);
+  }
+}
+
+//------------------------------------------------------------------------------
+// set_request_span_context
+//------------------------------------------------------------------------------
+void OpenTracingRequestInstrumentor::set_request_span_context(
+    lightstep::Tracer &tracer) {
+  if (loc_conf_->enable_locations)
+    inject_span_context(tracer, request_, span_.context());
+  else
+    inject_span_context(tracer, request_, request_span_.context());
 }
 
 //------------------------------------------------------------------------------
@@ -132,22 +152,9 @@ void OpenTracingRequestInstrumentor::on_exit_block() {
 void OpenTracingRequestInstrumentor::on_log_request() {
   on_exit_block();
 
-  // Check for errors.
-  // TODO: Should we also look at request->err_status?
-  auto status = uint64_t{request_->headers_out.status};
-  const auto &status_line = request_->headers_out.status_line;
-  span_.SetTag("http.status_code", status);
-  if (status_line.data)
-    span_.SetTag("http.status_line", to_string(status_line));
-  // Treat any 5xx code as an error.
-  if (status >= 500) {
-    span_.SetTag("error", true);
-    // TODO: Log error values in request->headers_out.status_line to span.
-  }
-
+  add_status_tags(request_, request_span_);
   add_script_tags(main_conf_->tags, request_, request_span_);
 
-  span_.Finish();
   request_span_.Finish();
 }
 }  // namespace ngx_opentracing

@@ -137,6 +137,7 @@ static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
   if (!loc_conf) return nullptr;
 
   loc_conf->enable = NGX_CONF_UNSET;
+  loc_conf->enable_locations = NGX_CONF_UNSET;
 
   return loc_conf;
 }
@@ -150,6 +151,7 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
   auto conf = static_cast<opentracing_loc_conf_t *>(child);
 
   ngx_conf_merge_value(conf->enable, prev->enable, 0);
+  ngx_conf_merge_value(conf->enable_locations, prev->enable_locations, 1);
 
   // Create a new array that joins `prev->tags` and `conf->tags`. Since tags
   // are set consecutively and setting a tag with the same key as a previous
@@ -188,13 +190,19 @@ static ngx_http_module_t opentracing_module_ctx = {
 // opentracing_commands
 //------------------------------------------------------------------------------
 static ngx_command_t opentracing_commands[] = {
-// Customization point: A tracer implentation will expose this file and 
+// Customization point: A tracer implentation will expose this file and
 // list any commands specific for that tracer.
 #include <ngx_opentracing_tracer_commands.def>
     {ngx_string("opentracing"),
-     NGX_HTTP_MAIN_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_TAKE1,
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
      offsetof(opentracing_loc_conf_t, enable), nullptr},
+    {ngx_string("opentracing_trace_locations"),
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_TAKE1,
+     ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
+     offsetof(opentracing_loc_conf_t, enable_locations), nullptr},
     {ngx_string("opentracing_operation_name"),
      NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1, set_opentracing_operation_name,
      NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
