@@ -85,10 +85,11 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
       get_request_operation_name(request_, core_loc_conf, loc_conf_),
       {lightstep::SpanReference{lightstep::ChildOfRef, parent_span_context}});
 
-  span_ = tracer.StartSpan(
-      get_loc_operation_name(request_, core_loc_conf, loc_conf_),
-      {lightstep::SpanReference{lightstep::ChildOfRef,
-                                request_span_.context()}});
+  if (loc_conf_->enable_locations)
+    span_ = tracer.StartSpan(
+        get_loc_operation_name(request_, core_loc_conf, loc_conf_),
+        {lightstep::SpanReference{lightstep::ChildOfRef,
+                                  request_span_.context()}});
 
   set_request_span_context(tracer);
 }
