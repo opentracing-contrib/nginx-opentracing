@@ -23,6 +23,7 @@ using ngx_opentracing::opentracing_loc_conf_t;
 using ngx_opentracing::opentracing_tag_t;
 using ngx_opentracing::on_enter_block;
 using ngx_opentracing::on_log_request;
+using ngx_opentracing::NgxScript;
 
 //------------------------------------------------------------------------------
 // kDefaultOpentracingTags
@@ -110,22 +111,39 @@ static void *create_opentracing_main_conf(ngx_conf_t *conf) {
 }
 
 //------------------------------------------------------------------------------
+// set_script
+//------------------------------------------------------------------------------
+static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
+                        NgxScript &script) {
+  if (script.is_valid()) return const_cast<char *>("is duplicate");
+
+  auto value = static_cast<ngx_str_t *>(cf->args->elts);
+  auto pattern = &value[1];
+
+  if (script.compile(cf, *pattern) != NGX_OK)
+    return static_cast<char *>(NGX_CONF_ERROR);
+
+  return static_cast<char *>(NGX_CONF_OK);
+}
+
+//------------------------------------------------------------------------------
 // set_opentracing_operation_name
 //------------------------------------------------------------------------------
 static char *set_opentracing_operation_name(ngx_conf_t *cf,
                                             ngx_command_t *command,
                                             void *conf) {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
-  if (loc_conf->operation_name_script.is_valid())
-    return const_cast<char *>("is duplicate");
+  return set_script(cf, command, loc_conf->operation_name_script);
+}
 
-  auto value = static_cast<ngx_str_t *>(cf->args->elts);
-  auto operation_name = &value[1];
-
-  if (loc_conf->operation_name_script.compile(cf, *operation_name) != NGX_OK)
-    return static_cast<char *>(NGX_CONF_ERROR);
-
-  return static_cast<char *>(NGX_CONF_OK);
+//------------------------------------------------------------------------------
+// set_opentracing_location_operation_name
+//------------------------------------------------------------------------------
+static char *set_opentracing_location_operation_name(ngx_conf_t *cf,
+                                                     ngx_command_t *command,
+                                                     void *conf) {
+  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
+  return set_script(cf, command, loc_conf->loc_operation_name_script);
 }
 
 //------------------------------------------------------------------------------
@@ -152,6 +170,14 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
 
   ngx_conf_merge_value(conf->enable, prev->enable, 0);
   ngx_conf_merge_value(conf->enable_locations, prev->enable_locations, 1);
+
+  if (prev->operation_name_script.is_valid() &&
+      !conf->operation_name_script.is_valid())
+    conf->operation_name_script = prev->operation_name_script;
+
+  if (prev->loc_operation_name_script.is_valid() &&
+      !conf->loc_operation_name_script.is_valid())
+    conf->loc_operation_name_script = prev->loc_operation_name_script;
 
   // Create a new array that joins `prev->tags` and `conf->tags`. Since tags
   // are set consecutively and setting a tag with the same key as a previous
@@ -204,8 +230,14 @@ static ngx_command_t opentracing_commands[] = {
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
      offsetof(opentracing_loc_conf_t, enable_locations), nullptr},
     {ngx_string("opentracing_operation_name"),
-     NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1, set_opentracing_operation_name,
-     NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_TAKE1,
+     set_opentracing_operation_name, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
+    {ngx_string("opentracing_location_operation_name"),
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_TAKE1,
+     set_opentracing_location_operation_name, NGX_HTTP_LOC_CONF_OFFSET, 0,
+     nullptr},
     {ngx_string("opentracing_tag"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
          NGX_CONF_TAKE2,

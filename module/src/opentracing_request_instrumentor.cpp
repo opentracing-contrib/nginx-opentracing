@@ -19,8 +19,8 @@ void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
 static std::string get_loc_operation_name(
     ngx_http_request_t *request, const ngx_http_core_loc_conf_t *core_loc_conf,
     const opentracing_loc_conf_t *loc_conf) {
-  if (loc_conf->operation_name_script.is_valid())
-    return to_string(loc_conf->operation_name_script.run(request));
+  if (loc_conf->loc_operation_name_script.is_valid())
+    return to_string(loc_conf->loc_operation_name_script.run(request));
   else
     return to_string(core_loc_conf->name);
 }
@@ -31,7 +31,10 @@ static std::string get_loc_operation_name(
 static std::string get_request_operation_name(
     ngx_http_request_t *request, const ngx_http_core_loc_conf_t *core_loc_conf,
     const opentracing_loc_conf_t *loc_conf) {
-  return get_loc_operation_name(request, core_loc_conf, loc_conf);
+  if (loc_conf->operation_name_script.is_valid())
+    return to_string(loc_conf->operation_name_script.run(request));
+  else
+    return get_loc_operation_name(request, core_loc_conf, loc_conf);
 }
 
 //------------------------------------------------------------------------------
