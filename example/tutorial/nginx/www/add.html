@@ -2,16 +2,31 @@
 <html>
 <head>
     <title>New Admittance</title>
+    <script>
+function admitAnimal() {
+  request = new XMLHttpRequest();
+  request.open('POST', '/upload/animal', false);
+  request.onload = function (err) {
+    newWindow = window.open("", "_self");
+    newWindow.document.write(this.response);
+  };
+
+  form = document.admitForm;
+  request.setRequestHeader('admit-name', form.name.value);
+  request.setRequestHeader('admit-animal', form.animal.value);
+  request.send(form.profile_pic.files[0]);
+}
+    </script>
 </head>
 <body>
-<form action="/upload/animal" method="post" enctype="multipart/form-data">
+<form name="admitForm">
   Name:<br>
   <input type="text" name="name"><br>
   Animal:<br>
   <input type="text" name="animal"><br>
   Profile Pic:<br>
   <input type="file" name="profile_pic"><br><br>
-  <input type="submit" value="Submit">
+  <button onclick="admitAnimal()">Submit</button>
 </form>
 </body>
 </html>

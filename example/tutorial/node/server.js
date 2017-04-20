@@ -1,6 +1,5 @@
 const express = require('express');
 const program = require('commander');
-const formidable = require('express-formidable');
 const lightstep = require('lightstep-tracer');
 const opentracing = require('opentracing');
 const sqlite3 = require('sqlite3');
@@ -46,6 +45,7 @@ tracer = new lightstep.Tracer({
 });
 
 var db = new sqlite3.Database(databasePath);
+// TODO: Close database connection on exit.
 
 function traceCallback(parentSpan, operationName, callback) {
   var span = tracer.startSpan(operationName, {childOf: parentSpan});
@@ -57,13 +57,12 @@ function traceCallback(parentSpan, operationName, callback) {
 
 var app = express();
 app.use(tracing_middleware.middleware({tracer: tracer }));
-app.use(formidable());
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
 
 app.get('/', function (req, res) {
-  stmt = 'select uuid, name from animals order by name';
+  var stmt = 'select uuid, name from animals order by name';
   db.all(stmt,
     traceCallback(req.span, stmt, function (err, rows) {
       console.log(err);
@@ -84,7 +83,7 @@ app.get('/', function (req, res) {
 });
 
 app.get('/animal', function (req, res) {
-  stmt = db.prepare(
+  var stmt = db.prepare(
       'select name, animal from animals where uuid = ?')
   stmt.get(req.query.id, function (err, row) {
     // TODO: Check for errors.
@@ -98,15 +97,11 @@ app.get('/animal', function (req, res) {
 });
 
 app.post('/upload/animal', (req, res) => {
-  console.log(req.files.profile_pic.type);
-  console.log(req.fields.name);
-  console.log(req.files.profile_pic.path);
+  var id = uuid()
 
-  id = uuid()
-
-  profileFilename = imageRoot + id + '.jpg';
-  thumbnailFilename = imageRoot + id + '_thumb.jpg';
-  profilePic = sharp(req.files.profile_pic.path);
+  var profileFilename = imageRoot + id + '.jpg';
+  var thumbnailFilename = imageRoot + id + '_thumb.jpg';
+  var profilePic = sharp(req.get('admit-profile-pic'));
   profilePic.toFile(profileFilename,
       traceCallback(req.span, 'copyProfilePic', function (err) {}));
 
@@ -117,11 +112,15 @@ app.post('/upload/animal', (req, res) => {
   var stmt = db.prepare(stmtPattern);
   stmt.run(
       id,
-      req.fields.animal,
-      req.fields.name,
+      req.get('admit-animal'),
+      req.get('admit-name'),
       traceCallback(req.span, stmtPattern, function (err) {
-        // TODO: Check for errors.
-        res.redirect(303, '/');
+        if (err) {
+          console.log(err);
+          res.status(500).send('Failed to admit animal');
+        } else {
+          res.redirect(303, '/');
+        }
       }));
 });
 
