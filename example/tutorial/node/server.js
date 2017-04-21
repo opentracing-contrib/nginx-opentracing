@@ -81,7 +81,15 @@ app.get('/', function (req, res) {
       while (animals[0]) {
         table.push(animals.splice(0, 3));
       }
-      res.render('index', { animals: table });
+      res.render('index', { animals: table },
+          traceCallback(req.span, 'render index', function(err, html) {
+            if (err) {
+              console.log(err);
+              res.status(500).send('Failed to render index!');
+            } else {
+              res.send(html);
+            }
+          }));
     }));
 });
 
