@@ -45,6 +45,8 @@ tracer = new lightstep.Tracer({
 });
 
 var db = new sqlite3.Database(databasePath);
+db.run('PRAGMA journal_mode = WAL');
+db.configure('busyTimeout', 15000);
 // TODO: Close database connection on exit.
 
 function traceCallback(parentSpan, operationName, callback) {
