@@ -1,6 +1,5 @@
 const express = require('express');
 const basicAuth = require('express-basic-auth');
-const program = require('commander');
 const formidable = require('express-formidable');
 const path = require('path');
 const fs = require('fs');
