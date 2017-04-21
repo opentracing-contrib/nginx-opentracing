@@ -103,7 +103,15 @@ app.get('/animal', function (req, res) {
       name: row.name,
       animal: row.animal,
       profile_pic: '/' + req.query.id + '.jpg'
-    });
+    },
+    traceCallback(req.span, 'render animal', function (err, html) {
+      if (err) {
+        console.log(err);
+        res.status(500).send('Failed to render animal');
+      } else {
+        res.send(html);
+      }
+    }));
   });
 });
 
