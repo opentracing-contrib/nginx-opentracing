@@ -65,8 +65,11 @@ app.get('/', function (req, res) {
   var stmt = 'select uuid, name from animals order by name';
   db.all(stmt,
     traceCallback(req.span, stmt, function (err, rows) {
-      console.log(err);
-      // TODO: Check errors.
+      if (err) {
+        console.log(err);
+        res.status(500).send('Failed to query animals!');
+        return;
+      }
       var animals = rows.map(function (row) {
         return {
           name: row.name,

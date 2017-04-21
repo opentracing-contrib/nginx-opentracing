@@ -9,6 +9,7 @@ function admitAnimal() {
   request.onload = function (err) {
     newWindow = window.open("", "_self");
     newWindow.document.write(this.response);
+    newWindow.history.pushState('', 'Virtual Zoo', '/');
   };
 
   form = document.admitForm;
