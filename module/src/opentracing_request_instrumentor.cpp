@@ -60,7 +60,7 @@ static void add_status_tags(const ngx_http_request_t *request,
   // TODO: Should we also look at request->err_status?
   auto status = uint64_t{request->headers_out.status};
   const auto &status_line = request->headers_out.status_line;
-  span.SetTag("http.status_code", status);
+  if (status != 0) span.SetTag("http.status_code", status);
   if (status_line.data) span.SetTag("http.status_line", to_string(status_line));
   // Treat any 5xx code as an error.
   if (status >= 500) {
