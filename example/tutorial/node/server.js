@@ -47,7 +47,13 @@ tracer = new lightstep.Tracer({
 var db = new sqlite3.Database(databasePath);
 db.run('PRAGMA journal_mode = WAL');
 db.configure('busyTimeout', 15000);
-// TODO: Close database connection on exit.
+
+function onExit() {
+  db.close();
+  process.exit(0);
+}
+process.on('SIGINT', onExit);
+process.on('SIGTERM', onExit);
 
 function traceCallback(parentSpan, operationName, callback) {
   var span = tracer.startSpan(operationName, {childOf: parentSpan});
@@ -115,6 +121,7 @@ app.get('/animal', function (req, res) {
       }
     }));
   });
+  stmt.finalize();
 });
 
 app.post('/upload/animal', (req, res) => {
@@ -143,6 +150,7 @@ app.post('/upload/animal', (req, res) => {
           res.redirect(303, '/');
         }
       }));
+  stmt.finalize();
 });
 
 app.listen(program.port, function() {
