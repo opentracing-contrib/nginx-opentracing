@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3');
 const fs = require('fs');
-const common = require('./common') const program = require('commander');
+const common = require('./common');
+const program = require('commander');
 const path = require('path');
 
 program.option('r, --data_root <data_root>', 'Data Root').parse(process.argv);

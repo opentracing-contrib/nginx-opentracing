@@ -8,10 +8,10 @@ const uuid = require('uuid/v1');
 const sharp = require('sharp');
 const path = require('path');
 
-const common = require('./common') const tracing_middleware =
-    require('./opentracing-express')
+const common = require('./common');
+const tracing_middleware = require('./opentracing-express');
 
-        const thumbnailWidth = 320;
+const thumbnailWidth = 320;
 const thumbnailHeight = 200;
 
 program.option('p, --port <n>', 'Port', parseInt)
