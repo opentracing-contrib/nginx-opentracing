@@ -6,18 +6,19 @@ const url = require('url');
 exports.middleware = function middleware(options) {
   if (typeof options === 'undefined') {
     options = {};
-  }
+    }
   if (options.tracer) {
     opentracing.initGlobalTracer(options.tracer);
   } else {
     opentracing.initGlobalTracer();
-  }
+    }
 
   return (req, res, next) => {
     var tracer = opentracing.globalTracer();
-    const wireCtx = tracer.extract(opentracing.FORMAT_HTTP_HEADERS, req.headers);
+    const wireCtx =
+        tracer.extract(opentracing.FORMAT_HTTP_HEADERS, req.headers);
     const pathname = url.parse(req.url).pathname;
-    const span = tracer.startSpan(pathname, {childOf: wireCtx});
+    const span = tracer.startSpan(pathname, {childOf : wireCtx});
     span.logEvent("request_received");
 
     // include some useful tags on the trace
@@ -30,7 +31,8 @@ exports.middleware = function middleware(options) {
     // the browser by looking up the trace ID found in response headers
     const responseHeaders = {};
     tracer.inject(span, opentracing.FORMAT_TEXT_MAP, responseHeaders);
-    Object.keys(responseHeaders).forEach(key => res.setHeader(key, responseHeaders[key]));
+    Object.keys(responseHeaders)
+        .forEach(key => res.setHeader(key, responseHeaders[key]));
 
     // add the span to the request object for handlers to use
     Object.assign(req, {span});
@@ -39,7 +41,8 @@ exports.middleware = function middleware(options) {
     var endOld = res.end;
     res.end = function() {
       span.logEvent("request_finished");
-      // Route matching often happens after the middleware is run. Try changing the operation name
+      // Route matching often happens after the middleware is run. Try changing
+      // the operation name
       // to the route matcher.
       const opName = (req.route && req.route.path) || pathname;
       span.setOperationName(opName);

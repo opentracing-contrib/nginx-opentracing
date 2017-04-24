@@ -7,10 +7,10 @@ const fs = require('fs');
 var app = express();
 app.use('/upload/profile', formidable());
 app.use('/auth', basicAuth({
-  users: {'abc': '123'},
-  challenge: true,
-  realm: 'multipart-example'
-  }));
+          users : {'abc' : '123'},
+          challenge : true,
+          realm : 'multipart-example'
+        }));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
@@ -29,16 +29,14 @@ app.post('/upload/profile', (req, res) => {
       return;
     }
     imgEncoding = new Buffer(data).toString('base64');
-    imgSrc = 'data:' + req.fields.profilepic_content_type + 
-             ';base64,'+imgEncoding;
-    res.render('profile', { 
-      firstname: req.fields.firstname,
-      lastname: req.fields.lastname,
-      profile_pic: imgSrc
+    imgSrc =
+        'data:' + req.fields.profilepic_content_type + ';base64,' + imgEncoding;
+    res.render('profile', {
+      firstname : req.fields.firstname,
+      lastname : req.fields.lastname,
+      profile_pic : imgSrc
     });
   });
 });
 
-app.listen(3000, function() {
-  console.log('Listening on 3000');
-});
+app.listen(3000, function() { console.log('Listening on 3000'); });
