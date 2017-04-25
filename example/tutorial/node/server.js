@@ -52,8 +52,8 @@ function onExit() {
 process.on('SIGINT', onExit);
 process.on('SIGTERM', onExit);
 
-function traceCallback(parentSpan, operationName, callback) {
-  var span = tracer.startSpan(operationName, {childOf : parentSpan});
+function traceCallback(spanOptions, operationName, callback) {
+  var span = tracer.startSpan(operationName, spanOptions);
   return function() {
     span.finish();
     return callback.apply(this, arguments);
@@ -67,7 +67,7 @@ app.set('views', path.join(__dirname, '/views'));
 
 app.get('/', function(req, res) {
   var stmt = 'select uuid, name from animals order by name';
-  db.all(stmt, traceCallback(req.span, stmt, function(err, rows) {
+  db.all(stmt, traceCallback({childOf : req.span}, stmt, function(err, rows) {
            if (err) {
              console.log(err);
              res.status(500).send('Failed to query animals!');
@@ -84,16 +84,17 @@ app.get('/', function(req, res) {
            while (animals[0]) {
              table.push(animals.splice(0, 3));
            }
-           res.render(
-               'index', {animals : table},
-               traceCallback(req.span, 'render index', function(err, html) {
-                 if (err) {
-                   console.log(err);
-                   res.status(500).send('Failed to render index!');
-                 } else {
-                   res.send(html);
-                 }
-               }));
+           res.render('index', {animals : table},
+                      traceCallback({childOf : req.span}, 'render index',
+                                    function(err, html) {
+                                      if (err) {
+                                        console.log(err);
+                                        res.status(500).send(
+                                            'Failed to render index!');
+                                      } else {
+                                        res.send(html);
+                                      }
+                                    }));
          }));
 });
 
@@ -107,14 +108,15 @@ app.get('/animal', function(req, res) {
       animal : row.animal,
       profile_pic : '/' + req.query.id + '.jpg'
     },
-               traceCallback(req.span, 'render animal', function(err, html) {
-                 if (err) {
-                   console.log(err);
-                   res.status(500).send('Failed to render animal');
-                 } else {
-                   res.send(html);
-                 }
-               }));
+               traceCallback(
+                   {childOf : req.span}, 'render animal', function(err, html) {
+                     if (err) {
+                       console.log(err);
+                       res.status(500).send('Failed to render animal');
+                     } else {
+                       res.send(html);
+                     }
+                   }));
   });
   stmt.finalize();
 });
@@ -125,17 +127,23 @@ app.post('/upload/animal', (req, res) => {
   var profileFilename = imageRoot + id + '.jpg';
   var thumbnailFilename = imageRoot + id + '_thumb.jpg';
   var profilePic = sharp(req.get('admit-profile-pic'));
-  profilePic.toFile(profileFilename, traceCallback(req.span, 'copyProfilePic',
-                                                   function(err) {}));
+  profilePic.toFile(
+      profileFilename,
+      traceCallback(
+          {references : [ opentracing.followsFrom(req.span.context()) ]},
+          'copyProfilePic', function(err) {}));
 
   profilePic.resize(thumbnailWidth, thumbnailHeight)
-      .toFile(thumbnailFilename,
-              traceCallback(req.span, 'resizeProfilePic', function(err) {}));
+      .toFile(
+          thumbnailFilename,
+          traceCallback(
+              {references : [ opentracing.followsFrom(req.span.context()) ]},
+              'resizeProfilePic', function(err) {}));
 
   var stmtPattern = 'insert into animals values (?, ?, ?)';
   var stmt = db.prepare(stmtPattern);
   stmt.run(id, req.get('admit-animal'), req.get('admit-name'),
-           traceCallback(req.span, stmtPattern, function(err) {
+           traceCallback({childOf : req.span}, stmtPattern, function(err) {
              if (err) {
                console.log(err);
                res.status(500).send('Failed to admit animal');

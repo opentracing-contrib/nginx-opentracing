@@ -104,13 +104,7 @@ void OpenTracingRequestInstrumentor::on_change_block(
   loc_conf_ = loc_conf;
 
   auto tracer = lightstep::Tracer::Global();
-  if (prev_loc_conf->enable_locations && loc_conf->enable_locations)
-    span_ = tracer.StartSpan(
-        get_loc_operation_name(request_, core_loc_conf, loc_conf),
-        {lightstep::SpanReference{lightstep::ChildOfRef,
-                                  request_span_.context()},
-         lightstep::SpanReference{lightstep::FollowsFromRef, span_.context()}});
-  else if (loc_conf->enable_locations)
+  if (loc_conf->enable_locations)
     span_ = tracer.StartSpan(
         get_loc_operation_name(request_, core_loc_conf, loc_conf),
         {lightstep::SpanReference{lightstep::ChildOfRef,
