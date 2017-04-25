@@ -34,7 +34,7 @@ static std::string get_request_operation_name(
   if (loc_conf->operation_name_script.is_valid())
     return to_string(loc_conf->operation_name_script.run(request));
   else
-    return get_loc_operation_name(request, core_loc_conf, loc_conf);
+    return to_string(core_loc_conf->name);
 }
 
 //------------------------------------------------------------------------------
