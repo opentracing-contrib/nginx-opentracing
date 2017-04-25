@@ -10,11 +10,12 @@
     "commander": "^2.9.0",
     "express": "^4.15.2",
     "lightstep-tracer": "^0.20.2",
-    "opentracing": "^0.14.0",
+    "opentracing": "0.13.0",
     "pug": "^2.0.0-beta.12",
     "request": "^2.81.0",
     "sharp": "^0.17.3",
     "sqlite3": "^3.1.8",
-    "uuid": "^3.0.1"
+    "uuid": "^3.0.1",
+    "winston": "^2.3.1"
   }
 }
