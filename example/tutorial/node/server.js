@@ -7,6 +7,7 @@ const uuid = require('uuid/v1');
 const sharp = require('sharp');
 const path = require('path');
 const winston = require('winston');
+const TracedPromise = require('opentracing-tracedpromise').default;
 
 const common = require('./common');
 const tracingMiddleware = require('./opentracing-express');
@@ -64,6 +65,48 @@ const app = express();
 app.use(tracingMiddleware.middleware({ tracer }));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
+
+// function selectAnimals(req, res) {
+//   const stmt = 'select uuid, name from animals order by name';
+//   const callback = (resolve, reject) => {
+//     db.all(stmt, (err, rows) => {
+//       if (err) {
+//         winston.error('Unable to select!', { error: err });
+//         res.status(500).send('Failed to select animals!');
+//         reject(err);
+//       } else {
+//         resolve(rows);
+//       }
+//     });
+//   };
+//   return new TracedPromise(req.span, stmt, callback);
+// }
+
+// app.get('/', (req, res) => {
+//   selectAnimals(req, res).then((rows) => {
+//     const animals = rows.map((row) => {
+//       return {
+//         name: row.name,
+//         profile: `/animal?id=${row.uuid}`,
+//         thumbnail_pic: `/${row.uuid}_thumb.jpg`,
+//       };
+//     });
+//     const table = [];
+//     while (animals[0]) {
+//       table.push(animals.splice(0, 3));
+//     }
+//     res.render(
+//         'index', { animals: table },
+//         traceCallback({ childOf: req.span }, 'render index', (err, html) => {
+//           if (err) {
+//             winston.error('Failed to render index.pug!', { error: err });
+//             res.status(500).send('Failed to render index!');
+//           } else {
+//             res.send(html);
+//           }
+//         }));
+//   });
+// });
 
 app.get('/', (req, res) => {
   const stmt = 'select uuid, name from animals order by name';
