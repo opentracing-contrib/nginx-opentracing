@@ -9,7 +9,7 @@ program.option('r, --data_root <data_root>', 'Data Root').parse(process.argv);
 if (typeof program.data_root === 'undefined') {
   winston.error('no data_root given!');
   process.exit(1);
-  }
+}
 
 const databasePath = path.join(program.data_root, common.databaseName);
 const db = new sqlite3.Database(databasePath);

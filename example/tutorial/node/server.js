@@ -3,13 +3,12 @@ const program = require('commander');
 const lightstep = require('lightstep-tracer');
 const opentracing = require('opentracing');
 const sqlite3 = require('sqlite3');
-const fs = require('fs');
 const uuid = require('uuid/v1');
 const sharp = require('sharp');
 const path = require('path');
 
 const common = require('./common');
-const tracing_middleware = require('./opentracing-express');
+const tracingMiddleware = require('./opentracing-express');
 
 const thumbnailWidth = 320;
 const thumbnailHeight = 200;
@@ -22,17 +21,17 @@ program.option('p, --port <n>', 'Port', parseInt)
 if (typeof program.port === 'undefined') {
   console.error('no port given!');
   process.exit(1);
-  }
+}
 
 if (typeof program.data_root === 'undefined') {
   console.error('no data_root given!');
   process.exit(1);
-  }
+}
 
 if (typeof program.access_token === 'undefined') {
   console.error('no access_token given!');
   process.exit(1);
-  }
+}
 
 const databasePath = path.join(program.data_root, common.databaseName);
 const imageRoot = path.join(program.data_root, '/images/');
@@ -58,10 +57,10 @@ function traceCallback(spanOptions, operationName, callback) {
     span.finish();
     return callback.apply(this, arguments);
   };
-  }
+}
 
 var app = express();
-app.use(tracing_middleware.middleware({tracer : tracer}));
+app.use(tracingMiddleware.middleware({tracer : tracer}));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
@@ -72,7 +71,7 @@ app.get('/', function(req, res) {
              console.log(err);
              res.status(500).send('Failed to query animals!');
              return;
-             }
+           }
            var animals = rows.map(function(row) {
              return {
                name : row.name,

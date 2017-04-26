@@ -10,7 +10,7 @@ program.option('r, --data_root <data_root>', 'Data Root')
 if (typeof program.data_root === 'undefined') {
   console.error('no data_root given!');
   process.exit(1);
-  }
+}
 
 const files = fs.readdirSync(program.data_root);
 const animals = files.map(function(file) {
@@ -38,7 +38,7 @@ function admitAnimal() {
     }
   });
   fs.createReadStream(animal.profile).pipe(req);
-  }
+}
 
 function queryAnimals() {
   request.get('http://localhost:8080/', function(err, resp, body) {
@@ -46,7 +46,7 @@ function queryAnimals() {
       console.log(err);
     }
   });
-  }
+}
 
 for (i = 0; i < program.num_requests; i++) {
   if (randomInt(2)) {

@@ -6,12 +6,12 @@ const url = require('url');
 exports.middleware = function middleware(options) {
   if (typeof options === 'undefined') {
     options = {};
-    }
+  }
   if (options.tracer) {
     opentracing.initGlobalTracer(options.tracer);
   } else {
     opentracing.initGlobalTracer();
-    }
+  }
 
   return (req, res, next) => {
     var tracer = opentracing.globalTracer();
