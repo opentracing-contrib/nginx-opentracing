@@ -19,13 +19,13 @@ fs.stat(program.profile, function(err, stats) {
   }
   restler
       .post('http://localhost:8080/upload/profile', {
-        multipart : true,
-        username : 'abc',
-        password : '123',
-        data : {
-          firstname : program.firstname,
-          lastname : program.lastname,
-          profilepic :
+        multipart: true,
+        username: 'abc',
+        password: '123',
+        data: {
+          firstname: program.firstname,
+          lastname: program.lastname,
+          profilepic:
               restler.file(program.profile, null, stats.size, null, 'image/jpg')
         }
       })

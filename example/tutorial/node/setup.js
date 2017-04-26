@@ -22,6 +22,6 @@ const stmt = `create table if not exists animals (
 db.run(stmt, (err) => {
   db.close();
   if (err) {
-    winston.error('Failed to create animal table!', {statement : stmt});
+    winston.error('Failed to create animal table!', {statement: stmt});
   }
 });

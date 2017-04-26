@@ -18,7 +18,7 @@ exports.middleware = function middleware(options) {
     const wireCtx =
         tracer.extract(opentracing.FORMAT_HTTP_HEADERS, req.headers);
     const pathname = url.parse(req.url).pathname;
-    const span = tracer.startSpan(pathname, {childOf : wireCtx});
+    const span = tracer.startSpan(pathname, {childOf: wireCtx});
     span.logEvent("request_received");
 
     // include some useful tags on the trace

@@ -6,11 +6,10 @@ const fs = require('fs');
 
 var app = express();
 app.use('/upload/profile', formidable());
-app.use('/auth', basicAuth({
-          users : {'abc' : '123'},
-          challenge : true,
-          realm : 'multipart-example'
-        }));
+app.use(
+    '/auth',
+    basicAuth(
+        {users: {'abc': '123'}, challenge: true, realm: 'multipart-example'}));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
@@ -32,9 +31,9 @@ app.post('/upload/profile', (req, res) => {
     imgSrc =
         'data:' + req.fields.profilepic_content_type + ';base64,' + imgEncoding;
     res.render('profile', {
-      firstname : req.fields.firstname,
-      lastname : req.fields.lastname,
-      profile_pic : imgSrc
+      firstname: req.fields.firstname,
+      lastname: req.fields.lastname,
+      profile_pic: imgSrc
     });
   });
 });

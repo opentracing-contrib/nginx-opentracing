@@ -15,13 +15,13 @@ if (typeof program.data_root === 'undefined') {
 const files = fs.readdirSync(program.data_root);
 const animals = files.map(function(file) {
   return {
-    profile : path.join(program.data_root, file),
-    animal : path.basename(file, path.extname(file))
+    profile: path.join(program.data_root, file),
+    animal: path.basename(file, path.extname(file))
   };
 });
 
 const names =
-    [ 'Bella', 'Buddy', 'Gizmo', 'Coco', 'Dexter', 'Bandit', 'Romeo', 'Lexi' ];
+    ['Bella', 'Buddy', 'Gizmo', 'Coco', 'Dexter', 'Bandit', 'Romeo', 'Lexi'];
 
 function randomInt(n) { return Math.floor(Math.random() * n); }
 
@@ -29,8 +29,8 @@ function admitAnimal() {
   var animal = animals[randomInt(animals.length)];
   var name = names[randomInt(names.length)];
   var options = {
-    url : 'http://localhost:8080/upload/animal',
-    headers : {'admit-name' : name, 'admit-animal' : animal.animal}
+    url: 'http://localhost:8080/upload/animal',
+    headers: {'admit-name': name, 'admit-animal': animal.animal}
   };
   req = request.post(options, function(err, resp, body) {
     if (err) {
