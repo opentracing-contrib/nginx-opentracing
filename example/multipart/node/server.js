@@ -6,10 +6,11 @@ const fs = require('fs');
 
 var app = express();
 app.use('/upload/profile', formidable());
-app.use(
-    '/auth',
-    basicAuth(
-        {users: {'abc': '123'}, challenge: true, realm: 'multipart-example'}));
+app.use('/auth', basicAuth({
+          users: { 'abc': '123' },
+          challenge: true,
+          realm: 'multipart-example'
+        }));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 

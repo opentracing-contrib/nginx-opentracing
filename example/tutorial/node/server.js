@@ -38,7 +38,7 @@ const imageRoot = path.join(program.data_root, '/images/');
 const accessToken = program.access_token;
 
 const tracer = new lightstep.Tracer(
-    {access_token: accessToken, component_name: 'virtual-zoo'});
+    { access_token: accessToken, component_name: 'virtual-zoo' });
 
 const db = new sqlite3.Database(databasePath);
 db.run('PRAGMA journal_mode = WAL');
@@ -60,13 +60,13 @@ function traceCallback(spanOptions, operationName, callback) {
 }
 
 const app = express();
-app.use(tracingMiddleware.middleware({tracer: tracer}));
+app.use(tracingMiddleware.middleware({ tracer: tracer }));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
 app.get('/', (req, res) => {
   const stmt = 'select uuid, name from animals order by name';
-  db.all(stmt, traceCallback({childOf: req.span}, stmt, (err, rows) => {
+  db.all(stmt, traceCallback({ childOf: req.span }, stmt, (err, rows) => {
            if (err) {
              console.log(err);
              res.status(500).send('Failed to query animals!');
@@ -83,16 +83,17 @@ app.get('/', (req, res) => {
            while (animals[0]) {
              table.push(animals.splice(0, 3));
            }
-           res.render('index', {animals: table},
-                      traceCallback(
-                          {childOf: req.span}, 'render index', (err, html) => {
-                            if (err) {
-                              console.log(err);
-                              res.status(500).send('Failed to render index!');
-                            } else {
-                              res.send(html);
-                            }
-                          }));
+           res.render('index', { animals: table },
+                      traceCallback({ childOf: req.span }, 'render index',
+                                    (err, html) => {
+                                      if (err) {
+                                        console.log(err);
+                                        res.status(500).send(
+                                            'Failed to render index!');
+                                      } else {
+                                        res.send(html);
+                                      }
+                                    }));
          }));
 });
 
@@ -107,7 +108,7 @@ app.get('/animal', (req, res) => {
           animal: row.animal,
           profile_pic: '/' + req.query.id + '.jpg'
         },
-        traceCallback({childOf: req.span}, 'render animal', (err, html) => {
+        traceCallback({ childOf: req.span }, 'render animal', (err, html) => {
           if (err) {
             console.log(err);
             res.status(500).send('Failed to render animal');
@@ -127,19 +128,20 @@ app.post('/upload/animal', (req, res) => {
   const profilePic = sharp(req.get('admit-profile-pic'));
   profilePic.toFile(
       profileFilename,
-      traceCallback({references: [opentracing.followsFrom(req.span.context())]},
-                    'copyProfilePic', (err) => {}));
+      traceCallback(
+          { references: [opentracing.followsFrom(req.span.context())] },
+          'copyProfilePic', (err) => {}));
 
   profilePic.resize(thumbnailWidth, thumbnailHeight)
       .toFile(thumbnailFilename,
               traceCallback(
-                  {references: [opentracing.followsFrom(req.span.context())]},
+                  { references: [opentracing.followsFrom(req.span.context())] },
                   'resizeProfilePic', (err) => {}));
 
   const stmtPattern = 'insert into animals values (?, ?, ?)';
   const stmt = db.prepare(stmtPattern);
   stmt.run(id, req.get('admit-animal'), req.get('admit-name'),
-           traceCallback({childOf: req.span}, stmtPattern, (err) => {
+           traceCallback({ childOf: req.span }, stmtPattern, (err) => {
              if (err) {
                console.log(err);
                res.status(500).send('Failed to admit animal');

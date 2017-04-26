@@ -30,7 +30,7 @@ function admitAnimal() {
   var name = names[randomInt(names.length)];
   var options = {
     url: 'http://localhost:8080/upload/animal',
-    headers: {'admit-name': name, 'admit-animal': animal.animal}
+    headers: { 'admit-name': name, 'admit-animal': animal.animal }
   };
   req = request.post(options, function(err, resp, body) {
     if (err) {
