@@ -53,14 +53,6 @@ function onExit() {
 process.on('SIGINT', onExit);
 process.on('SIGTERM', onExit);
 
-function traceCallback(spanOptions, operationName, callback) {
-  const span = tracer.startSpan(operationName, spanOptions);
-  return (...args) => {
-    span.finish();
-    return callback(...args);
-  };
-}
-
 const app = express();
 app.use(tracingMiddleware.middleware({ tracer }));
 app.set('view engine', 'pug');
@@ -208,17 +200,7 @@ app.get('/', (req, res) => {
         while (animals[0]) {
           table.push(animals.splice(0, 3));
         }
-        res.render('index', { animals: table },
-                   traceCallback(
-                       { childOf: req.span }, 'render index', (err, html) => {
-                         if (err) {
-                           winston.error('Failed to render index.pug!',
-                                         { error: err });
-                           res.status(500).send('Failed to render index!');
-                         } else {
-                           res.send(html);
-                         }
-                       }));
+        res.render('index', { animals: table });
       },
       () => { res.status(500).send('Failed to view animals!'); });
 });
@@ -231,17 +213,7 @@ app.get('/animal', (req, res) => {
           name: row.name,
           animal: row.animal,
           profile_pic: `/${req.query.id}.jpg`,
-        },
-                   traceCallback(
-                       { childOf: req.span }, 'render animal', (err, html) => {
-                         if (err) {
-                           winston.error('Failed to render animal.pug!',
-                                         { error: err });
-                           res.status(500).send('Failed to render animal');
-                         } else {
-                           res.send(html);
-                         }
-                       }));
+        });
       },
       () => { res.status(500).send('Failed to view animal!'); });
 });

@@ -38,7 +38,7 @@ exports.middleware = function middleware(options) {
     Object.assign(req, { span });
 
     // finalize the span when the response is completed
-    var endOld = res.end;
+    const endOld = res.end;
     res.end = function() {
       span.logEvent('request_finished');
       // Route matching often happens after the middleware is run. Try changing
@@ -53,6 +53,42 @@ exports.middleware = function middleware(options) {
       }
       span.finish();
       endOld.apply(this, arguments);
+    };
+
+    // Create a span for any rendered templates.
+    const renderOld = res.render;
+    res.render = function(view, options, callback) {
+      let done = callback;
+      let opts = options || {};
+      const req = this.req;
+      const self = this;
+      if (typeof options === 'function') {
+        done = options;
+        opts = {};
+      }
+
+      done = done || function(err, str) {
+        if (err) {
+          return req.next(err);
+        }
+        self.send(str);
+      };
+
+      const templateSpan = tracer.startSpan(view, { childOf: span });
+      templateSpan.setTag('component', 'express-template');
+      const doneWrap = function(err, str) {
+        if (err) {
+          templateSpan.log({
+            event: 'error',
+            'error.object': err,
+          });
+          templateSpan.setTag('error', true);
+        }
+        templateSpan.finish();
+        done.apply(this, arguments);
+      };
+
+      renderOld.apply(this, [view, opts, doneWrap]);
     };
     next();
   };
