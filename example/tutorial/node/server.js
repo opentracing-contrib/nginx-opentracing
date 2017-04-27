@@ -142,6 +142,60 @@ function insertAnimal(req, id) {
   return new Promise(executer);
 }
 
+function resizeProfileImage(req, id) {
+  const thumbnailFilename = `${imageRoot}${id}_thumb.jpg`;
+  const span = tracer.startSpan(
+      'resizeProfileImage',
+      { references: [opentracing.followsFrom(req.span.context())] });
+  span.setTag('component', 'sharp');
+  const executer = (resolve, reject) => {
+    sharp(req.get('admit-profile-pic'))
+        .resize(thumbnailWidth, thumbnailHeight)
+        .toFile(thumbnailFilename, (err) => {
+          if (err) {
+            winston.error('Unable to resize profile image!', { error: err });
+            span.log({
+              event: 'error',
+              'error.object': err,
+            });
+            span.setTag('error', true);
+            span.finish();
+            reject(err);
+          } else {
+            span.finish();
+            resolve();
+          }
+        });
+  };
+  return new Promise(executer);
+}
+
+function copyTransformProfileImage(req, id) {
+  const profileFilename = `${imageRoot}${id}.jpg`;
+  const span = tracer.startSpan(
+      'copyTransformProfileImage',
+      { references: [opentracing.followsFrom(req.span.context())] });
+  span.setTag('component', 'sharp');
+  const executer = (resolve, reject) => {
+    sharp(req.get('admit-profile-pic')).toFile(profileFilename, (err) => {
+      if (err) {
+        winston.error('Unable to resize profile image!', { error: err });
+        span.log({
+          event: 'error',
+          'error.object': err,
+        });
+        span.setTag('error', true);
+        span.finish();
+        reject(err);
+      } else {
+        span.finish();
+        resolve();
+      }
+    });
+  };
+  return new Promise(executer);
+}
+
 app.get('/', (req, res) => {
   selectAnimals(req).then(
       (rows) => {
@@ -194,22 +248,8 @@ app.get('/animal', (req, res) => {
 
 app.post('/upload/animal', (req, res) => {
   const id = uuid();
-
-  const profileFilename = `${imageRoot}${id}.jpg`;
-  const thumbnailFilename = `${imageRoot}${id}_thumb.jpg`;
-  const profilePic = sharp(req.get('admit-profile-pic'));
-  profilePic.toFile(
-      profileFilename,
-      traceCallback(
-          { references: [opentracing.followsFrom(req.span.context())] },
-          'copyProfilePic', (err) => {}));
-
-  profilePic.resize(thumbnailWidth, thumbnailHeight)
-      .toFile(thumbnailFilename,
-              traceCallback(
-                  { references: [opentracing.followsFrom(req.span.context())] },
-                  'resizeProfilePic', (err) => {}));
-
+  resizeProfileImage(req, id);
+  copyTransformProfileImage(req, id);
   insertAnimal(req, id).then(
       () => { res.redirect(303, '/'); },
       () => { res.status(500).send('Failed to upload animal'); });
