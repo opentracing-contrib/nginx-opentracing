@@ -39,7 +39,7 @@ const imageRoot = path.join(program.data_root, '/images/');
 const accessToken = program.access_token;
 
 const tracer = new lightstep.Tracer(
-    { access_token: accessToken, component_name: 'virtual-zoo' });
+    { access_token: accessToken, component_name: 'zoo' });
 opentracing.initGlobalTracer(tracer);
 
 const db = new sqlite3.Database(databasePath);
