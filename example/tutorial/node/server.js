@@ -7,7 +7,6 @@ const uuid = require('uuid/v1');
 const sharp = require('sharp');
 const path = require('path');
 const winston = require('winston');
-const TracedPromise = require('opentracing-tracedpromise').default;
 
 const common = require('./common');
 const tracingMiddleware = require('./opentracing-express');
@@ -41,6 +40,7 @@ const accessToken = program.access_token;
 
 const tracer = new lightstep.Tracer(
     { access_token: accessToken, component_name: 'virtual-zoo' });
+opentracing.initGlobalTracer(tracer);
 
 const db = new sqlite3.Database(databasePath);
 db.run('PRAGMA journal_mode = WAL');
@@ -66,103 +66,130 @@ app.use(tracingMiddleware.middleware({ tracer }));
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
-// function selectAnimals(req, res) {
-//   const stmt = 'select uuid, name from animals order by name';
-//   const callback = (resolve, reject) => {
-//     db.all(stmt, (err, rows) => {
-//       if (err) {
-//         winston.error('Unable to select!', { error: err });
-//         res.status(500).send('Failed to select animals!');
-//         reject(err);
-//       } else {
-//         resolve(rows);
-//       }
-//     });
-//   };
-//   return new TracedPromise(req.span, stmt, callback);
-// }
+function selectAnimals(req) {
+  const stmt = 'select uuid, name from animals order by name';
+  const span = tracer.startSpan(stmt, { childOf: req.span });
+  span.setTag('component', 'SQLite');
+  const executer = (resolve, reject) => {
+    db.all(stmt, (err, rows) => {
+      if (err) {
+        winston.error('Unable to select!', { error: err });
+        span.log({
+          event: 'error',
+          'error.object': err,
+        });
+        span.setTag('error', true);
+        span.finish();
+        reject(err);
+      } else {
+        span.finish();
+        resolve(rows);
+      }
+    });
+  };
+  return new Promise(executer);
+}
 
-// app.get('/', (req, res) => {
-//   selectAnimals(req, res).then((rows) => {
-//     const animals = rows.map((row) => {
-//       return {
-//         name: row.name,
-//         profile: `/animal?id=${row.uuid}`,
-//         thumbnail_pic: `/${row.uuid}_thumb.jpg`,
-//       };
-//     });
-//     const table = [];
-//     while (animals[0]) {
-//       table.push(animals.splice(0, 3));
-//     }
-//     res.render(
-//         'index', { animals: table },
-//         traceCallback({ childOf: req.span }, 'render index', (err, html) => {
-//           if (err) {
-//             winston.error('Failed to render index.pug!', { error: err });
-//             res.status(500).send('Failed to render index!');
-//           } else {
-//             res.send(html);
-//           }
-//         }));
-//   });
-// });
+function selectAnimal(req) {
+  const stmtPattern = 'select name, animal from animals where uuid = ?';
+  const span = tracer.startSpan(stmtPattern, { childOf: req.span });
+  span.setTag('component', 'SQLite');
+  const stmt = db.prepare(stmtPattern);
+  const executer = (resolve, reject) => {
+    stmt.get(req.query.id, (err, row) => {
+      if (err) {
+        winston.error('Unable to select!', { error: err });
+        span.log({
+          event: 'error',
+          'error.object': err,
+        });
+        span.setTag('error', true);
+        span.finish();
+        reject(err);
+      } else {
+        span.finish();
+        resolve(row);
+      }
+    });
+    stmt.finalize();
+  };
+  return new Promise(executer);
+}
+
+function insertAnimal(req, id) {
+  const stmtPattern = 'insert into animals values (?, ?, ?)';
+  const span = tracer.startSpan(stmtPattern, { childOf: req.span });
+  span.setTag('component', 'SQLite');
+  const stmt = db.prepare(stmtPattern);
+  const executer = (resolve, reject) => {
+    stmt.run(id, req.get('admit-animal'), req.get('admit-name'), (err) => {
+      if (err) {
+        winston.error('Unable to insert!', { error: err });
+        span.log({
+          event: 'error',
+          'error.object': err,
+        });
+        span.setTag('error', true);
+        span.finish();
+        reject(err);
+      } else {
+        span.finish();
+        resolve();
+      }
+    });
+    stmt.finalize();
+  };
+  return new Promise(executer);
+}
 
 app.get('/', (req, res) => {
-  const stmt = 'select uuid, name from animals order by name';
-  db.all(stmt, traceCallback({ childOf: req.span }, stmt, (err, rows) => {
-           if (err) {
-             winston.error('Unable to select!', { error: err });
-             res.status(500).send('Failed to query animals!');
-             return;
-           }
-           const animals = rows.map((row) => {
-             return {
-               name: row.name,
-               profile: `/animal?id=${row.uuid}`,
-               thumbnail_pic: `/${row.uuid}_thumb.jpg`,
-             };
-           });
-           const table = [];
-           while (animals[0]) {
-             table.push(animals.splice(0, 3));
-           }
-           res.render(
-               'index', { animals: table },
-               traceCallback(
-                   { childOf: req.span }, 'render index', (err, html) => {
-                     if (err) {
-                       winston.error('Failed to render index.pug!',
-                                     { error: err });
-                       res.status(500).send('Failed to render index!');
-                     } else {
-                       res.send(html);
-                     }
-                   }));
-         }));
+  selectAnimals(req).then(
+      (rows) => {
+        const animals = rows.map(row => ({
+                                   name: row.name,
+                                   profile: `/animal?id=${row.uuid}`,
+                                   thumbnail_pic: `/${row.uuid}_thumb.jpg`,
+                                 }));
+        const table = [];
+        while (animals[0]) {
+          table.push(animals.splice(0, 3));
+        }
+        res.render('index', { animals: table },
+                   traceCallback(
+                       { childOf: req.span }, 'render index', (err, html) => {
+                         if (err) {
+                           winston.error('Failed to render index.pug!',
+                                         { error: err });
+                           res.status(500).send('Failed to render index!');
+                         } else {
+                           res.send(html);
+                         }
+                       }));
+      },
+      () => { res.status(500).send('Failed to view animals!'); });
 });
 
 app.get('/animal', (req, res) => {
-  const stmt = db.prepare('select name, animal from animals where uuid = ?');
-  stmt.get(req.query.id, (err, row) => {
-    // TODO: Check for errors.
-    res.render(
-        'animal', {
+  selectAnimal(req).then(
+      (row) => {
+        res.render('animal', {
           title: row.name,
           name: row.name,
           animal: row.animal,
           profile_pic: `/${req.query.id}.jpg`,
         },
-        traceCallback({ childOf: req.span }, 'render animal', (err, html) => {
-          if (err) {
-            winston.error('Failed to render animal.pug!', { error: err });
-            res.status(500).send('Failed to render animal');
-          } else {
-            res.send(html);
-          }
-        }));
-  });
-  stmt.finalize();
+                   traceCallback(
+                       { childOf: req.span }, 'render animal', (err, html) => {
+                         if (err) {
+                           winston.error('Failed to render animal.pug!',
+                                         { error: err });
+                           res.status(500).send('Failed to render animal');
+                         } else {
+                           res.send(html);
+                         }
+                       }));
+      },
+      () => { res.status(500).send('Failed to view animal!'); });
 });
 
 app.post('/upload/animal', (req, res) => {
@@ -183,18 +210,9 @@ app.post('/upload/animal', (req, res) => {
                   { references: [opentracing.followsFrom(req.span.context())] },
                   'resizeProfilePic', (err) => {}));
 
-  const stmtPattern = 'insert into animals values (?, ?, ?)';
-  const stmt = db.prepare(stmtPattern);
-  stmt.run(id, req.get('admit-animal'), req.get('admit-name'),
-           traceCallback({ childOf: req.span }, stmtPattern, (err) => {
-             if (err) {
-               winston.error('Failed to admit animal!', { error: err });
-               res.status(500).send('Failed to admit animal');
-             } else {
-               res.redirect(303, '/');
-             }
-           }));
-  stmt.finalize();
+  insertAnimal(req, id).then(
+      () => { res.redirect(303, '/'); },
+      () => { res.status(500).send('Failed to upload animal'); });
 });
 
 app.listen(program.port,
