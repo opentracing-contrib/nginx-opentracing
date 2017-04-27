@@ -38,6 +38,9 @@ http {
       # Don't pass the body so that we can handle internal redirects
       # from `/upload/animal`
       proxy_set_body             off;
+
+      # The backend returns a table of thumbnail profile pictures for every
+      # animal in the zoo.
       proxy_pass http://backend;
     }
 
@@ -50,6 +53,9 @@ http {
     location = /upload/animal {
       limit_except POST { deny all; }
 
+      # The backend will add the new animal into the database, create a new
+      # thumbnail sized profile picture, and transform the full-sized profile
+      # picture, if necessary, to be in the jpeg format.
       proxy_pass http://backend;
       
       # Redirect to the spash page if the animal was successfully admitted.
@@ -62,8 +68,8 @@ http {
     }
 
     location ~ \.jpg$ {
-      # Set the root directory for where the Node.js backend uploads image 
-      # files.
+      # Set the root directory to where the Node.js backend uploads profile 
+      # images.
       include image_params;
     }
   }
@@ -73,8 +79,59 @@ http {
 Enabling OpenTracing for NGINX
 ------------------------------
 
+We can tell NGINX to trace every request by adding these two lines to
+`nginx.conf`:
+```
+http {
+  lightstep_access_token `your-access-token`;
+  opentracing on;
+...
+```
+Now, we'll see the following when admitting a new animal into the zoo:
+
+![alt text](data/nginx-upload-trace1.png "Trace")
+
+By default NGINX creates spans for both the request and the location blocks. It
+uses the name of the first location as the name of the top-level span. We can
+change this behavior by using the directives `opentracing_operation_name` and
+`opentracing_location_operation_name` to change the names of the request and
+location block spans respectively. We can also use the directive
+`lightstep_component_name` to set a name to group together common traces. For
+example, by adding 
+```
+http {
+...
+  lightstep_component_name zoo;
+...
+    location = /upload/animal {
+      opentracing_location_operation_name upload;
+    ...
+```
+The trace will change to
+
+![alt text](data/nginx-upload-trace2.png "Trace")
+
+At this point, similar information can be obtained by adding a logging
+directive to the NGINX configuration. Advantages for OpenTracing are that the
+data is easily accessible and searchable without needing to log onto a machine,
+but much greater value can be realized if we also enable the backend for
+OpenTracing.
+
 Enabling OpenTracing for Backends
 ---------------------------------
+
+When using express with Node.js, OpenTracing for requests can be easily enabled
+by adding tracing middleware to the express app:
+```JavaScript
+const app = express();
+app.use(tracingMiddleware.middleware({ tracer }));
+...
+```
+When tracing is additionally manually added for the database and image
+operations, we'll see the following when uploading:
+
+![alt text](data/nginx-upload-trace3.png "Trace")
+
 
 Performance Improvements
 ------------------------
