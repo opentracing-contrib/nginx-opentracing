@@ -117,7 +117,7 @@ data is easily accessible and searchable without needing to log onto a machine,
 but much greater value can be realized if we also enable the backend for
 OpenTracing.
 
-Enabling OpenTracing for Backends
+Enabling OpenTracing for the Backend
 ---------------------------------
 
 When using express with Node.js, OpenTracing can be turn on 
