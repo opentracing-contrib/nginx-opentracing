@@ -2,7 +2,7 @@ Virtual Zoo
 ===========
 
 In this tutorial, we'll enable an application for OpenTracing and use the
-tracing data to guide us in making several optimizations. The application we're
+trace data to guide us in making several optimizations. The application we're
 going to work with is a virtual zoo. Users admit new animals into the zoo by
 filling out a form and submitting a profile picture. 
 
@@ -141,7 +141,7 @@ for an animal's profile picture. The image is packaged as a component of the req
 using the multipart/form-data format where it's sent by NGINX to a Node.js server which uses
 [form middleware](https://www.npmjs.com/package/express-formidable) to extract the file
 and write it to disk. As pointed out in this [article](https://coderwall.com/p/swgfvw/nginx-direct-file-upload-without-passing-them-through-backend), there is some unnecessary copying that can
-be eliminated by instead having NGINX write the file to disk and pass the file's path instead
+be eliminated by having NGINX write the file to disk and pass the file's path instead
 of its contents to the Node.js servers. Updating NGINX's configuration file to do this
 ```
     location = /upload/animal {
