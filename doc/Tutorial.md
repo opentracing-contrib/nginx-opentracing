@@ -120,7 +120,7 @@ OpenTracing.
 Enabling OpenTracing for Backends
 ---------------------------------
 
-When using express with Node.js, OpenTracing for requests can be easily enabled
+When using express with Node.js, OpenTracing can be turn on 
 by adding tracing middleware to the express app:
 ```JavaScript
 const app = express();
@@ -135,3 +135,31 @@ operations, we'll see the following when uploading:
 
 Performance Improvements
 ------------------------
+
+One source of inefficiency we can see from looking at the trace is the file upload
+for an animal's profile picture. The image is packaged as a component of the request body
+using the multipart/form-data format where it's sent by NGINX to a Node.js server which uses
+[form middleware](https://www.npmjs.com/package/express-formidable) to extract the file
+and write it to disk. As pointed out in this [article](https://coderwall.com/p/swgfvw/nginx-direct-file-upload-without-passing-them-through-backend), there is some unnecessary copying that can
+be eliminated by instead having NGINX write the file to disk and pass the file's path instead
+of its contents to the Node.js servers. Updating NGINX's configuration file to do this
+```
+    location = /upload/animal {
+      ...
+      client_body_temp_path      /tmp/;
+      client_body_in_file_only   on;
+      client_body_buffer_size    128K;
+      client_max_body_size       1000M;
+
+      proxy_pass_request_headers on;
+      proxy_set_header           admit-profile-pic $request_body_file; 
+      proxy_set_body             off;
+      proxy_redirect             off;
+      ...
+```
+The `upload` span now looks like
+
+![alt text](data/nginx-upload-trace4.png "Trace")
+
+And we can see the reduction in time between when express first receives the
+request and the images are first processed.
