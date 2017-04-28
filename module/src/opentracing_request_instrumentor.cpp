@@ -81,15 +81,22 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
   auto tracer = lightstep::Tracer::Global();
   auto parent_span_context = extract_span_context(tracer, request_);
 
+  ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
+                 "starting opentracing request span for %p", request_);
   request_span_ = tracer.StartSpan(
       get_request_operation_name(request_, core_loc_conf, loc_conf_),
       {lightstep::SpanReference{lightstep::ChildOfRef, parent_span_context}});
 
-  if (loc_conf_->enable_locations)
+  if (loc_conf_->enable_locations) {
+    ngx_log_debug3(
+        NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
+        "starting opentracing location span for \"%V\"(%p) in request %p",
+        &core_loc_conf->name, loc_conf_, request_);
     span_ = tracer.StartSpan(
         get_loc_operation_name(request_, core_loc_conf, loc_conf_),
         {lightstep::SpanReference{lightstep::ChildOfRef,
                                   request_span_.context()}});
+  }
 
   set_request_span_context(tracer);
 }
@@ -104,11 +111,16 @@ void OpenTracingRequestInstrumentor::on_change_block(
   loc_conf_ = loc_conf;
 
   auto tracer = lightstep::Tracer::Global();
-  if (loc_conf->enable_locations)
+  if (loc_conf->enable_locations) {
+    ngx_log_debug3(
+        NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
+        "starting opentracing location span for \"%V\"(%p) in request %p",
+        &core_loc_conf->name, loc_conf_, request_);
     span_ = tracer.StartSpan(
         get_loc_operation_name(request_, core_loc_conf, loc_conf),
         {lightstep::SpanReference{lightstep::ChildOfRef,
                                   request_span_.context()}});
+  }
 
   // As an optimization, avoid injecting the request span context if neither the
   // previous nor current location blocks are traced since the active span
@@ -125,6 +137,9 @@ void OpenTracingRequestInstrumentor::on_exit_block() {
   // available when a block is first entered, so set tags when the block is
   // exited instead.
   if (loc_conf_->enable_locations) {
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
+                   "finishing opentracing location span for %p in request %p",
+                   loc_conf_, request_);
     add_script_tags(main_conf_->tags, request_, span_);
     add_script_tags(loc_conf_->tags, request_, span_);
     add_status_tags(request_, span_);
@@ -151,6 +166,8 @@ void OpenTracingRequestInstrumentor::set_request_span_context(
 void OpenTracingRequestInstrumentor::on_log_request() {
   on_exit_block();
 
+  ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
+                 "finishing opentracing request span for %p", request_);
   add_status_tags(request_, request_span_);
   add_script_tags(main_conf_->tags, request_, request_span_);
 

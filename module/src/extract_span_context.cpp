@@ -44,6 +44,19 @@ class NgxHeaderCarrierReader : public lightstep::BasicCarrierReader {
 lightstep::SpanContext extract_span_context(lightstep::Tracer &tracer,
                                             const ngx_http_request_t *request) {
   auto carrier_reader = NgxHeaderCarrierReader{request};
-  return tracer.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
+  auto span_context =
+      tracer.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
+  if (span_context.valid()) {
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
+                   "extraced opentracing span context (trace_id=%uxL"
+                   ", span_id=%uxL) from request %p",
+                   span_context.trace_id(), span_context.span_id(), request);
+  } else {
+    ngx_log_debug1(
+        NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
+        "failed to extract an opentracing span context from request %p",
+        request);
+  }
+  return span_context;
 }
 }  // namespace ngx_opentracing

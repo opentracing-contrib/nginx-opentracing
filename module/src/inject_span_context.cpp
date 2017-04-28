@@ -52,6 +52,11 @@ static bool set_headers(ngx_http_request_t *request,
 
             });
         if (i == headers.end()) return;
+        ngx_log_debug4(
+            NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
+            "replacing opentracing header \"%V:%V\" with value \"%V\""
+            " in request %p",
+            &header.key, &header.value, &i->second, request);
         header.value = i->second;
         headers.erase(i);
       });
@@ -59,6 +64,9 @@ static bool set_headers(ngx_http_request_t *request,
   // Any header left in `headers` doesn't already have a key in the request, so
   // create a new entry for it.
   for (const auto &key_value : headers) {
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
+                   "adding opentracing header \"%V:%V\" in request %p",
+                   &key_value.first, &key_value.second, request);
     if (!insert_header(request, key_value.first, key_value.second)) {
       ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                     "failed to insert header");
@@ -112,14 +120,17 @@ class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter {
 //------------------------------------------------------------------------------
 void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
                          const lightstep::SpanContext span_context) {
+  ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
+                 "injecting opentracing span context (trace_id=%uxL"
+                 ", span_id=%uxL) in request %p",
+                 span_context.trace_id(), span_context.span_id(), request);
   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
   bool was_successful = true;
   auto carrier_writer =
       NgxHeaderCarrierWriter{request, headers, was_successful};
-  was_successful =
-      tracer.Inject(span_context, lightstep::CarrierFormat::HTTPHeaders,
-                    carrier_writer) &&
-      was_successful;
+  auto successfully_injected = tracer.Inject(
+      span_context, lightstep::CarrierFormat::HTTPHeaders, carrier_writer);
+  was_successful = was_successful && successfully_injected;
   if (was_successful) was_successful = set_headers(request, headers);
   if (!was_successful)
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
