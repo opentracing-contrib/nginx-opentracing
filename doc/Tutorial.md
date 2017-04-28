@@ -3,8 +3,8 @@ Virtual Zoo
 
 In this tutorial, we'll enable an application for OpenTracing and use the
 tracing data to guide us in making several optimizations. The application we're
-going to work with is a virtual zoo. Users can admit new animals into the zoo
-by filling out a form and submitting a profile picture. 
+going to work with is a virtual zoo. Users admit new animals into the zoo by
+filling out a form and submitting a profile picture. 
 
 ![alt text](data/Admit.png "Admit New Animal")
 
@@ -92,11 +92,11 @@ Now, we'll see the following when admitting a new animal into the zoo:
 ![alt text](data/nginx-upload-trace1.png "Trace")
 
 By default NGINX creates spans for both the request and the location blocks. It
-uses the name of the first location as the name of the top-level span. We can
+uses the name of the first location as the name for the top-level span. We can
 change this behavior by using the directives `opentracing_operation_name` and
-`opentracing_location_operation_name` to change the names of the request and
+`opentracing_location_operation_name` to set the names of the request and
 location block spans respectively. We can also use the directive
-`lightstep_component_name` to set a name to group together common traces. For
+`lightstep_component_name` to set a group name for related traces. For
 example, by adding 
 ```
 http {
@@ -127,7 +127,7 @@ const app = express();
 app.use(tracingMiddleware.middleware({ tracer }));
 ...
 ```
-When tracing is additionally manually added for the database and image
+If tracing is additionally manually added for the database and image
 operations, we'll see the following when uploading:
 
 ![alt text](data/nginx-upload-trace3.png "Trace")
@@ -157,9 +157,17 @@ of its contents to the Node.js servers. Updating NGINX's configuration file to d
       proxy_redirect             off;
       ...
 ```
-The `upload` span now looks like
+the `upload` span now looks like
 
 ![alt text](data/nginx-upload-trace4.png "Trace")
 
-And we can see the reduction in time between when express first receives the
-request and the images are first processed.
+We can see the reduction in time between when express first receives the
+request and the images are first processed. From the span, we can also see
+that the image processing is what dominates the time for `upload`. If we change the
+processing to be asynchronous, the `upload` span will finish quicker, allowing more
+of the other operations to execute concurrently. This is what the traces looks
+like after having made both of these changes:
+
+![alt text](data/nginx-upload-trace5.png "Trace")
+
+The full source code can be viewed [here](../example/zoo).
