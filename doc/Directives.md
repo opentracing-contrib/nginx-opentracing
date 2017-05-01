@@ -37,5 +37,5 @@ of the span for an NGINX location block.
 - **syntax** `opentracing_tag <key> <value>`
 - **context**: `http`, `server`, `location`
 
-Sets a tag [tag](https://github.com/opentracing/specification/blob/master/specification.md#set-a-span-tag)
-to a request or location span with the given `key` and `value`.
+Sets a [tag](https://github.com/opentracing/specification/blob/master/specification.md#set-a-span-tag)
+with the given `key` and `value` for an NGINX span.
