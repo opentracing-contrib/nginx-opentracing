@@ -35,4 +35,4 @@ Specifies the encryption to use when uploading traces.
 - **default**: `443`
 - **context**: `http`
 
-Species the port to use when uploading traces.
+Specifies the port to use when uploading traces.
