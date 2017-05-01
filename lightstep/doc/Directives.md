@@ -27,7 +27,7 @@ Specifies the host to use when uploading traces.
 - **default**: `tls`
 - **context**: `http`
 
-Specifies the encryption to use when upload traces.
+Specifies the encryption to use when uploading traces.
 
 ### `lightstep_collector_port`
 
