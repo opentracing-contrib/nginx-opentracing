@@ -11,7 +11,7 @@ lightstep::SpanContext extract_span_context(lightstep::Tracer &tracer,
                                             const ngx_http_request_t *request);
 
 void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
-                         const lightstep::SpanContext span_context);
+                         const lightstep::SpanContext &span_context);
 
 //------------------------------------------------------------------------------
 // get_loc_operation_name
