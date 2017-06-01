@@ -119,7 +119,7 @@ class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter {
 // inject_span_context
 //------------------------------------------------------------------------------
 void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request,
-                         const lightstep::SpanContext span_context) {
+                         const lightstep::SpanContext &span_context) {
   ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
                  "injecting opentracing span context (trace_id=%uxL"
                  ", span_id=%uxL) in request %p",
