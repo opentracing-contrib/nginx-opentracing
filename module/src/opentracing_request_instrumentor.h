@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lightstep/tracer.h>
+/* #include <lightstep/tracer.h> */
 #include "opentracing_conf.h"
 
 extern "C" {
@@ -26,10 +26,10 @@ class OpenTracingRequestInstrumentor {
   ngx_http_request_t *request_;
   opentracing_main_conf_t *main_conf_;
   opentracing_loc_conf_t *loc_conf_;
-  lightstep::Span request_span_;
-  lightstep::Span span_;
+  /* lightstep::Span request_span_; */
+  /* lightstep::Span span_; */
 
   void on_exit_block();
-  void set_request_span_context(lightstep::Tracer &tracer);
+  /* void set_request_span_context(lightstep::Tracer &tracer); */
 };
 }  // namespace ngx_opentracing

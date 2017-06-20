@@ -5,8 +5,6 @@ NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
 $ngx_addon_dir/lightstep/include/ngx_opentracing_tracer_options.h \
 $ngx_addon_dir/lightstep/include/ngx_opentracing_tracer_commands.def"
 CORE_LIBS="$CORE_LIBS \
-  -llightstep_core_cxx11 \
-  -llightstep_grpc_cxx11 \
   -lgrpc++ \
   -lgrpc \
   -lprotobuf"
