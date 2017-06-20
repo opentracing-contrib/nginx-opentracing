@@ -7,4 +7,5 @@ $ngx_addon_dir/lightstep/include/ngx_opentracing_tracer_commands.def"
 CORE_LIBS="$CORE_LIBS \
   -lgrpc++ \
   -lgrpc \
-  -lprotobuf"
+  -lprotobuf
+  -llightstep_tracer"

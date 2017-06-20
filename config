@@ -25,5 +25,6 @@ NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
   $ngx_addon_dir/module/src/ngx_script.h"
 CORE_INCS="$CORE_INCS"
 CORE_LIBS="$CORE_LIBS \
-  -lstdc++"
+  -lstdc++
+  -lopentracing"
 OT_NGX_SRCS="$NGX_ADDON_SRCS"
