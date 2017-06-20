@@ -1,8 +1,8 @@
 #include "opentracing_handler.h"
-/* #include <lightstep/tracer.h> */
+#include <opentracing/tracer.h>
+#include <unordered_map>
 #include "opentracing_conf.h"
 #include "opentracing_request_instrumentor.h"
-#include <unordered_map>
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -11,16 +11,18 @@ extern ngx_module_t ngx_http_opentracing_module;
 namespace ngx_opentracing {
 // Customization point: A tracer implementation needs to define this function
 // that returns an instance of its specific tracer.
-/* lightstep::Tracer make_tracer(const tracer_options_t &options); */
+std::shared_ptr<opentracing::Tracer> make_tracer(
+    const tracer_options_t &options);
 
 //------------------------------------------------------------------------------
 // make_tracer
 //------------------------------------------------------------------------------
-/* static lightstep::Tracer make_tracer(const ngx_http_request_t *request) { */
-/*   auto main_conf = static_cast<opentracing_main_conf_t *>( */
-/*       ngx_http_get_module_main_conf(request, ngx_http_opentracing_module)); */
-/*   return make_tracer(main_conf->tracer_options); */
-/* } */
+static std::shared_ptr<opentracing::Tracer> make_tracer(
+    const ngx_http_request_t *request) {
+  auto main_conf = static_cast<opentracing_main_conf_t *>(
+      ngx_http_get_module_main_conf(request, ngx_http_opentracing_module));
+  return make_tracer(main_conf->tracer_options);
+}
 
 //------------------------------------------------------------------------------
 // OpenTracingContext
@@ -29,7 +31,7 @@ namespace {
 class OpenTracingContext {
  public:
   explicit OpenTracingContext(const ngx_http_request_t *request) {
-    /* lightstep::Tracer::InitGlobal(make_tracer(request)); */
+    opentracing::Tracer::InitGlobal(make_tracer(request));
   }
 
   void on_enter_block(ngx_http_request_t *request);
@@ -78,11 +80,18 @@ void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
   auto instrumentor_iter = active_instrumentors_.find(request);
   if (instrumentor_iter == active_instrumentors_.end()) {
     if (!is_opentracing_enabled(request, core_loc_conf, loc_conf)) return;
-    active_instrumentors_.emplace(
-        request,
-        OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf});
+    try {
+      active_instrumentors_.emplace(
+          request,
+          OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf});
+    } catch (const InstrumentationFailure &) {
+    }
   } else {
-    instrumentor_iter->second.on_change_block(core_loc_conf, loc_conf);
+    try {
+      instrumentor_iter->second.on_change_block(core_loc_conf, loc_conf);
+    } catch (const InstrumentationFailure &) {
+      active_instrumentors_.erase(instrumentor_iter);
+    }
   }
 }
 
@@ -97,7 +106,10 @@ ngx_int_t on_enter_block(ngx_http_request_t *request) {
 void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
   auto instrumentor_iter = active_instrumentors_.find(request);
   if (instrumentor_iter == active_instrumentors_.end()) return;
-  instrumentor_iter->second.on_log_request();
+  try {
+    instrumentor_iter->second.on_log_request();
+  } catch (const InstrumentationFailure &) {
+  }
   active_instrumentors_.erase(instrumentor_iter);
 }
 

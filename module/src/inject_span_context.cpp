@@ -10,9 +10,11 @@ extern "C" {
 }
 
 /* namespace ngx_opentracing { */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* // insert_header */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* static bool insert_header(ngx_http_request_t *request, ngx_str_t key, */
 /*                           ngx_str_t value) { */
 /*   auto header = static_cast<ngx_table_elt_t *>( */
@@ -25,19 +27,25 @@ extern "C" {
 /*   return true; */
 /* } */
 
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* // set_headers */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* static bool set_headers(ngx_http_request_t *request, */
-/*                         std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) { */
+/*                         std::vector<std::pair<ngx_str_t, ngx_str_t>>
+ * &headers) { */
 /*   if (headers.empty()) return true; */
 
-/*   // If header keys are already in the request, overwrite the values instead of */
+/*   // If header keys are already in the request, overwrite the values instead
+ * of */
 /*   // inserting a new header. */
 /*   // */
 /*   // It may be possible in some cases to use nginx's hashes to look up the */
-/*   // entries faster, but then we'd have to handle the special case of when a */
-/*   // header element isn't hashed yet. Iterating over the header entries all the */
+/*   // entries faster, but then we'd have to handle the special case of when a
+ */
+/*   // header element isn't hashed yet. Iterating over the header entries all
+ * the */
 /*   // time keeps things simple. */
 /*   for_each<ngx_table_elt_t>( */
 /*       request->headers_in.headers, [&](ngx_table_elt_t &header) { */
@@ -46,7 +54,8 @@ extern "C" {
 /*             [&](const std::pair<ngx_str_t, ngx_str_t> &key_value) { */
 /*               const auto &key = key_value.first; */
 /*               return header.key.len == key.len && */
-/*                      ngx_strncmp(reinterpret_cast<char *>(header.lowcase_key), */
+/*                      ngx_strncmp(reinterpret_cast<char
+ * *>(header.lowcase_key), */
 /*                                  reinterpret_cast<char *>(key.data), */
 /*                                  key.len) == 0; */
 
@@ -61,7 +70,8 @@ extern "C" {
 /*         headers.erase(i); */
 /*       }); */
 
-/*   // Any header left in `headers` doesn't already have a key in the request, so */
+/*   // Any header left in `headers` doesn't already have a key in the request,
+ * so */
 /*   // create a new entry for it. */
 /*   for (const auto &key_value : headers) { */
 /*     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0, */
@@ -76,20 +86,25 @@ extern "C" {
 /*   return true; */
 /* } */
 
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* // NgxHeaderCarrierWriter */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* namespace { */
 /* class NgxHeaderCarrierWriter : public lightstep::BasicCarrierWriter { */
 /*  public: */
 /*   NgxHeaderCarrierWriter(ngx_http_request_t *request, */
-/*                          std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers, */
+/*                          std::vector<std::pair<ngx_str_t, ngx_str_t>>
+ * &headers, */
 /*                          bool &was_successful) */
-/*       : request_{request}, headers_{headers}, was_successful_{was_successful} { */
+/*       : request_{request}, headers_{headers}, was_successful_{was_successful}
+ * { */
 /*     was_successful_ = true; */
 /*   } */
 
-/*   void Set(const std::string &key, const std::string &value) const override { */
+/*   void Set(const std::string &key, const std::string &value) const override {
+ */
 /*     if (!was_successful_) return; */
 /*     auto ngx_key = to_lower_ngx_str(request_->pool, key); */
 /*     if (!ngx_key.data) { */
@@ -115,21 +130,26 @@ extern "C" {
 /* }; */
 /* } */
 
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* // inject_span_context */
-/* //------------------------------------------------------------------------------ */
-/* void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t *request, */
+/* //------------------------------------------------------------------------------
+ */
+/* void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t
+ * *request, */
 /*                          const lightstep::SpanContext &span_context) { */
 /*   ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0, */
 /*                  "injecting opentracing span context (trace_id=%uxL" */
 /*                  ", span_id=%uxL) in request %p", */
-/*                  span_context.trace_id(), span_context.span_id(), request); */
+/*                  span_context.trace_id(), span_context.span_id(), request);
+ */
 /*   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers; */
 /*   bool was_successful = true; */
 /*   auto carrier_writer = */
 /*       NgxHeaderCarrierWriter{request, headers, was_successful}; */
 /*   auto successfully_injected = tracer.Inject( */
-/*       span_context, lightstep::CarrierFormat::HTTPHeaders, carrier_writer); */
+/*       span_context, lightstep::CarrierFormat::HTTPHeaders, carrier_writer);
+ */
 /*   was_successful = was_successful && successfully_injected; */
 /*   if (was_successful) was_successful = set_headers(request, headers); */
 /*   if (!was_successful) */

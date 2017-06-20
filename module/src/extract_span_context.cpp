@@ -10,9 +10,11 @@ extern "C" {
 }
 
 /* namespace ngx_opentracing { */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* // NgxHeaderCarrierReader */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* namespace { */
 /* class NgxHeaderCarrierReader : public lightstep::BasicCarrierReader { */
 /*  public: */
@@ -20,7 +22,8 @@ extern "C" {
 /*       : request_{request} {} */
 
 /*   void ForeachKey( */
-/*       std::function<void(const std::string &, const std::string &value)> f) */
+/*       std::function<void(const std::string &, const std::string &value)> f)
+ */
 /*       const { */
 /*     std::string key, value; */
 /*     for_each<ngx_table_elt_t>( */
@@ -38,19 +41,24 @@ extern "C" {
 /* }; */
 /* } */
 
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* // extract_span_context */
-/* //------------------------------------------------------------------------------ */
+/* //------------------------------------------------------------------------------
+ */
 /* lightstep::SpanContext extract_span_context(lightstep::Tracer &tracer, */
-/*                                             const ngx_http_request_t *request) { */
+/*                                             const ngx_http_request_t
+ * *request) { */
 /*   auto carrier_reader = NgxHeaderCarrierReader{request}; */
 /*   auto span_context = */
-/*       tracer.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader); */
+/*       tracer.Extract(lightstep::CarrierFormat::HTTPHeaders, carrier_reader);
+ */
 /*   if (span_context.valid()) { */
 /*     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0, */
 /*                    "extraced opentracing span context (trace_id=%uxL" */
 /*                    ", span_id=%uxL) from request %p", */
-/*                    span_context.trace_id(), span_context.span_id(), request); */
+/*                    span_context.trace_id(), span_context.span_id(), request);
+ */
 /*   } else { */
 /*     ngx_log_debug1( */
 /*         NGX_LOG_DEBUG_HTTP, request->connection->log, 0, */

@@ -1,6 +1,8 @@
 #pragma once
 
-/* #include <lightstep/tracer.h> */
+#include <opentracing/tracer.h>
+#include <exception>
+#include <memory>
 #include "opentracing_conf.h"
 
 extern "C" {
@@ -11,6 +13,13 @@ extern "C" {
 }
 
 namespace ngx_opentracing {
+struct InstrumentationFailure : std::exception {
+  InstrumentationFailure() = default;
+  const char *what() const noexcept override {
+    return "InstrumentationFailure";
+  }
+};
+
 class OpenTracingRequestInstrumentor {
  public:
   OpenTracingRequestInstrumentor(ngx_http_request_t *request,
@@ -26,10 +35,10 @@ class OpenTracingRequestInstrumentor {
   ngx_http_request_t *request_;
   opentracing_main_conf_t *main_conf_;
   opentracing_loc_conf_t *loc_conf_;
-  /* lightstep::Span request_span_; */
-  /* lightstep::Span span_; */
+  std::unique_ptr<opentracing::Span> request_span_;
+  std::unique_ptr<opentracing::Span> span_;
 
   void on_exit_block();
-  /* void set_request_span_context(lightstep::Tracer &tracer); */
+  void set_request_span_context();
 };
 }  // namespace ngx_opentracing
