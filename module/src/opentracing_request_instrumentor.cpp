@@ -11,9 +11,9 @@ namespace ngx_opentracing {
 /*                                             const ngx_http_request_t
  * *request); */
 
-/* void inject_span_context(lightstep::Tracer &tracer, ngx_http_request_t
- * *request, */
-/*                          const lightstep::SpanContext &span_context); */
+void inject_span_context(const opentracing::Tracer &tracer,
+                         ngx_http_request_t* request,
+                         const opentracing::SpanContext &span_context);
 
 //------------------------------------------------------------------------------
 // get_loc_operation_name
@@ -157,10 +157,11 @@ void OpenTracingRequestInstrumentor::on_exit_block() {
 // set_request_span_context
 //------------------------------------------------------------------------------
 void OpenTracingRequestInstrumentor::set_request_span_context() {
-  /* if (loc_conf_->enable_locations) */
-  /*   inject_span_context(tracer, request_, span_.context()); */
-  /* else */
-  /*   inject_span_context(tracer, request_, request_span_.context()); */
+  if (loc_conf_->enable_locations)
+    inject_span_context(span_->tracer(), request_, span_->context());
+  else
+    inject_span_context(request_span_->tracer(), request_,
+                        request_span_->context());
 }
 
 //------------------------------------------------------------------------------
