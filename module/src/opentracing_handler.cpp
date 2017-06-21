@@ -85,12 +85,18 @@ void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
           request,
           OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf});
     } catch (const InstrumentationFailure &) {
+      ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                    "OpenTracing instrumentation failed for request %p",
+                    request);
     }
   } else {
     try {
       instrumentor_iter->second.on_change_block(core_loc_conf, loc_conf);
     } catch (const InstrumentationFailure &) {
       active_instrumentors_.erase(instrumentor_iter);
+      ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                    "OpenTracing instrumentation failed for request %p",
+                    request);
     }
   }
 }
@@ -109,6 +115,8 @@ void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
   try {
     instrumentor_iter->second.on_log_request();
   } catch (const InstrumentationFailure &) {
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "OpenTracing instrumentation failed for request %p", request);
   }
   active_instrumentors_.erase(instrumentor_iter);
 }

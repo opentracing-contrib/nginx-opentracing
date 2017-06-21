@@ -55,10 +55,10 @@ std::unique_ptr<opentracing::SpanContext> extract_span_context(
                    "extraced opentracing span context from request %p",
                    request);
   } else {
-    ngx_log_debug1(
-        NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
-        "failed to extract an opentracing span context from request %p",
-        request);
+    ngx_log_error(
+        NGX_LOG_ERR, request->connection->log, 0,
+        "failed to extract an opentracing span context from request %p: %s",
+        request, span_context_maybe.error().message().c_str());
   }
   return std::move(*span_context_maybe);
 }

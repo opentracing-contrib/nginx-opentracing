@@ -134,7 +134,7 @@ void inject_span_context(const opentracing::Tracer &tracer,
   if (was_successful) was_successful = set_headers(request, headers);
   if (!was_successful)
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "Tracer.inject() failed: %s",
+                  "Tracer.inject() failed for request %p: %s", request,
                   was_successful.error().message().c_str());
 }
 }  // namespace ngx_opentracing
