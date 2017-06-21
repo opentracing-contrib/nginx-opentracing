@@ -7,12 +7,11 @@ extern ngx_module_t ngx_http_opentracing_module;
 }
 
 namespace ngx_opentracing {
-/* lightstep::SpanContext extract_span_context(lightstep::Tracer &tracer, */
-/*                                             const ngx_http_request_t
- * *request); */
+std::unique_ptr<opentracing::SpanContext> extract_span_context(
+    const opentracing::Tracer &tracer, const ngx_http_request_t *request);
 
 void inject_span_context(const opentracing::Tracer &tracer,
-                         ngx_http_request_t* request,
+                         ngx_http_request_t *request,
                          const opentracing::SpanContext &span_context);
 
 //------------------------------------------------------------------------------
@@ -82,8 +81,7 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
       ngx_http_get_module_main_conf(request_, ngx_http_opentracing_module));
   auto tracer = opentracing::Tracer::Global();
   if (!tracer) throw InstrumentationFailure{};
-  std::unique_ptr<opentracing::SpanContext> parent_span_context;
-  /* auto parent_span_context = extract_span_context(tracer, request_); */
+  auto parent_span_context = extract_span_context(*tracer, request_);
 
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
                  "starting opentracing request span for %p", request_);

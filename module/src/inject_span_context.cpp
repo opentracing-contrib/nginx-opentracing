@@ -1,6 +1,6 @@
-#include <opentracing/tracer.h>
-#include <opentracing/propagation.h>
 #include <ngx_opentracing_utility.h>
+#include <opentracing/propagation.h>
+#include <opentracing/tracer.h>
 #include <system_error>
 using opentracing::Expected;
 using opentracing::make_unexpected;
@@ -32,8 +32,9 @@ static Expected<void> insert_header(ngx_http_request_t *request, ngx_str_t key,
 //------------------------------------------------------------------------------
 // set_headers
 //------------------------------------------------------------------------------
-static Expected<void> set_headers(ngx_http_request_t *request,
-                        std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) {
+static Expected<void> set_headers(
+    ngx_http_request_t *request,
+    std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) {
   if (headers.empty()) return {};
 
   // If header keys are already in the request, overwrite the values instead of
@@ -71,8 +72,8 @@ static Expected<void> set_headers(ngx_http_request_t *request,
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
                    "adding opentracing header \"%V:%V\" in request %p",
                    &key_value.first, &key_value.second, request);
-    auto was_successful = 
-      insert_header(request, key_value.first, key_value.second);
+    auto was_successful =
+        insert_header(request, key_value.first, key_value.second);
     if (!was_successful) {
       ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                     "failed to insert header");
@@ -121,20 +122,19 @@ class NgxHeaderCarrierWriter : public opentracing::HTTPHeadersWriter {
 //------------------------------------------------------------------------------
 // inject_span_context
 //------------------------------------------------------------------------------
-void inject_span_context(
-    const opentracing::Tracer &tracer, ngx_http_request_t *request,
-    const opentracing::SpanContext &span_context) {
+void inject_span_context(const opentracing::Tracer &tracer,
+                         ngx_http_request_t *request,
+                         const opentracing::SpanContext &span_context) {
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
                  "injecting opentracing span context from request %p", request);
   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
-  auto carrier_writer =
-      NgxHeaderCarrierWriter{request, headers};
+  auto carrier_writer = NgxHeaderCarrierWriter{request, headers};
   auto was_successful = tracer.Inject(
       span_context, opentracing::CarrierFormat::HTTPHeaders, carrier_writer);
   if (was_successful) was_successful = set_headers(request, headers);
   if (!was_successful)
-    ngx_log_error(
-        NGX_LOG_ERR, request->connection->log, 0,
-        "Tracer.inject() failed: %s", was_successful.error().message().c_str());
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "Tracer.inject() failed: %s",
+                  was_successful.error().message().c_str());
 }
 }  // namespace ngx_opentracing
