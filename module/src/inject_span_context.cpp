@@ -129,8 +129,7 @@ void inject_span_context(const opentracing::Tracer &tracer,
                  "injecting opentracing span context from request %p", request);
   std::vector<std::pair<ngx_str_t, ngx_str_t>> headers;
   auto carrier_writer = NgxHeaderCarrierWriter{request, headers};
-  auto was_successful = tracer.Inject(
-      span_context, opentracing::CarrierFormat::HTTPHeaders, carrier_writer);
+  auto was_successful = tracer.Inject(span_context, carrier_writer);
   if (was_successful) was_successful = set_headers(request, headers);
   if (!was_successful)
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
