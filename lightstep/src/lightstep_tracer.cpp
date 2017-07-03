@@ -27,6 +27,6 @@ std::shared_ptr<Tracer> make_tracer(const tracer_options_t &options) {
     tracer_options.component_name = to_string(options.component_name);
   else
     tracer_options.component_name = "nginx";
-  return lightstep::make_lightstep_tracer(tracer_options);
+  return lightstep::MakeLightStepTracer(tracer_options);
 }
 }  // namespace ngx_opentracing
