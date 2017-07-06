@@ -2,7 +2,7 @@
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
 #include <system_error>
-using opentracing::Expected;
+using opentracing::expected;
 using opentracing::make_unexpected;
 using opentracing::string_view;
 
@@ -17,7 +17,7 @@ namespace ngx_opentracing {
 //------------------------------------------------------------------------------
 // insert_header
 //------------------------------------------------------------------------------
-static Expected<void> insert_header(ngx_http_request_t *request, ngx_str_t key,
+static expected<void> insert_header(ngx_http_request_t *request, ngx_str_t key,
                                     ngx_str_t value) {
   auto header = static_cast<ngx_table_elt_t *>(
       ngx_list_push(&request->headers_in.headers));
@@ -33,7 +33,7 @@ static Expected<void> insert_header(ngx_http_request_t *request, ngx_str_t key,
 //------------------------------------------------------------------------------
 // set_headers
 //------------------------------------------------------------------------------
-static Expected<void> set_headers(
+static expected<void> set_headers(
     ngx_http_request_t *request,
     std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers) {
   if (headers.empty()) return {};
@@ -94,7 +94,7 @@ class NgxHeaderCarrierWriter : public opentracing::HTTPHeadersWriter {
                          std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers)
       : request_{request}, headers_{headers} {}
 
-  Expected<void> Set(string_view key, string_view value) const override {
+  expected<void> Set(string_view key, string_view value) const override {
     auto ngx_key = to_lower_ngx_str(request_->pool, key);
     if (!ngx_key.data) {
       ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,

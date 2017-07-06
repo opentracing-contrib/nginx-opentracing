@@ -1,7 +1,7 @@
 #include <ngx_opentracing_utility.h>
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
-using opentracing::Expected;
+using opentracing::expected;
 using opentracing::make_unexpected;
 using opentracing::string_view;
 
@@ -22,10 +22,10 @@ class NgxHeaderCarrierReader : public opentracing::HTTPHeadersReader {
   explicit NgxHeaderCarrierReader(const ngx_http_request_t *request)
       : request_{request} {}
 
-  Expected<void> ForeachKey(
-      std::function<Expected<void>(string_view, string_view)> f)
+  expected<void> ForeachKey(
+      std::function<expected<void>(string_view, string_view)> f)
       const override {
-    Expected<void> result;
+    expected<void> result;
     for_each<ngx_table_elt_t>(
         request_->headers_in.headers, [&](const ngx_table_elt_t &header) {
           if (!result) return;
