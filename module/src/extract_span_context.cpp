@@ -3,7 +3,7 @@
 #include <opentracing/tracer.h>
 using opentracing::Expected;
 using opentracing::make_unexpected;
-using opentracing::StringRef;
+using opentracing::string_view;
 
 extern "C" {
 #include <nginx.h>
@@ -23,15 +23,16 @@ class NgxHeaderCarrierReader : public opentracing::HTTPHeadersReader {
       : request_{request} {}
 
   Expected<void> ForeachKey(
-      std::function<Expected<void>(StringRef, StringRef)> f) const override {
+      std::function<Expected<void>(string_view, string_view)> f)
+      const override {
     Expected<void> result;
     for_each<ngx_table_elt_t>(
         request_->headers_in.headers, [&](const ngx_table_elt_t &header) {
           if (!result) return;
-          auto key = StringRef{reinterpret_cast<char *>(header.lowcase_key),
-                               header.key.len};
-          auto value = StringRef{reinterpret_cast<char *>(header.value.data),
-                                 header.value.len};
+          auto key = string_view{reinterpret_cast<char *>(header.lowcase_key),
+                                 header.key.len};
+          auto value = string_view{reinterpret_cast<char *>(header.value.data),
+                                   header.value.len};
           result = f(key, value);
         });
     return result;

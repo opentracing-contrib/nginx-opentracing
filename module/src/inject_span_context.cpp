@@ -4,7 +4,7 @@
 #include <system_error>
 using opentracing::Expected;
 using opentracing::make_unexpected;
-using opentracing::StringRef;
+using opentracing::string_view;
 
 extern "C" {
 #include <nginx.h>
@@ -94,7 +94,7 @@ class NgxHeaderCarrierWriter : public opentracing::HTTPHeadersWriter {
                          std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers)
       : request_{request}, headers_{headers} {}
 
-  Expected<void> Set(StringRef key, StringRef value) const override {
+  Expected<void> Set(string_view key, string_view value) const override {
     auto ngx_key = to_lower_ngx_str(request_->pool, key);
     if (!ngx_key.data) {
       ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
