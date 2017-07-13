@@ -1,0 +1,10 @@
+CORE_INCS="$CORE_INCS $ngx_addon_dir/zipkin/include"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
+  $ngx_addon_dir/zipkin/src/zipkin_tracer.cpp"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
+$ngx_addon_dir/zipkin/include/ngx_opentracing_tracer_options.h \
+$ngx_addon_dir/zipkin/include/ngx_opentracing_tracer_commands.def"
+CORE_LIBS="$CORE_LIBS \
+  -lcurl \
+  -lzipkin \
+  -lzipkin_opentracing"

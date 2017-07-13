@@ -1,7 +1,7 @@
-#include <opentracing/noop.h>
-#include <lightstep/tracer.h> 
+#include <lightstep/tracer.h>
 #include <ngx_opentracing_tracer_options.h>
 #include <ngx_opentracing_utility.h>
+#include <opentracing/noop.h>
 #include <string>
 using namespace lightstep;
 using namespace opentracing;
