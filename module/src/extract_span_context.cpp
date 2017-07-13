@@ -50,16 +50,15 @@ std::unique_ptr<opentracing::SpanContext> extract_span_context(
     const opentracing::Tracer &tracer, const ngx_http_request_t *request) {
   auto carrier_reader = NgxHeaderCarrierReader{request};
   auto span_context_maybe = tracer.Extract(carrier_reader);
-  if (span_context_maybe) {
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
-                   "extraced opentracing span context from request %p",
-                   request);
-  } else {
+  if (!span_context_maybe) {
     ngx_log_error(
         NGX_LOG_ERR, request->connection->log, 0,
         "failed to extract an opentracing span context from request %p: %s",
         request, span_context_maybe.error().message().c_str());
+    return nullptr;
   }
+  ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
+                 "extraced opentracing span context from request %p", request);
   return std::move(*span_context_maybe);
 }
 }  // namespace ngx_opentracing
