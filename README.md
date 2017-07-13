@@ -5,8 +5,10 @@ Enable requests served by nginx for distributed tracing via [The OpenTracing Pro
 
 Dependencies
 ------------
-- [LightStep's C++ tracer](https://github.com/lightstep/lightstep-tracer-cpp).  
-- A LightStep [account](http://lightstep.com/#request-access).
+- The [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp)
+- A C++ OpenTracing Tracer. It currently works with either
+[Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) or
+[LightStep](https://github.com/lightstep/lightstep-tracer-cpp).
 - Source for [Nginx 1.0.x](http://nginx.org/).
 
 Building
@@ -14,6 +16,7 @@ Building
 ```
 $ tar zxvf nginx-1.0.x.tar.gz
 $ cd nginx-1.0.x
+$ export NGINX_OPENTRACING_VENDOR="ZIPKIN" # or export NGINX_OPENTRACING_VENDOR="LIGHTSTEP"
 $ ./configure --add-module=/absolute/path/to/nginx-opentracing
 $ make && sudo make install
 ```
@@ -23,8 +26,13 @@ Getting Started
 ---------------
 ```
 http {
-  # Provide your lightstep access token.
-  lightstep_access_token ACCESSTOKEN;
+  # Configure your vendor's tracer.
+  # For Example,
+  #     lightstep_access_token ACCESSTOKEN;
+  #     ....
+  # or
+  #     zipkin_collector_host localhost;
+  #     ...
 
   # Enable tracing for all requests.
   opentracing on;
@@ -42,6 +50,7 @@ http {
 }
 ```
 
-See [Tutorial](doc/Tutorial.md) for a more complete example, and [Reference](doc/Directives.md)
-and [LightStep](lightstep/doc/Directives.md) for a list of available directives.
+See [Tutorial](doc/Tutorial.md) for a more complete example, [Reference](doc/Directives.md)
+for a list of available OpenTracing-related directives, and [LightStep](lightstep/doc/Directives.md)
+and [Zipkin](zipkin/doc/Directives.md) for a list of vendor tracing directives.
 
