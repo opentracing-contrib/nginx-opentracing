@@ -3,5 +3,5 @@
 # files. Hence, we hack the makefile to add it for just our sources.
 for ot_src_file in $OT_NGX_SRCS; do
   ot_obj_file="$NGX_OBJS/addon/src/`basename $ot_src_file .cpp`.o"
-  echo "$ot_obj_file : CFLAGS += --std=c++11" >> $NGX_MAKEFILE
+  echo "$ot_obj_file : CFLAGS += --std=c++11 -Wno-constexpr-not-const" >> $NGX_MAKEFILE
 done

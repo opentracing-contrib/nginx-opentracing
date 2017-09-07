@@ -7,7 +7,8 @@ using namespace zipkin;
 using namespace opentracing;
 
 namespace ngx_opentracing {
-std::shared_ptr<Tracer> make_tracer(const tracer_options_t &options) {
+std::shared_ptr<opentracing::Tracer> make_tracer(
+    const tracer_options_t &options) {
   ZipkinOtTracerOptions tracer_options;
   if (options.collector_host.data)
     tracer_options.collector_host = to_string(options.collector_host);
