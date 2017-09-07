@@ -12,7 +12,7 @@ struct tracer_options_t {
   ngx_str_t access_token;
   ngx_str_t component_name;
   ngx_str_t collector_host;
-  ngx_str_t collector_encryption;
+  ngx_flag_t collector_plaintext = NGX_CONF_UNSET;
   ngx_str_t collector_port;
 };
 }  // namespace ngx_opentracing

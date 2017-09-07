@@ -21,13 +21,13 @@ Specifies the component name to use for any traces created.
 
 Specifies the host to use when uploading traces.
 
-### `lightstep_collector_encryption`
+### `lightstep_collector_plaintext`
 
-- **syntax** `lightstep_collector_encryption <encryption_type>`
-- **default**: `tls`
+- **syntax** `lightstep_collector_plaintext on|off`
+- **default**: `off`
 - **context**: `http`
 
-Specifies the encryption to use when uploading traces.
+Specifies whether to encrypt when uploading traces.
 
 ### `lightstep_collector_port`
 

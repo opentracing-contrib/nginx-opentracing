@@ -2,12 +2,14 @@
 #include <ngx_opentracing_tracer_options.h>
 #include <ngx_opentracing_utility.h>
 #include <opentracing/noop.h>
+#include <iostream>
 #include <string>
 using namespace lightstep;
 using namespace opentracing;
 
 namespace ngx_opentracing {
-std::shared_ptr<opentracing::Tracer> make_tracer(const tracer_options_t &options) {
+std::shared_ptr<opentracing::Tracer> make_tracer(
+    const tracer_options_t &options) {
   LightStepTracerOptions tracer_options;
   // If `options.access_token` isn't specified return a no-op tracer.
   if (!options.access_token.data)
@@ -20,13 +22,12 @@ std::shared_ptr<opentracing::Tracer> make_tracer(const tracer_options_t &options
     // TODO: Check for errors here?
     tracer_options.collector_port =
         std::stoi(to_string(options.collector_port));
-  if (options.collector_encryption.data)
-    tracer_options.collector_encryption =
-        to_string(options.collector_encryption);
+  if (options.collector_plaintext != NGX_CONF_UNSET)
+    tracer_options.collector_plaintext = options.collector_plaintext;
   if (options.component_name.data)
     tracer_options.component_name = to_string(options.component_name);
   else
     tracer_options.component_name = "nginx";
-  return lightstep::MakeLightStepTracer(tracer_options);
+  return lightstep::MakeLightStepTracer(std::move(tracer_options));
 }
 }  // namespace ngx_opentracing
