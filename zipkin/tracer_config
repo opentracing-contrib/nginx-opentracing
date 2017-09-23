@@ -5,6 +5,6 @@ NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
 $ngx_addon_dir/zipkin/include/ngx_opentracing_tracer_options.h \
 $ngx_addon_dir/zipkin/include/ngx_opentracing_tracer_commands.def"
 CORE_LIBS="$CORE_LIBS \
-  -lcurl \
+  -lzipkin_opentracing \
   -lzipkin \
-  -lzipkin_opentracing"
+  -lcurl"
