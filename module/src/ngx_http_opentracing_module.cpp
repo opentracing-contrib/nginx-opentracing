@@ -1,6 +1,3 @@
-/* #include <lightstep/impl.h> */
-/* #include <lightstep/recorder.h> */
-/* #include <lightstep/tracer.h> */
 #include <cstdlib>
 #include <exception>
 #include <iostream>
