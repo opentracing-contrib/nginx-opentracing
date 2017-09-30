@@ -1,38 +1,26 @@
-# TODO: Will need a more robust build method that doesn't rely on library
-# locations and allows one to select alternative OpenTracing implementations.
 ngx_addon_name=ngx_http_opentracing_module
-HTTP_MODULES="$HTTP_MODULES ngx_http_opentracing_module"
-
-CORE_INCS="$CORE_INCS $ngx_addon_dir/utility/include"
-NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
-  $ngx_addon_dir/utility/src/ngx_opentracing_utility.cpp"
-NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
-  $ngx_addon_dir/utility/include/ngx_opentracing_utility.h"
-
-if [ "$NGINX_OPENTRACING_VENDOR" = "LIGHTSTEP" ] 
-then
-  . $ngx_addon_dir/lightstep/tracer_config
-elif [ "$NGINX_OPENTRACING_VENDOR" = "ZIPKIN" ]
-then
-  . $ngx_addon_dir/zipkin/tracer_config
-else
-  . $ngx_addon_dir/zipkin/tracer_config
-fi
-
-NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
+ngx_module_type=HTTP
+ngx_module_name=$ngx_addon_name
+ngx_module_incs=" \
+  $ngx_addon_dir/utility/include \
+"
+ngx_module_deps=" \
+  $ngx_addon_dir/utility/include/ngx_opentracing_utility.h \
+  $ngx_addon_dir/module/src/opentracing_conf.h \
+  $ngx_addon_dir/module/src/opentracing_handler.h \
+  $ngx_addon_dir/module/src/opentracing_request_instrumentor.h \
+  $ngx_addon_dir/module/src/ngx_script.h \
+"
+ngx_module_srcs=" \
   $ngx_addon_dir/module/src/ngx_http_opentracing_module.cpp \
   $ngx_addon_dir/module/src/ngx_script.cpp \
   $ngx_addon_dir/module/src/extract_span_context.cpp \
   $ngx_addon_dir/module/src/inject_span_context.cpp \
   $ngx_addon_dir/module/src/opentracing_handler.cpp \
-  $ngx_addon_dir/module/src/opentracing_request_instrumentor.cpp"
-NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
-  $ngx_addon_dir/module/src/opentracing_conf.h \
-  $ngx_addon_dir/module/src/opentracing_handler.h \
-  $ngx_addon_dir/module/src/opentracing_request_instrumentor.h \
-  $ngx_addon_dir/module/src/ngx_script.h"
-CORE_INCS="$CORE_INCS"
-CORE_LIBS="$CORE_LIBS \
-  -lstdc++
-  -lopentracing"
-OT_NGX_SRCS="$NGX_ADDON_SRCS"
+  $ngx_addon_dir/module/src/opentracing_request_instrumentor.cpp \
+"
+ngx_module_libs="-lstdc++ -lopentracing"
+
+. auto/module
+
+OT_NGX_SRCS="$ngx_module_srcs"

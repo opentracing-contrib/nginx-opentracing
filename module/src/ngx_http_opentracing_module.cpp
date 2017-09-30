@@ -215,9 +215,6 @@ static ngx_http_module_t opentracing_module_ctx = {
 // opentracing_commands
 //------------------------------------------------------------------------------
 static ngx_command_t opentracing_commands[] = {
-// Customization point: A tracer implentation will expose this file and
-// list any commands specific for that tracer.
-#include <ngx_opentracing_tracer_commands.def>
     {ngx_string("opentracing"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
          NGX_CONF_TAKE1,

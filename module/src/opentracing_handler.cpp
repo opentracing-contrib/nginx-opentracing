@@ -9,30 +9,12 @@ extern ngx_module_t ngx_http_opentracing_module;
 }
 
 namespace ngx_opentracing {
-// Customization point: A tracer implementation needs to define this function
-// that returns an instance of its specific tracer.
-std::shared_ptr<opentracing::Tracer> make_tracer(
-    const tracer_options_t &options);
-
-//------------------------------------------------------------------------------
-// make_tracer
-//------------------------------------------------------------------------------
-static std::shared_ptr<opentracing::Tracer> make_tracer(
-    const ngx_http_request_t *request) {
-  auto main_conf = static_cast<opentracing_main_conf_t *>(
-      ngx_http_get_module_main_conf(request, ngx_http_opentracing_module));
-  return make_tracer(main_conf->tracer_options);
-}
-
 //------------------------------------------------------------------------------
 // OpenTracingContext
 //------------------------------------------------------------------------------
 namespace {
 class OpenTracingContext {
  public:
-  explicit OpenTracingContext(const ngx_http_request_t *request) {
-    opentracing::Tracer::InitGlobal(make_tracer(request));
-  }
 
   void on_enter_block(ngx_http_request_t *request);
   void on_log_request(ngx_http_request_t *request);
@@ -46,9 +28,8 @@ class OpenTracingContext {
 //------------------------------------------------------------------------------
 // get_handler_context
 //------------------------------------------------------------------------------
-static OpenTracingContext &get_handler_context(
-    const ngx_http_request_t *request) {
-  static OpenTracingContext handler_context{request};
+static OpenTracingContext &get_handler_context() {
+  static OpenTracingContext handler_context{};
   return handler_context;
 }
 
@@ -102,7 +83,7 @@ void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
 }
 
 ngx_int_t on_enter_block(ngx_http_request_t *request) {
-  get_handler_context(request).on_enter_block(request);
+  get_handler_context().on_enter_block(request);
   return NGX_DECLINED;
 }
 
@@ -122,7 +103,7 @@ void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
 }
 
 ngx_int_t on_log_request(ngx_http_request_t *request) {
-  get_handler_context(request).on_log_request(request);
+  get_handler_context().on_log_request(request);
   return NGX_DECLINED;
 }
 }  // namespace ngx_opentracing
