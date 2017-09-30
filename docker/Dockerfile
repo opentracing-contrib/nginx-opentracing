@@ -27,11 +27,19 @@ RUN set -x \
 	&& chmod 777 "$tempDir" \
 			\
 # (777 to ensure APT's "_apt" user can access it too)
-# Build OpenTracing package and tracers
+## Build OpenTracing package and tracers
+  && buildDeps=" \
+    build-essential \
+    cmake \
+    git \
+    ca-certificates \
+    wget \
+    golang \
+  " \
   && apt-get update \
-  && apt-get install --no-install-recommends --no-install-suggests -y build-essential cmake git \
-# opentracing-cpp
-  && GIT_SSL_NO_VERIFY=true git clone https://github.com/opentracing/opentracing-cpp.git \
+  && apt-get install --no-install-recommends --no-install-suggests -y $buildDeps \
+## opentracing-cpp
+  && git clone https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release .. \
@@ -41,15 +49,23 @@ RUN set -x \
   && cd "$tempDir" \
 # zipkin-cpp-opentracing
   && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
-  && GIT_SSL_NO_VERIFY=true git clone https://github.com/rnburn/zipkin-cpp-opentracing.git \
+  && git clone https://github.com/rnburn/zipkin-cpp-opentracing.git \
   && cd zipkin-cpp-opentracing \
+  && mkdir .build && cd .build \
+  && cmake -DCMAKE_BUILD_TYPE=Release .. \
+  && make && make install \
+  && cd "$tempDir" \
+# gRPC
+  && git clone -b v1.6.x https://github.com/grpc/grpc \
+  && cd grpc \
+  && git submodule update --init \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release .. \
   && make && make install \
   && cd "$tempDir" \
 # TODO: lightstep-tracer-cpp
 # nginx-opentracing
-  && GIT_SSL_NO_VERIFY=true git clone https://github.com/rnburn/nginx-opentracing.git \
+  && git clone https://github.com/rnburn/nginx-opentracing.git \
 	\
 	&& dpkgArch="$(dpkg --print-architecture)" \
   && nginxPackage=" nginx=${NGINX_VERSION} " \
@@ -107,7 +123,7 @@ RUN set -x \
 	\
 # if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
 	&& if [ -n "$tempDir" ]; then \
-    apt-get remove --purge --auto-remove -y build-essential cmake git \
+    apt-get remove --purge --auto-remove -y $buildDeps \
 		&& apt-get purge -y --auto-remove \
 		&& rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
 	fi
