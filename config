@@ -18,6 +18,7 @@ ngx_module_srcs=" \
   $ngx_addon_dir/module/src/inject_span_context.cpp \
   $ngx_addon_dir/module/src/opentracing_handler.cpp \
   $ngx_addon_dir/module/src/opentracing_request_instrumentor.cpp \
+  $ngx_addon_dir/utility/src/ngx_opentracing_utility.cpp \
 "
 ngx_module_libs="-lstdc++ -lopentracing"
 
