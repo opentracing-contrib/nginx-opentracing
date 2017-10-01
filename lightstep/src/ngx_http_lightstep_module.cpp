@@ -30,9 +30,25 @@ struct lightstep_main_conf_t {
 static ngx_int_t lightstep_module_init(ngx_conf_t *cf) {
   auto main_conf = static_cast<lightstep_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_lightstep_module));
-  lightstep::LightStepTracerOptions tracer_options;
+  // Validate the configuration
   if (!main_conf->access_token.data) {
     ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+                  "`lighstep_access_token` must be specified");
+    return NGX_ERROR;
+  }
+  return NGX_OK;
+}
+
+//------------------------------------------------------------------------------
+// lightstep_init_worker
+//------------------------------------------------------------------------------
+static ngx_int_t
+lightstep_init_worker(ngx_cycle_t* cycle) {
+  auto main_conf = static_cast<lightstep_main_conf_t *>(
+      ngx_http_cycle_get_module_main_conf(cycle, ngx_http_lightstep_module));
+  lightstep::LightStepTracerOptions tracer_options;
+  if (!main_conf->access_token.data) {
+    ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                   "`lighstep_access_token` must be specified");
     return NGX_ERROR;
   }
@@ -51,7 +67,7 @@ static ngx_int_t lightstep_module_init(ngx_conf_t *cf) {
     tracer_options.component_name = "nginx";
   auto tracer = lightstep::MakeLightStepTracer(std::move(tracer_options));
   if (!tracer) {
-    ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+    ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                   "Failed to create LightStep tracer");
     return NGX_OK;
   }
@@ -120,7 +136,7 @@ ngx_module_t ngx_http_lightstep_module = {
     NGX_HTTP_MODULE,         /* module type */
     nullptr,                 /* init master */
     nullptr,                 /* init module */
-    nullptr,                 /* init process */
+    lightstep_init_worker,                 /* init process */
     nullptr,                 /* init thread */
     nullptr,                 /* exit thread */
     nullptr,                 /* exit process */
