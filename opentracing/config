@@ -1,0 +1,25 @@
+ngx_addon_name=ngx_http_opentracing_module
+ngx_module_type=HTTP
+ngx_module_name=$ngx_addon_name
+ngx_module_incs=
+ngx_module_deps=" \
+  $ngx_addon_dir/src/opentracing_conf.h \
+  $ngx_addon_dir/src/opentracing_handler.h \
+  $ngx_addon_dir/src/opentracing_request_instrumentor.h \
+  $ngx_addon_dir/src/ngx_script.h \
+  $ngx_addon_dir/src/utility.h \
+"
+ngx_module_srcs=" \
+  $ngx_addon_dir/src/ngx_http_opentracing_module.cpp \
+  $ngx_addon_dir/src/ngx_script.cpp \
+  $ngx_addon_dir/src/extract_span_context.cpp \
+  $ngx_addon_dir/src/inject_span_context.cpp \
+  $ngx_addon_dir/src/opentracing_handler.cpp \
+  $ngx_addon_dir/src/opentracing_request_instrumentor.cpp \
+  $ngx_addon_dir/src/utility.cpp \
+"
+ngx_module_libs="-lstdc++ -lopentracing"
+
+. auto/module
+
+OT_NGX_SRCS="$ngx_module_srcs"

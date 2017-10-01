@@ -1,4 +1,4 @@
-#include <ngx_opentracing_utility.h>
+#include "utility.h"
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
 #include <system_error>

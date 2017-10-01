@@ -1,5 +1,5 @@
 #include <ngx_opentracing_tracer_options.h>
-#include <ngx_opentracing_utility.h>
+#include "utility.h"
 #include <opentracing/noop.h>
 #include <zipkin/opentracing.h>
 #include <string>

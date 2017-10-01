@@ -1,4 +1,4 @@
-#include <ngx_opentracing_utility.h>
+#include "utility.h"
 #include <algorithm>
 #include <cctype>
 #include <string>

@@ -1,8 +1,6 @@
 #include <cstdlib>
 #include <opentracing/tracer.h>
 #include <lightstep/tracer.h>
-#include <ngx_opentracing_utility.h>
-using ngx_opentracing::to_string;
 
 extern "C" {
 #include <nginx.h>
@@ -11,6 +9,13 @@ extern "C" {
 #include <ngx_http.h>
 
 extern ngx_module_t ngx_http_lightstep_module;
+}
+
+//------------------------------------------------------------------------------
+// to_string
+//------------------------------------------------------------------------------
+static inline std::string to_string(const ngx_str_t &ngx_str) {
+  return {reinterpret_cast<char *>(ngx_str.data), ngx_str.len};
 }
 
 //------------------------------------------------------------------------------

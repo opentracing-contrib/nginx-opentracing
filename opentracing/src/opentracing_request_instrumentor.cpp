@@ -1,5 +1,5 @@
 #include "opentracing_request_instrumentor.h"
-#include <ngx_opentracing_utility.h>
+#include "utility.h"
 #include <iostream>
 
 extern "C" {
