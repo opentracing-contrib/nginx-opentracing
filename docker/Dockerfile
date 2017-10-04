@@ -1,130 +1,95 @@
-FROM debian:stretch-slim
-
-LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
-
-ENV NGINX_VERSION 1.13.5-1~stretch
-ENV NJS_VERSION   1.13.5.0.1.13-1~stretch
-
+FROM nginx
 RUN set -x \
-	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg1 \
-	&& \
-	NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62; \
-	found=''; \
-	for server in \
-		ha.pool.sks-keyservers.net \
-		hkp://keyserver.ubuntu.com:80 \
-		hkp://p80.pool.sks-keyservers.net:80 \
-		pgp.mit.edu \
-	; do \
-		echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
-		apt-key adv --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$NGINX_GPGKEY" && found=yes && break; \
-	done; \
-	test -z "$found" && echo >&2 "error: failed to fetch GPG key $NGINX_GPGKEY" && exit 1; \
-	apt-get remove --purge --auto-remove -y gnupg1 && rm -rf /var/lib/apt/lists/* \
+# install nginx-opentracing package dependencies
+  && apt-get update \
+  && apt-get install --no-install-recommends --no-install-suggests -y \
+              libcurl4-openssl-dev \
+              libprotobuf-dev \
+              protobuf-compiler \
+# save list of currently-installed packages so build dependencies can be cleanly removed later
+	&& savedAptMark="$(apt-mark showmanual)" \
 # new directory for storing sources and .deb files
 	&& tempDir="$(mktemp -d)" \
 	&& chmod 777 "$tempDir" \
 			\
 # (777 to ensure APT's "_apt" user can access it too)
 ## Build OpenTracing package and tracers
-  && buildDeps=" \
-    build-essential \
-    cmake \
-    git \
-    ca-certificates \
-    wget \
-    golang \
-  " \
-  && apt-get update \
-  && apt-get install --no-install-recommends --no-install-suggests -y $buildDeps \
-## opentracing-cpp
-  && git clone https://github.com/opentracing/opentracing-cpp.git \
-  && cd opentracing-cpp \
-  && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release .. \
-  && make && make install \
-# only use static libraries
-  && rm /usr/local/lib/libopentracing.so* \
-  && cd "$tempDir" \
-# zipkin-cpp-opentracing
-  && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
-  && git clone https://github.com/rnburn/zipkin-cpp-opentracing.git \
-  && cd zipkin-cpp-opentracing \
-  && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release .. \
-  && make && make install \
-  && cd "$tempDir" \
-# gRPC
-  && git clone -b v1.6.x https://github.com/grpc/grpc \
-  && cd grpc \
-  && git submodule update --init \
-  && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release .. \
-  && make && make install \
-  && cd "$tempDir" \
-# TODO: lightstep-tracer-cpp
-# nginx-opentracing
-  && git clone https://github.com/rnburn/nginx-opentracing.git \
-	\
-	&& dpkgArch="$(dpkg --print-architecture)" \
-  && nginxPackage=" nginx=${NGINX_VERSION} " \
-  && nginxAddOnPackages=" \
-		nginx-module-xslt=${NGINX_VERSION} \
-		nginx-module-geoip=${NGINX_VERSION} \
-		nginx-module-image-filter=${NGINX_VERSION} \
-		nginx-module-njs=${NJS_VERSION} \
-	" \
-  && nginxPackages="${nginxPackage} ${nginxAddOnPackages}" \
-# let's build binaries from the published source packages
-	&& echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
-	\
-# save list of currently-installed packages so build dependencies can be cleanly removed later
-	&& savedAptMark="$(apt-mark showmanual)" \
-	\
-# build .deb files from upstream's source packages (which are verified by apt-get)
-	&& apt-get update \
-	&& apt-get build-dep -y $nginxPackages \
-  && ( \
-		cd "$tempDir" \
-    && apt-get source $nginxPackage \
-    && cd nginx-${NGINX_VERSION%-*} \
-    && sed -i -e "s#--with-cc-opt#--add-module=${tempDir}/nginx-opentracing --with-cc-opt#g" debian/rules \
-    && export NGINX_OPENTRACING_VENDOR="ZIPKIN" \
-		&& DEB_BUILD_OPTIONS="nocheck parallel=$(nproc)" \
-      dpkg-buildpackage -us -uc \
-  ) \
-	&& ( \
-		cd "$tempDir" \
-		&& DEB_BUILD_OPTIONS="nocheck parallel=$(nproc)" \
-			apt-get source --compile $nginxAddOnPackages \
-	) \
-# we don't remove APT lists here because they get re-downloaded and removed later
+  && apt-get install --no-install-recommends --no-install-suggests -y \
+              build-essential \
+              cmake \
+              git \
+              ca-certificates \
+              pkg-config \
+              wget \
+              golang \
+              libz-dev \
+              automake \
+              autogen \
+              autoconf \
+              libtool \
 	\
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
 	\
-# create a temporary local APT repo to install from (so that dependency resolution can be handled by APT, as it should be)
-	&& ls -lAFh "$tempDir" \
-	&& ( cd "$tempDir" && dpkg-scanpackages . > Packages ) \
-	&& grep '^Package: ' "$tempDir/Packages" \
-	&& echo "deb [ trusted=yes ] file://$tempDir ./" > /etc/apt/sources.list.d/temp.list \
-# work around the following APT issue by using "Acquire::GzipIndexes=false" (overriding "/etc/apt/apt.conf.d/docker-gzip-indexes")
-#   Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
-#   ...
-#   E: Failed to fetch store:/var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages  Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
-	&& apt-get -o Acquire::GzipIndexes=false update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y \
-						$nginxPackages \
-						gettext-base \
-	&& rm -rf /var/lib/apt/lists/* \
-	\
-# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
+## Build opentracing-cpp
+  && git clone https://github.com/opentracing/opentracing-cpp.git \
+  && cd opentracing-cpp \
+  && mkdir .build && cd .build \
+  && cmake -DCMAKE_BUILD_TYPE=Release .. \
+  && make && make install \
+  && cd "$tempDir" \
+## Build zipkin-cpp-opentracing
+  && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
+  && git clone https://github.com/rnburn/zipkin-cpp-opentracing.git \
+  && cd zipkin-cpp-opentracing \
+  && mkdir .build && cd .build \
+  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release .. \
+  && make && make install \
+  && cd "$tempDir" \
+### Build gRPC
+ && git clone -b v1.4.x https://github.com/grpc/grpc \
+ && cd grpc \
+ && git submodule update --init \
+ && make HAS_SYSTEM_PROTOBUF=false && make install \
+# && mkdir .build && cd .build \
+# && cmake -DCMAKE_BUILD_TYPE=Release -DgRPC_ZLIB_PROVIDER=package .. \
+ && make && make install \
+ && cd "$tempDir" \
+### Build lightstep-tracer-cpp
+# && apt-get install --no-install-recommends --no-install-suggests -y \
+#              libprotobuf-dev \
+#              protobuf-compiler \
+ && git clone https://github.com/lightstep/lightstep-tracer-cpp.git \
+ && cd lightstep-tracer-cpp \
+ && mkdir .build && cd .build \
+ && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release .. \
+ && make && make install \
+ && cd "$tempDir" \
+### Get nginx-opentracing source
+  && git clone -b dymod https://github.com/rnburn/nginx-opentracing.git \
+## Build nginx-opentracing modules
+  && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
+  && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
+  && apt-get update \
+  && apt-get build-dep -y nginx=${NGINX_VERSION} \
+  && wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
+  && tar zxf nginx-release-${NGINX_VERSION}.tar.gz \
+  && cd nginx-release-${NGINX_VERSION} \
+  && NGINX_MODULES_PATH=$(nginx -V 2>&1 | grep -oP "modules-path=\K[^\s]*") \
+  && auto/configure \
+        --with-compat \
+        --add-dynamic-module=${tempDir}/nginx-opentracing/opentracing \
+        --add-dynamic-module=${tempDir}/nginx-opentracing/zipkin \
+        --add-dynamic-module=${tempDir}/nginx-opentracing/lightstep \
+  && make modules \
+  && cp objs/ngx_http_opentracing_module.so $NGINX_MODULES_PATH/ \
+  && cp objs/ngx_http_zipkin_module.so $NGINX_MODULES_PATH/ \
+  && cp objs/ngx_http_lightstep_module.so $NGINX_MODULES_PATH/ \
+	# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
 	&& if [ -n "$tempDir" ]; then \
-    apt-get remove --purge --auto-remove -y $buildDeps \
-		&& apt-get purge -y --auto-remove \
+		apt-get purge -y --auto-remove \
 		&& rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
 	fi
 
