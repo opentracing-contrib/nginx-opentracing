@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	opentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
@@ -9,13 +10,15 @@ import (
 )
 
 const (
-	serviceName        = "hello-server"
-	hostPort           = "0.0.0.0:0"
-	debug              = false
-	zipkinHTTPEndpoint = "http://localhost:9411/api/v1/spans"
-	sameSpan           = false
-	traceID128Bit      = true
+	serviceName   = "hello-server"
+	hostPort      = "0.0.0.0:0"
+	debug         = false
+	sameSpan      = false
+	traceID128Bit = true
 )
+
+var collectorHost = flag.String("collector_host", "localhost", "Host for Zipkin Collector")
+var collectorPort = flag.String("collector_port", "9411", "Port for Zipkin Collector")
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	wireContext, _ := opentracing.GlobalTracer().Extract(
@@ -29,6 +32,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	flag.Parse()
+  zipkinHTTPEndpoint := "http://" + *collectorHost + ":" + *collectorPort + "/api/v1/spans"
 	collector, err := zipkin.NewHTTPCollector(zipkinHTTPEndpoint)
 	if err != nil {
 		fmt.Printf("unable to create Zipkin HTTP collector: %+v\n", err)
