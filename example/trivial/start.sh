@@ -1,7 +1,8 @@
 #!/bin/bash
 
-go build go/server.go
 ./server &
-echo $! >> backend_pids
-mkdir -p nginx/logs
-nginx -p nginx/ -c nginx.conf
+envsubst '\$ZIPKIN_PORT_9411_TCP_ADDR \$ZIPKIN_PORT_9411_TCP_PORT' < /app/nginx.conf > /etc/nginx/nginx.conf
+nginx
+while /bin/true; do
+  sleep 50
+done
