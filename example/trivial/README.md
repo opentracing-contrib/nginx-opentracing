@@ -1,6 +1,6 @@
-A minimal OpenTracing example demonstrating usage of the nginx-opentracing docker 
-image. It features Nginx as a reverse-proxy in front a Go server. Use these
-commands to run:
+A minimal OpenTracing example demonstrating usage of the nginx-opentracing
+docker image with zipkin. It features Nginx as a reverse-proxy in front a Go
+server. Use these commands to run:
 ```bash
 docker build -t nginx-example-trivial .
 docker run -d -p 9411:9411 --name zipkin openzipkin/zipkin
