@@ -11,7 +11,7 @@ Dependencies
 [LightStep](https://github.com/lightstep/lightstep-tracer-cpp).
 - Source for [Nginx 1.9.13 or later](http://nginx.org/).
 
-Dependencies
+Docker
 ------------
 A [Dockerfile](docker/Dockerfile) is provided to support using nginx with OpenTracing
 in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
