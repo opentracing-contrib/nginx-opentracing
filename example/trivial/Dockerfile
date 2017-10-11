@@ -1,4 +1,4 @@
-FROM nginx-opentracing
+FROM rnburn/nginx-opentracing
 
 WORKDIR /app
 ADD . /app
