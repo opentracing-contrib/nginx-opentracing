@@ -9,15 +9,25 @@ Dependencies
 - A C++ OpenTracing Tracer. It currently works with either
 [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) or
 [LightStep](https://github.com/lightstep/lightstep-tracer-cpp).
-- Source for [Nginx 1.0.x](http://nginx.org/).
+- Source for [Nginx 1.9.13 or later](http://nginx.org/).
+
+Dependencies
+------------
+A [Dockerfile](docker/Dockerfile) is provided to support using nginx with OpenTracing
+in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
+See the [here](examples/) for examples of how to use it.
 
 Building
 --------
 ```
-$ tar zxvf nginx-1.0.x.tar.gz
-$ cd nginx-1.0.x
+$ tar zxvf nginx-1.9.x.tar.gz
+$ cd nginx-1.9.x
 $ export NGINX_OPENTRACING_VENDOR="ZIPKIN" # or export NGINX_OPENTRACING_VENDOR="LIGHTSTEP"
-$ ./configure --add-module=/absolute/path/to/nginx-opentracing
+$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing \
+              # To enable tracing with Zipkin
+              --add-dynamic-module=/absolute/path/to/nginx-opentracing/zipkin \  
+              # To enable tracing with LightStep
+              --add-dynamic-module=/absolute/path/to/nginx-opentracing/lightstep
 $ make && sudo make install
 ```
 
@@ -25,9 +35,18 @@ $ make && sudo make install
 Getting Started
 ---------------
 ```
+# Load the OpenTracing dynamic module.
+load_module modules/ngx_http_opentracing_module.so;
+
+# Load a vendor OpenTracing dynamic module.
+# For example,
+#   load_module modules/ngx_http_lightstep_module.so;
+# or
+#   load_module modules/ngx_http_zipkin_module.so;
+
 http {
   # Configure your vendor's tracer.
-  # For Example,
+  # For example,
   #     lightstep_access_token ACCESSTOKEN;
   #     ....
   # or
