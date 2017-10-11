@@ -15,7 +15,7 @@ Docker
 ------------
 A [Dockerfile](docker/Dockerfile) is provided to support using nginx with OpenTracing
 in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
-See the [here](example/) for examples of how to use it.
+See [here](example/) for examples of how to use it.
 
 Building
 --------
