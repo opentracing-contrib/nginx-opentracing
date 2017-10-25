@@ -1,6 +1,7 @@
 #pragma once
 
 #include <opentracing/tracer.h>
+#include <chrono>
 #include <exception>
 #include <memory>
 #include "opentracing_conf.h"
@@ -38,7 +39,9 @@ class OpenTracingRequestInstrumentor {
   std::unique_ptr<opentracing::Span> request_span_;
   std::unique_ptr<opentracing::Span> span_;
 
-  void on_exit_block();
+  void on_exit_block(std::chrono::steady_clock::time_point finish_timestamp =
+                         std::chrono::steady_clock::now());
+
   void set_request_span_context();
 };
 }  // namespace ngx_opentracing
