@@ -37,7 +37,7 @@ RUN set -x \
   && git clone https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release .. \
+  && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
 ## Build zipkin-cpp-opentracing
@@ -45,7 +45,7 @@ RUN set -x \
   && git clone https://github.com/rnburn/zipkin-cpp-opentracing.git \
   && cd zipkin-cpp-opentracing \
   && mkdir .build && cd .build \
-  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release .. \
+  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
 ### Build gRPC
@@ -64,11 +64,11 @@ RUN set -x \
  && git clone https://github.com/lightstep/lightstep-tracer-cpp.git \
  && cd lightstep-tracer-cpp \
  && mkdir .build && cd .build \
- && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release .. \
+ && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
  && make && make install \
  && cd "$tempDir" \
 ### Get nginx-opentracing source
-  && git clone -b dymod https://github.com/rnburn/nginx-opentracing.git \
+  && git clone https://github.com/opentracing-contrib/nginx-opentracing.git \
 ## Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
