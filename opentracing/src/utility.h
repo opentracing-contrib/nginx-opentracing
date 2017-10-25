@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <string>
 
 extern "C" {
@@ -30,6 +31,14 @@ ngx_str_t to_ngx_str(ngx_pool_t *pool, const std::string &s);
 //------------------------------------------------------------------------------
 // Convert a std::string to an ngx_str_t and transforms it to lowercase.
 ngx_str_t to_lower_ngx_str(ngx_pool_t *pool, const std::string &s);
+
+//------------------------------------------------------------------------------
+// to_system_timestamp
+//------------------------------------------------------------------------------
+// Converts the epoch denoted by epoch_seconds, epoch_milliseconds to an
+// std::chrono::system_clock::time_point duration from the epoch.
+std::chrono::system_clock::time_point to_system_timestamp(
+    time_t epoch_seconds, ngx_msec_t epoch_milliseconds);
 
 //------------------------------------------------------------------------------
 // for_each

@@ -1,6 +1,6 @@
 #include "opentracing_request_instrumentor.h"
-#include "utility.h"
 #include <iostream>
+#include "utility.h"
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -87,7 +87,9 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
                  "starting opentracing request span for %p", request_);
   request_span_ = tracer->StartSpan(
       get_request_operation_name(request_, core_loc_conf, loc_conf_),
-      {opentracing::ChildOf(parent_span_context.get())});
+      {opentracing::ChildOf(parent_span_context.get()),
+       opentracing::StartTimestamp{
+           to_system_timestamp(request->start_sec, request->start_msec)}});
   if (!request_span_) throw InstrumentationFailure{};
 
   if (loc_conf_->enable_locations) {
@@ -134,7 +136,8 @@ void OpenTracingRequestInstrumentor::on_change_block(
 //------------------------------------------------------------------------------
 // on_exit_block
 //------------------------------------------------------------------------------
-void OpenTracingRequestInstrumentor::on_exit_block() {
+void OpenTracingRequestInstrumentor::on_exit_block(
+    std::chrono::steady_clock::time_point finish_timestamp) {
   // Set default and custom tags for the block. Many nginx variables won't be
   // available when a block is first entered, so set tags when the block is
   // exited instead.
@@ -145,7 +148,7 @@ void OpenTracingRequestInstrumentor::on_exit_block() {
     add_script_tags(main_conf_->tags, request_, *span_);
     add_script_tags(loc_conf_->tags, request_, *span_);
     add_status_tags(request_, *span_);
-    span_->Finish();
+    span_->Finish({opentracing::FinishTimestamp{finish_timestamp}});
   } else {
     add_script_tags(loc_conf_->tags, request_, *request_span_);
   }
@@ -166,13 +169,21 @@ void OpenTracingRequestInstrumentor::set_request_span_context() {
 // on_log_request
 //------------------------------------------------------------------------------
 void OpenTracingRequestInstrumentor::on_log_request() {
-  on_exit_block();
+  // Follows the same logic to determine the time point that the request is
+  // finished as that for NGINX's $request_time variable. See
+  // http://nginx.org/en/docs/http/ngx_http_log_module.html#var_request_time
+  auto timepoint = ngx_timeofday();
+  auto finish_timestamp =
+      opentracing::convert_time_point<std::chrono::steady_clock>(
+          to_system_timestamp(timepoint->sec, timepoint->msec));
+
+  on_exit_block(finish_timestamp);
 
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
                  "finishing opentracing request span for %p", request_);
   add_status_tags(request_, *request_span_);
   add_script_tags(main_conf_->tags, request_, *request_span_);
 
-  request_span_->Finish();
+  request_span_->Finish({opentracing::FinishTimestamp{finish_timestamp}});
 }
 }  // namespace ngx_opentracing
