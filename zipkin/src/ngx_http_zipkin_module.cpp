@@ -1,6 +1,6 @@
-#include <cstdlib>
 #include <opentracing/tracer.h>
 #include <zipkin/opentracing.h>
+#include <cstdlib>
 
 extern "C" {
 #include <nginx.h>
@@ -30,8 +30,7 @@ struct zipkin_main_conf_t {
 //------------------------------------------------------------------------------
 // zipkin_init_worker
 //------------------------------------------------------------------------------
-static ngx_int_t
-zipkin_init_worker(ngx_cycle_t* cycle) {
+static ngx_int_t zipkin_init_worker(ngx_cycle_t *cycle) {
   auto main_conf = static_cast<zipkin_main_conf_t *>(
       ngx_http_cycle_get_module_main_conf(cycle, ngx_http_zipkin_module));
   zipkin::ZipkinOtTracerOptions tracer_options;
@@ -47,8 +46,7 @@ zipkin_init_worker(ngx_cycle_t* cycle) {
     tracer_options.service_name = "nginx";
   auto tracer = makeZipkinOtTracer(tracer_options);
   if (!tracer) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                  "Failed to create Zipkin tracer");
+    ngx_log_error(NGX_LOG_ERR, cycle->log, 0, "Failed to create Zipkin tracer");
     return NGX_OK;
   }
   opentracing::Tracer::InitGlobal(std::move(tracer));
@@ -71,46 +69,42 @@ static void *create_zipkin_main_conf(ngx_conf_t *conf) {
 // zipkin_module_ctx
 //------------------------------------------------------------------------------
 static ngx_http_module_t zipkin_module_ctx = {
-    nullptr,                      /* preconfiguration */
-    nullptr,      /* postconfiguration */
+    nullptr,                 /* preconfiguration */
+    nullptr,                 /* postconfiguration */
     create_zipkin_main_conf, /* create main configuration */
-    nullptr,                      /* init main configuration */
-    nullptr,                      /* create server configuration */
-    nullptr,                      /* merge server configuration */
-    nullptr,  /* create location configuration */
-    nullptr    /* merge location configuration */
+    nullptr,                 /* init main configuration */
+    nullptr,                 /* create server configuration */
+    nullptr,                 /* merge server configuration */
+    nullptr,                 /* create location configuration */
+    nullptr                  /* merge location configuration */
 };
 
 //------------------------------------------------------------------------------
 // zipkin_commands
 //------------------------------------------------------------------------------
 static ngx_command_t zipkin_commands[] = {
-    {ngx_string("zipkin_service_name"),
-     NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
+    {ngx_string("zipkin_service_name"), NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_str_slot, NGX_HTTP_MAIN_CONF_OFFSET,
      offsetof(zipkin_main_conf_t, service_name), nullptr},
-    {ngx_string("zipkin_collector_host"),
-     NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
+    {ngx_string("zipkin_collector_host"), NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_str_slot, NGX_HTTP_MAIN_CONF_OFFSET,
      offsetof(zipkin_main_conf_t, collector_host), nullptr},
-    {ngx_string("zipkin_collector_port"),
-     NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
+    {ngx_string("zipkin_collector_port"), NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_str_slot, NGX_HTTP_MAIN_CONF_OFFSET,
      offsetof(zipkin_main_conf_t, collector_port), nullptr}};
 
 //------------------------------------------------------------------------------
 // ngx_http_zipkin_module
 //------------------------------------------------------------------------------
-ngx_module_t ngx_http_zipkin_module = {
-    NGX_MODULE_V1,
-    &zipkin_module_ctx, /* module context */
-    zipkin_commands,    /* module directives */
-    NGX_HTTP_MODULE,         /* module type */
-    nullptr,                 /* init master */
-    nullptr,                 /* init module */
-    zipkin_init_worker,                 /* init process */
-    nullptr,                 /* init thread */
-    nullptr,                 /* exit thread */
-    nullptr,                 /* exit process */
-    nullptr,                 /* exit master */
-    NGX_MODULE_V1_PADDING};
+ngx_module_t ngx_http_zipkin_module = {NGX_MODULE_V1,
+                                       &zipkin_module_ctx, /* module context */
+                                       zipkin_commands, /* module directives */
+                                       NGX_HTTP_MODULE, /* module type */
+                                       nullptr,         /* init master */
+                                       nullptr,         /* init module */
+                                       zipkin_init_worker, /* init process */
+                                       nullptr,            /* init thread */
+                                       nullptr,            /* exit thread */
+                                       nullptr,            /* exit process */
+                                       nullptr,            /* exit master */
+                                       NGX_MODULE_V1_PADDING};

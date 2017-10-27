@@ -1,6 +1,6 @@
-#include <cstdlib>
-#include <opentracing/tracer.h>
 #include <lightstep/tracer.h>
+#include <opentracing/tracer.h>
+#include <cstdlib>
 
 extern "C" {
 #include <nginx.h>
@@ -47,8 +47,7 @@ static ngx_int_t lightstep_module_init(ngx_conf_t *cf) {
 //------------------------------------------------------------------------------
 // lightstep_init_worker
 //------------------------------------------------------------------------------
-static ngx_int_t
-lightstep_init_worker(ngx_cycle_t* cycle) {
+static ngx_int_t lightstep_init_worker(ngx_cycle_t *cycle) {
   auto main_conf = static_cast<lightstep_main_conf_t *>(
       ngx_http_cycle_get_module_main_conf(cycle, ngx_http_lightstep_module));
   lightstep::LightStepTracerOptions tracer_options;
@@ -96,40 +95,39 @@ static void *create_lightstep_main_conf(ngx_conf_t *conf) {
 // lightstep_module_ctx
 //------------------------------------------------------------------------------
 static ngx_http_module_t lightstep_module_ctx = {
-    nullptr,                      /* preconfiguration */
+    nullptr,                    /* preconfiguration */
     lightstep_module_init,      /* postconfiguration */
     create_lightstep_main_conf, /* create main configuration */
-    nullptr,                      /* init main configuration */
-    nullptr,                      /* create server configuration */
-    nullptr,                      /* merge server configuration */
-    nullptr,  /* create location configuration */
-    nullptr    /* merge location configuration */
+    nullptr,                    /* init main configuration */
+    nullptr,                    /* create server configuration */
+    nullptr,                    /* merge server configuration */
+    nullptr,                    /* create location configuration */
+    nullptr                     /* merge location configuration */
 };
 
 //------------------------------------------------------------------------------
 // lightstep_commands
 //------------------------------------------------------------------------------
 static ngx_command_t lightstep_commands[] = {
-    {ngx_string("lightstep_access_token"),
-     NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
+    {ngx_string("lightstep_access_token"), NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_str_slot, NGX_HTTP_MAIN_CONF_OFFSET,
      offsetof(lightstep_main_conf_t, access_token), nullptr},
     {ngx_string("lightstep_component_name"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
-     offsetof(lightstep_main_conf_t, component_name), nullptr},
+     NGX_HTTP_MAIN_CONF_OFFSET, offsetof(lightstep_main_conf_t, component_name),
+     nullptr},
     {ngx_string("lightstep_collector_host"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
-     offsetof(lightstep_main_conf_t, collector_host), nullptr},
+     NGX_HTTP_MAIN_CONF_OFFSET, offsetof(lightstep_main_conf_t, collector_host),
+     nullptr},
     {ngx_string("lightstep_collector_plaintext"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_flag_slot,
      NGX_HTTP_MAIN_CONF_OFFSET,
      offsetof(lightstep_main_conf_t, collector_plaintext), nullptr},
     {ngx_string("lightstep_collector_port"),
      NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1, ngx_conf_set_str_slot,
-     NGX_HTTP_MAIN_CONF_OFFSET,
-     offsetof(lightstep_main_conf_t, collector_port), nullptr}};
+     NGX_HTTP_MAIN_CONF_OFFSET, offsetof(lightstep_main_conf_t, collector_port),
+     nullptr}};
 
 //------------------------------------------------------------------------------
 // ngx_http_lightstep_module
@@ -138,12 +136,12 @@ ngx_module_t ngx_http_lightstep_module = {
     NGX_MODULE_V1,
     &lightstep_module_ctx, /* module context */
     lightstep_commands,    /* module directives */
-    NGX_HTTP_MODULE,         /* module type */
-    nullptr,                 /* init master */
-    nullptr,                 /* init module */
-    lightstep_init_worker,                 /* init process */
-    nullptr,                 /* init thread */
-    nullptr,                 /* exit thread */
-    nullptr,                 /* exit process */
-    nullptr,                 /* exit master */
+    NGX_HTTP_MODULE,       /* module type */
+    nullptr,               /* init master */
+    nullptr,               /* init module */
+    lightstep_init_worker, /* init process */
+    nullptr,               /* init thread */
+    nullptr,               /* exit thread */
+    nullptr,               /* exit process */
+    nullptr,               /* exit master */
     NGX_MODULE_V1_PADDING};
