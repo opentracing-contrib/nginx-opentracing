@@ -62,7 +62,7 @@ static void *create_zipkin_main_conf(ngx_conf_t *conf) {
   auto main_conf = static_cast<zipkin_main_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(zipkin_main_conf_t)));
   // Default initialize members.
-  *main_conf = zipkin_main_conf_t{};
+  *main_conf = zipkin_main_conf_t();
   if (!main_conf) return nullptr;
   return main_conf;
 }
