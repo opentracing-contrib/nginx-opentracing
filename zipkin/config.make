@@ -3,5 +3,5 @@
 # files. Hence, we hack the makefile to add it for just our sources.
 for src_file in $ZIPKIN_NGX_SRCS; do
   obj_file="$NGX_OBJS/addon/src/`basename $src_file .cpp`.o"
-  echo "$obj_file : CFLAGS += --std=c++11 -Wno-constexpr-not-const" >> $NGX_MAKEFILE
+  echo "$obj_file : CFLAGS += --std=c++11" >> $NGX_MAKEFILE
 done
