@@ -1,7 +1,7 @@
-#include "utility.h"
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
 #include <system_error>
+#include "utility.h"
 using opentracing::expected;
 using opentracing::make_unexpected;
 using opentracing::string_view;
@@ -92,7 +92,7 @@ class NgxHeaderCarrierWriter : public opentracing::HTTPHeadersWriter {
  public:
   NgxHeaderCarrierWriter(ngx_http_request_t *request,
                          std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers)
-      : request_{request}, headers_{headers} {}
+      : request_{request}, headers_(headers) {}
 
   expected<void> Set(string_view key, string_view value) const override {
     auto ngx_key = to_lower_ngx_str(request_->pool, key);
@@ -117,7 +117,7 @@ class NgxHeaderCarrierWriter : public opentracing::HTTPHeadersWriter {
   ngx_http_request_t *request_;
   std::vector<std::pair<ngx_str_t, ngx_str_t>> &headers_;
 };
-}
+}  // namespace
 
 //------------------------------------------------------------------------------
 // inject_span_context
