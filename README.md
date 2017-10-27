@@ -22,7 +22,6 @@ Building
 ```
 $ tar zxvf nginx-1.9.x.tar.gz
 $ cd nginx-1.9.x
-$ export NGINX_OPENTRACING_VENDOR="ZIPKIN" # or export NGINX_OPENTRACING_VENDOR="LIGHTSTEP"
 $ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing \
               # To enable tracing with Zipkin
               --add-dynamic-module=/absolute/path/to/nginx-opentracing/zipkin \  
