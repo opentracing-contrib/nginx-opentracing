@@ -15,7 +15,6 @@ namespace ngx_opentracing {
 namespace {
 class OpenTracingContext {
  public:
-
   void on_enter_block(ngx_http_request_t *request);
   void on_log_request(ngx_http_request_t *request);
 
@@ -23,7 +22,7 @@ class OpenTracingContext {
   std::unordered_map<const ngx_http_request_t *, OpenTracingRequestInstrumentor>
       active_instrumentors_;
 };
-}
+}  // namespace
 
 //------------------------------------------------------------------------------
 // get_handler_context

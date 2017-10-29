@@ -1,6 +1,6 @@
-#include "utility.h"
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
+#include "utility.h"
 using opentracing::expected;
 using opentracing::make_unexpected;
 using opentracing::string_view;
@@ -41,7 +41,7 @@ class NgxHeaderCarrierReader : public opentracing::HTTPHeadersReader {
  private:
   const ngx_http_request_t *request_;
 };
-}
+}  // namespace
 
 //------------------------------------------------------------------------------
 // extract_span_context

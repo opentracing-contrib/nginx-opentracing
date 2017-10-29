@@ -33,6 +33,7 @@ RUN set -x \
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
 	\
+  && cd "$tempDir" \
 ## Build opentracing-cpp
   && git clone https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
