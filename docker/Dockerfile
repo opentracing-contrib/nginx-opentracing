@@ -27,7 +27,6 @@ RUN set -x \
               autogen \
               autoconf \
               libtool \
-	\
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
@@ -66,6 +65,15 @@ RUN set -x \
  && cd lightstep-tracer-cpp \
  && mkdir .build && cd .build \
  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+ && make && make install \
+ && cd "$tempDir" \
+### Build Jaeger cpp-client
+ && git clone https://github.com/isaachier/cpp-client.git jaeger-cpp-client \
+ && cd jaeger-cpp-client \
+ && mkdir .build && cd .build \
+ && cmake -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_TESTING=OFF \
+          -DJAEGERTRACING_WITH_YAML_CPP=OFF .. \
  && make && make install \
  && cd "$tempDir" \
 ### Get nginx-opentracing source
