@@ -94,7 +94,8 @@ RUN set -x \
         --add-dynamic-module=${tempDir}/nginx-opentracing/zipkin \
         --add-dynamic-module=${tempDir}/nginx-opentracing/lightstep \
         --add-dynamic-module=${tempDir}/nginx-opentracing/jaeger \
-        --with-cpp="-I$HUNTER_INSTALL_DIR/include -L$HUNTER_INSTALL_DIR/lib" \
+        --with-cc-opt="-I$HUNTER_INSTALL_DIR/include" \
+        --with-ld-opt="-L$HUNTER_INSTALL_DIR/lib" \
   && make modules \
   && cp objs/ngx_http_opentracing_module.so $NGINX_MODULES_PATH/ \
   && cp objs/ngx_http_zipkin_module.so $NGINX_MODULES_PATH/ \
