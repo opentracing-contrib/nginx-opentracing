@@ -75,9 +75,10 @@ RUN set -x \
           -DBUILD_TESTING=OFF \
           -DJAEGERTRACING_WITH_YAML_CPP=OFF .. \
  && make && make install \
+ && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
  && cd "$tempDir" \
 ### Get nginx-opentracing source
-  && git clone https://github.com/opentracing-contrib/nginx-opentracing.git \
+  && git clone https://github.com/isaachier/nginx-opentracing.git \
 ## Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
@@ -92,10 +93,13 @@ RUN set -x \
         --add-dynamic-module=${tempDir}/nginx-opentracing/opentracing \
         --add-dynamic-module=${tempDir}/nginx-opentracing/zipkin \
         --add-dynamic-module=${tempDir}/nginx-opentracing/lightstep \
+        --add-dynamic-module=${tempDir}/nginx-opentracing/jaeger \
+        --with-cpp="-I$HUNTER_INSTALL_DIR/include -L$HUNTER_INSTALL_DIR/lib" \
   && make modules \
   && cp objs/ngx_http_opentracing_module.so $NGINX_MODULES_PATH/ \
   && cp objs/ngx_http_zipkin_module.so $NGINX_MODULES_PATH/ \
   && cp objs/ngx_http_lightstep_module.so $NGINX_MODULES_PATH/ \
+  && cp objs/ngx_http_jaeger_module.so $NGINX_MODULES_PATH/ \
 	# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
 	&& if [ -n "$tempDir" ]; then \
 		apt-get purge -y --auto-remove \
