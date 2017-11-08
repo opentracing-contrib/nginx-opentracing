@@ -27,7 +27,6 @@ RUN set -x \
               autogen \
               autoconf \
               libtool \
-	\
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
@@ -68,6 +67,16 @@ RUN set -x \
  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
  && make && make install \
  && cd "$tempDir" \
+### Build Jaeger cpp-client
+ && git clone https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
+ && cd jaeger-cpp-client \
+ && mkdir .build && cd .build \
+ && cmake -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_TESTING=OFF \
+          -DJAEGERTRACING_WITH_YAML_CPP=OFF .. \
+ && make && make install \
+ && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
+ && cd "$tempDir" \
 ### Get nginx-opentracing source
   && git clone https://github.com/opentracing-contrib/nginx-opentracing.git \
 ## Build nginx-opentracing modules
@@ -84,10 +93,14 @@ RUN set -x \
         --add-dynamic-module=${tempDir}/nginx-opentracing/opentracing \
         --add-dynamic-module=${tempDir}/nginx-opentracing/zipkin \
         --add-dynamic-module=${tempDir}/nginx-opentracing/lightstep \
+        --add-dynamic-module=${tempDir}/nginx-opentracing/jaeger \
+        --with-cc-opt="-I$HUNTER_INSTALL_DIR/include" \
+        --with-ld-opt="-L$HUNTER_INSTALL_DIR/lib" \
   && make modules \
   && cp objs/ngx_http_opentracing_module.so $NGINX_MODULES_PATH/ \
   && cp objs/ngx_http_zipkin_module.so $NGINX_MODULES_PATH/ \
   && cp objs/ngx_http_lightstep_module.so $NGINX_MODULES_PATH/ \
+  && cp objs/ngx_http_jaeger_module.so $NGINX_MODULES_PATH/ \
 	# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
 	&& if [ -n "$tempDir" ]; then \
 		apt-get purge -y --auto-remove \
