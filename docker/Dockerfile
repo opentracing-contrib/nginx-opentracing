@@ -68,7 +68,7 @@ RUN set -x \
  && make && make install \
  && cd "$tempDir" \
 ### Build Jaeger cpp-client
- && git clone https://github.com/isaachier/cpp-client.git jaeger-cpp-client \
+ && git clone https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
  && cd jaeger-cpp-client \
  && mkdir .build && cd .build \
  && cmake -DCMAKE_BUILD_TYPE=Release \
@@ -78,7 +78,7 @@ RUN set -x \
  && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
  && cd "$tempDir" \
 ### Get nginx-opentracing source
-  && git clone https://github.com/isaachier/nginx-opentracing.git \
+  && git clone https://github.com/opentracing-contrib/nginx-opentracing.git \
 ## Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
