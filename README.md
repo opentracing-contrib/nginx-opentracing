@@ -6,8 +6,9 @@ Enable requests served by nginx for distributed tracing via [The OpenTracing Pro
 Dependencies
 ------------
 - The [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp)
-- A C++ OpenTracing Tracer. It currently works with either
-[Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) or
+- A C++ OpenTracing Tracer. It currently works with
+[Jaeger](https://github.com/jaegertracing/cpp-client),
+[Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing), or
 [LightStep](https://github.com/lightstep/lightstep-tracer-cpp).
 - Source for [Nginx 1.9.13 or later](http://nginx.org/).
 
@@ -23,6 +24,8 @@ Building
 $ tar zxvf nginx-1.9.x.tar.gz
 $ cd nginx-1.9.x
 $ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing \
+              # To enable tracing with Jaeger
+              --add-dynamic-module=/absolute/path/to/nginx-opentracing/jaeger \
               # To enable tracing with Zipkin
               --add-dynamic-module=/absolute/path/to/nginx-opentracing/zipkin \  
               # To enable tracing with LightStep
@@ -39,18 +42,23 @@ load_module modules/ngx_http_opentracing_module.so;
 
 # Load a vendor OpenTracing dynamic module.
 # For example,
-#   load_module modules/ngx_http_lightstep_module.so;
+#   load_module modules/ngx_http_jaeger_module.so;
 # or
 #   load_module modules/ngx_http_zipkin_module.so;
+# or
+#   load_module modules/ngx_http_lightstep_module.so;
 
 http {
   # Configure your vendor's tracer.
   # For example,
-  #     lightstep_access_token ACCESSTOKEN;
-  #     ....
+  #     jaeger_service_name my-nginx-server;
+  #     ...
   # or
   #     zipkin_collector_host localhost;
   #     ...
+  # or
+  #     lightstep_access_token ACCESSTOKEN;
+  #     ....
 
   # Enable tracing for all requests.
   opentracing on;
@@ -68,7 +76,10 @@ http {
 }
 ```
 
-See [Tutorial](doc/Tutorial.md) for a more complete example, [Reference](doc/Directives.md)
-for a list of available OpenTracing-related directives, and [LightStep](lightstep/doc/Directives.md)
-and [Zipkin](zipkin/doc/Directives.md) for a list of vendor tracing directives.
+See [Tutorial](doc/Tutorial.md) for a more complete example,
+[Reference](doc/Directives.md) for a list of available OpenTracing-related
+directives, and [Jaeger](jaeger/doc/Directives.md),
+[Zipkin](zipkin/doc/Directives.md), and
+[LightStep](lightstep/doc/Directives.md) for a list of vendor tracing
+directives.
 
