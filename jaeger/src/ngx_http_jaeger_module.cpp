@@ -118,7 +118,7 @@ ngx_int_t initWorker(ngx_cycle_t* cycle) {
     opentracing::Tracer::InitGlobal(tracer);
   } catch (const std::exception& e) {
     ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                  "Failed to create Jaeger tracer: ", e.what());
+                  "Failed to create Jaeger tracer: %s", e.what());
   }
   return NGX_OK;
 }
