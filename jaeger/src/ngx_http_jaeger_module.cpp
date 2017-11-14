@@ -15,17 +15,17 @@ namespace {
 
 struct Config {
   ngx_str_t serviceName;
-  ngx_flag_t disabled;
+  ngx_flag_t disabled = NGX_CONF_UNSET;
   // samplers::Config
   ngx_str_t samplerType;
   ngx_str_t samplerParam;
   ngx_str_t samplingServerURL;
-  ngx_uint_t samplerMaxOperations;
-  ngx_uint_t samplingRefreshIntervalSeconds;
+  ngx_uint_t samplerMaxOperations = NGX_CONF_UNSET_UINT;
+  ngx_uint_t samplingRefreshIntervalSeconds = NGX_CONF_UNSET_UINT;
   // reporters::Config
-  ngx_uint_t reporterQueueSize;
-  ngx_uint_t reporterBufferFlushIntervalSeconds;
-  ngx_flag_t reporterLogSpans;
+  ngx_uint_t reporterQueueSize = NGX_CONF_UNSET_UINT;
+  ngx_uint_t reporterBufferFlushIntervalSeconds = NGX_CONF_UNSET_UINT;
+  ngx_flag_t reporterLogSpans = NGX_CONF_UNSET;
   ngx_str_t reporterLocalAgentHostPort;
   // propagation::HeadersConfig
   ngx_str_t jaegerDebugHeader;
@@ -59,9 +59,41 @@ ngx_int_t moduleInit(ngx_conf_t* cf) {
 }
 
 ngx_int_t initWorker(ngx_cycle_t* cycle) {
-  auto* rawConfig = static_cast<Config*>(
+  auto rawConfig = static_cast<Config*>(
       ngx_http_cycle_get_module_main_conf(cycle, ngx_http_jaeger_module));
   try {
+    // Apply defaults.
+    if (rawConfig->disabled == NGX_CONF_UNSET) rawConfig->disabled = false;
+    // samplers::Config
+    if (!rawConfig->samplerType.data)
+      rawConfig->samplerType = ngx_string("remote");
+    if (!rawConfig->samplerParam.data)
+      rawConfig->samplerParam = ngx_string("0.001");
+    if (!rawConfig->samplingServerURL.data)
+      rawConfig->samplingServerURL = ngx_string("http://127.0.0.1:5778");
+    if (rawConfig->samplerMaxOperations == NGX_CONF_UNSET_UINT)
+      rawConfig->samplerMaxOperations = 2000;
+    if (rawConfig->samplingRefreshIntervalSeconds == NGX_CONF_UNSET_UINT)
+      rawConfig->samplingRefreshIntervalSeconds = 60;
+    // reporters::Config
+    if (rawConfig->reporterQueueSize == NGX_CONF_UNSET_UINT)
+      rawConfig->reporterQueueSize = 100;
+    if (rawConfig->reporterBufferFlushIntervalSeconds == NGX_CONF_UNSET_UINT)
+      rawConfig->reporterBufferFlushIntervalSeconds = 10;
+    if (rawConfig->reporterLogSpans == NGX_CONF_UNSET)
+      rawConfig->reporterLogSpans = false;
+    if (!rawConfig->reporterLocalAgentHostPort.data)
+      rawConfig->reporterLocalAgentHostPort = ngx_string("127.0.0.1:6831");
+    // propagation::HeadersConfig
+    if (!rawConfig->jaegerDebugHeader.data)
+      rawConfig->jaegerDebugHeader = ngx_string("jaeger-debug-id");
+    if (!rawConfig->jaegerBaggageHeader.data)
+      rawConfig->jaegerBaggageHeader = ngx_string("jaeger-baggage");
+    if (!rawConfig->traceContextHeaderName.data)
+      rawConfig->traceContextHeaderName = ngx_string("uber-trace-id");
+    if (!rawConfig->traceBaggageHeaderPrefix.data)
+      rawConfig->traceBaggageHeaderPrefix = ngx_string("uberctx-");
+
     const jaegertracing::Config config(
         rawConfig->disabled,
         jaegertracing::samplers::Config(
@@ -130,13 +162,13 @@ struct JaegerCommands {
     DEFINE_COMMAND(jaeger_sampler_type, samplerType, str);
     DEFINE_COMMAND(jaeger_sampler_param, samplerParam, str);
     DEFINE_COMMAND(jaeger_sampling_server_url, samplingServerURL, str);
-    DEFINE_COMMAND(jaeger_sampler_max_operations, samplerMaxOperations, str);
+    DEFINE_COMMAND(jaeger_sampler_max_operations, samplerMaxOperations, num);
     DEFINE_COMMAND(jaeger_sampling_refresh_interval_seconds,
-                   samplingRefreshIntervalSeconds, size);
+                   samplingRefreshIntervalSeconds, num);
     // reporters::Config
-    DEFINE_COMMAND(jaeger_reporter_queue_size, reporterQueueSize, size);
+    DEFINE_COMMAND(jaeger_reporter_queue_size, reporterQueueSize, num);
     DEFINE_COMMAND(jaeger_reporter_buffer_flush_interval_seconds,
-                   reporterBufferFlushIntervalSeconds, size)
+                   reporterBufferFlushIntervalSeconds, num)
     DEFINE_COMMAND(jaeger_reporter_log_spans, reporterLogSpans, flag);
     DEFINE_COMMAND(jaeger_reporter_local_agent_host_port,
                    reporterLocalAgentHostPort, str);
