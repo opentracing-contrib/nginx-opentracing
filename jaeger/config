@@ -7,9 +7,9 @@ ngx_module_srcs=" \
   $ngx_addon_dir/src/ngx_http_jaeger_module.cpp \
 "
 ngx_module_libs=" \
-  -ljaegertracing \
-  -lopentracing \
   -lthrift \
+  -lopentracing \
+  -ljaegertracing \
 "
 
 . auto/module
