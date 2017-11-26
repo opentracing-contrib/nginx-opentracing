@@ -19,7 +19,13 @@ Specifies whether or not to disable tracing.
 - **default**: `remote`
 - **context**: `http`
 
-Specifies the sampler to be used when sampling traces.
+Specifies the sampler to be used when sampling traces. The available samplers
+are: `const`, `probabilistic`, `ratelimiting`, `remote`. `const` sampling always
+sample or always ignore. `probabilistic` sampling will use a random number to
+check whether or not to sample the trace. `ratelimiting` sampling caps the
+number of traces at a given number per second. `remote` sampling allows the
+Jaeger backend to customize the sampling strategy based on throughput. The
+recommended default is `remote`.
 
 ### `jaeger_sampler_param`
 
@@ -28,7 +34,12 @@ Specifies the sampler to be used when sampling traces.
 - **context**: `http`
 
 Specifies the argument to be passed to the sampler constructor. Must be a
-number.
+number. For `const` this should be `0` to never sample and `1` to always sample.
+For `probabilistic`, this should be a number representing the percent to sample
+(i.e. 0.001 = 0.1%). For `ratelimiting` this should be the maximum number of
+traces to sample per second. For `remote` this represents the upfront
+probabilistic sampling rate to use for traces before determining throughput on
+the backend (i.e. 0.001 = 0.1%, as above).
 
 ### `jaeger_sampling_server_url`
 
