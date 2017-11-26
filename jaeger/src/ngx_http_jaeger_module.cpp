@@ -192,8 +192,6 @@ ngx_command_t* jaegerCommands() {
   return &commands._commands[0];
 }
 
-#undef DEFINE_COMMAND
-
 }  // anonymous namespace
 
 ngx_module_t ngx_http_jaeger_module = {NGX_MODULE_V1,
