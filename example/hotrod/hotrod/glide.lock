@@ -1,0 +1,126 @@
+hash: 5afb055333607d4ef6fdd4023a87611599776f05195058dd4bf7a8381dad0bec
+updated: 2017-10-20T13:24:51.186338625-07:00
+imports:
+- name: github.com/apache/thrift
+  version: b2a4d4ae21c789b689dd162deb819665567f481c
+  subpackages:
+  - lib/go/thrift
+- name: github.com/codahale/hdrhistogram
+  version: 3a0bb77429bd3a61596f5e8a3172445844342120
+- name: github.com/fsnotify/fsnotify
+  version: 4da3e2cfbabc9f751898f250b49f2439785783a1
+- name: github.com/go-kit/kit
+  version: a9ca6725cbbea455e61c6bc8a1ed28e81eb3493b
+  subpackages:
+  - metrics
+  - metrics/expvar
+  - metrics/generic
+  - metrics/internal/lv
+- name: github.com/hashicorp/hcl
+  version: 23c074d0eceb2b8a5bfdbb271ab780cde70f05a8
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/magiconair/properties
+  version: 8d7837e64d3c1ee4e54a880c5a920ab4316fc90a
+- name: github.com/mitchellh/mapstructure
+  version: 06020f85339e21b2478f756a78e295255ffa4d6a
+- name: github.com/opentracing-contrib/go-stdlib
+  version: 48e4d763b2fbcd10e666e6a1742acdf8cc2286ef
+  subpackages:
+  - nethttp
+- name: github.com/opentracing/opentracing-go
+  version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
+  subpackages:
+  - ext
+  - log
+- name: github.com/pelletier/go-toml
+  version: 2009e44b6f182e34d8ce081ac2767622937ea3d4
+- name: github.com/spf13/afero
+  version: e67d870304c4bca21331b02f414f970df13aa694
+  subpackages:
+  - mem
+- name: github.com/spf13/cast
+  version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
+- name: github.com/spf13/cobra
+  version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
+- name: github.com/spf13/jwalterweatherman
+  version: 12bd96e66386c1960ab0f74ced1362f66f552f7b
+- name: github.com/spf13/pflag
+  version: 97afa5e7ca8a08a383cb259e06636b5e2cc7897f
+- name: github.com/spf13/viper
+  version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
+- name: github.com/uber-go/atomic
+  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+- name: github.com/uber/jaeger-client-go
+  version: 3e3870040def0ebdaf65a003863fa64f5cb26139
+  subpackages:
+  - config
+  - internal/spanlog
+  - log
+  - rpcmetrics
+  - thrift-gen/agent
+  - thrift-gen/jaeger
+  - thrift-gen/sampling
+  - thrift-gen/zipkincore
+  - utils
+- name: github.com/uber/jaeger-lib
+  version: 3b2a9ad2a045881ab7a0f81d465be54c8292ee4f
+  subpackages:
+  - metrics
+  - metrics/go-kit
+  - metrics/go-kit/expvar
+- name: github.com/uber/tchannel-go
+  version: a7ad9ecb640b5f10a0395b38d6319175172b3ab2
+  subpackages:
+  - internal/argreader
+  - relay
+  - thrift
+  - thrift/gen-go/meta
+  - tnet
+  - tos
+  - trand
+  - typed
+- name: github.com/VividCortex/gohistogram
+  version: 51564d9861991fb0ad0f531c99ef602d0f9866e6
+- name: go.uber.org/atomic
+  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+- name: go.uber.org/multierr
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
+- name: go.uber.org/zap
+  version: 35aad584952c3e7020db7b839f6b102de6271f89
+  subpackages:
+  - buffer
+  - internal/bufferpool
+  - internal/color
+  - internal/exit
+  - zapcore
+- name: golang.org/x/net
+  version: aabf50738bcdd9b207582cbe796b59ed65d56680
+  subpackages:
+  - bpf
+  - context
+  - internal/iana
+  - internal/socket
+  - ipv4
+  - ipv6
+- name: golang.org/x/sys
+  version: 8dbc5d05d6edcc104950cc299a1ce6641235bc86
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: c01e4764d870b77f8abe5096ee19ad20d80e8075
+  subpackages:
+  - transform
+  - unicode/norm
+- name: gopkg.in/yaml.v2
+  version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
+testImports: []
