@@ -37,7 +37,8 @@ RUN set -x \
   && git clone https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+  && cmake -DCMAKE_BUILD_TYPE=Release \
+           -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
 ## Build zipkin-cpp-opentracing
@@ -48,25 +49,6 @@ RUN set -x \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
-### Build gRPC
- && git clone -b v1.4.x https://github.com/grpc/grpc \
- && cd grpc \
- && git submodule update --init \
- && make HAS_SYSTEM_PROTOBUF=false && make install \
-# && mkdir .build && cd .build \
-# && cmake -DCMAKE_BUILD_TYPE=Release -DgRPC_ZLIB_PROVIDER=package .. \
- && make && make install \
- && cd "$tempDir" \
-### Build lightstep-tracer-cpp
-# && apt-get install --no-install-recommends --no-install-suggests -y \
-#              libprotobuf-dev \
-#              protobuf-compiler \
- && git clone https://github.com/lightstep/lightstep-tracer-cpp.git \
- && cd lightstep-tracer-cpp \
- && mkdir .build && cd .build \
- && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
- && make && make install \
- && cd "$tempDir" \
 ### Build Jaeger cpp-client
  && git clone https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
  && cd jaeger-cpp-client \
@@ -77,9 +59,22 @@ RUN set -x \
  && make && make install \
  && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
  && cd "$tempDir" \
-### Get nginx-opentracing source
+### Build gRPC
+ && git clone -b v1.4.x https://github.com/grpc/grpc \
+ && cd grpc \
+ && git submodule update --init \
+ && make HAS_SYSTEM_PROTOBUF=false && make install \
+ && make && make install \
+ && cd "$tempDir" \
+### Build lightstep-tracer-cpp
+ && git clone https://github.com/lightstep/lightstep-tracer-cpp.git \
+ && cd lightstep-tracer-cpp \
+ && mkdir .build && cd .build \
+ && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+ && make && make install \
+ && cd "$tempDir" \
+### Build nginx-opentracing modules
   && git clone https://github.com/opentracing-contrib/nginx-opentracing.git \
-## Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
   && apt-get update \
@@ -102,10 +97,11 @@ RUN set -x \
   && cp objs/ngx_http_lightstep_module.so $NGINX_MODULES_PATH/ \
   && cp objs/ngx_http_jaeger_module.so $NGINX_MODULES_PATH/ \
 	# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
-	&& if [ -n "$tempDir" ]; then \
-		apt-get purge -y --auto-remove \
-		&& rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
-	fi
+  && rm -rf $HOME/.hunter \
+  && if [ -n "$tempDir" ]; then \
+  	apt-get purge -y --auto-remove \
+  	&& rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
+  fi
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
