@@ -102,10 +102,10 @@ RUN set -x \
   && cp objs/ngx_http_jaeger_module.so $NGINX_MODULES_PATH/ \
 	# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
   && rm -rf $HOME/.hunter \
-	&& if [ -n "$tempDir" ]; then \
-		apt-get purge -y --auto-remove \
-		&& rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
-	fi
+  && if [ -n "$tempDir" ]; then \
+  	apt-get purge -y --auto-remove \
+  	&& rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
+  fi
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
