@@ -37,11 +37,7 @@ RUN set -x \
   && git clone https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
-  # Jaeger links to opentracing statically even for it's shared library so
-  # we have to compile opentracing with position indenpendent code.
-  && cmake -DCMAKE_C_FLAGS="-fPIC" \
-           -DCMAKE_CXX_FLAGS="-fPIC" \
-           -DCMAKE_BUILD_TYPE=Release \
+  && cmake -DCMAKE_BUILD_TYPE=Release \
            -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
