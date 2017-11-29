@@ -43,7 +43,7 @@ RUN set -x \
 			\
 # purge leftovers from building them (including extra, unnecessary build deps)
   && apt-get purge -y --auto-remove \
-	&& rm -rf "$tempDir"
+  && rm -rf "$tempDir"
 
 EXPOSE 8080
 
