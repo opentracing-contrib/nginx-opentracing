@@ -1,0 +1,30 @@
+{
+  "name": "zipkin-nginx-js-example",
+  "version": "0.0.1",
+  "description": "Example project that shows how to use zipkin with javascript",
+  "repository": "https://github.com/openzipkin/zipkin-js",
+  "scripts": {
+    "lint": "eslint .",
+    "start": "node node/servers.js",
+    "browserify": "browserify node/browser.js -o bundle.js"
+  },
+  "dependencies": {
+    "browser-process-hrtime": "^0.1.2",
+    "express": "^4.14.0",
+    "rest": "^1.3.2",
+    "zipkin": "^0.11.1",
+    "zipkin-context-cls": "^0.11.0",
+    "zipkin-instrumentation-cujojs-rest": "^0.11.1",
+    "zipkin-instrumentation-express": "^0.11.1",
+    "zipkin-instrumentation-fetch": "^0.11.1",
+    "zipkin-transport-http": "^0.11.1"
+  },
+  "devDependencies": {
+    "browserify": "^14.1.0",
+    "eslint": "^3.4.0",
+    "eslint-config-airbnb": "^14.1.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^4.0.0",
+    "eslint-plugin-react": "^6.2.0"
+  }
+}
