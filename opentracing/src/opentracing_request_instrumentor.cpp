@@ -1,5 +1,4 @@
 #include "opentracing_request_instrumentor.h"
-#include <iostream>
 #include "utility.h"
 
 extern "C" {
@@ -169,13 +168,7 @@ void OpenTracingRequestInstrumentor::set_request_span_context() {
 // on_log_request
 //------------------------------------------------------------------------------
 void OpenTracingRequestInstrumentor::on_log_request() {
-  // Follows the same logic to determine the time point that the request is
-  // finished as that for NGINX's $request_time variable. See
-  // http://nginx.org/en/docs/http/ngx_http_log_module.html#var_request_time
-  auto timepoint = ngx_timeofday();
-  auto finish_timestamp =
-      opentracing::convert_time_point<std::chrono::steady_clock>(
-          to_system_timestamp(timepoint->sec, timepoint->msec));
+  auto finish_timestamp = std::chrono::steady_clock::now();
 
   on_exit_block(finish_timestamp);
 
