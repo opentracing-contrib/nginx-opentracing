@@ -1,4 +1,14 @@
-FROM nginx
+ARG NGINX_LABEL=latest
+
+FROM nginx:${NGINX_LABEL}
+
+ARG OPENTRACING_CPP_VERSION=v1.2.0
+ARG ZIPKIN_CPP_VERSION=v0.2.0
+ARG LIGHTSTEP_VERSION=v0.6.1
+ARG JAEGER_CPP_VERSION=v0.1.0
+ARG GRPC_VERSION=v1.4.x
+ARG NGINX_OPENTRACING_VERSION=v0.2.1
+
 RUN set -x \
 # install nginx-opentracing package dependencies
   && apt-get update \
@@ -33,48 +43,48 @@ RUN set -x \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
 	\
   && cd "$tempDir" \
-## Build opentracing-cpp
-  && git clone -b v1.2.0 https://github.com/opentracing/opentracing-cpp.git \
+### Build opentracing-cpp
+  && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release \
            -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
-## Build zipkin-cpp-opentracing
+### Build zipkin-cpp-opentracing
   && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
-  && git clone -b v0.2.0 https://github.com/rnburn/zipkin-cpp-opentracing.git \
+  && git clone -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
   && cd zipkin-cpp-opentracing \
   && mkdir .build && cd .build \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
 ### Build Jaeger cpp-client
- && git clone -b v0.1.0 https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
- && cd jaeger-cpp-client \
- && mkdir .build && cd .build \
- && cmake -DCMAKE_BUILD_TYPE=Release \
-          -DBUILD_TESTING=OFF \
-          -DJAEGERTRACING_WITH_YAML_CPP=OFF .. \
- && make && make install \
- && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
- && cd "$tempDir" \
+  && git clone -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
+  && cd jaeger-cpp-client \
+  && mkdir .build && cd .build \
+  && cmake -DCMAKE_BUILD_TYPE=Release \
+           -DBUILD_TESTING=OFF \
+           -DJAEGERTRACING_WITH_YAML_CPP=OFF .. \
+  && make && make install \
+  && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
+  && cd "$tempDir" \
 ### Build gRPC
- && git clone -b v1.4.x https://github.com/grpc/grpc \
- && cd grpc \
- && git submodule update --init \
- && make HAS_SYSTEM_PROTOBUF=false && make install \
- && make && make install \
- && cd "$tempDir" \
+  && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
+  && cd grpc \
+  && git submodule update --init \
+  && make HAS_SYSTEM_PROTOBUF=false && make install \
+  && make && make install \
+  && cd "$tempDir" \
 ### Build lightstep-tracer-cpp
- && git clone -b v0.6.1 https://github.com/lightstep/lightstep-tracer-cpp.git \
- && cd lightstep-tracer-cpp \
- && mkdir .build && cd .build \
- && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
- && make && make install \
- && cd "$tempDir" \
+  && git clone -b $LIGHTSTEP_VERSION https://github.com/lightstep/lightstep-tracer-cpp.git \
+  && cd lightstep-tracer-cpp \
+  && mkdir .build && cd .build \
+  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+  && make && make install \
+  && cd "$tempDir" \
 ### Build nginx-opentracing modules
-  && git clone https://github.com/opentracing-contrib/nginx-opentracing.git \
+  && git clone -b $NGINX_OPENTRACING_VERSION https://github.com/opentracing-contrib/nginx-opentracing.git \
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
   && apt-get update \
