@@ -34,7 +34,7 @@ RUN set -x \
 	\
   && cd "$tempDir" \
 ## Build opentracing-cpp
-  && git clone https://github.com/opentracing/opentracing-cpp.git \
+  && git clone -b v1.2.0 https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release \
@@ -43,14 +43,14 @@ RUN set -x \
   && cd "$tempDir" \
 ## Build zipkin-cpp-opentracing
   && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
-  && git clone https://github.com/rnburn/zipkin-cpp-opentracing.git \
+  && git clone -b v0.2.0 https://github.com/rnburn/zipkin-cpp-opentracing.git \
   && cd zipkin-cpp-opentracing \
   && mkdir .build && cd .build \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
 ### Build Jaeger cpp-client
- && git clone https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
+ && git clone -b v0.1.0 https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
  && cd jaeger-cpp-client \
  && mkdir .build && cd .build \
  && cmake -DCMAKE_BUILD_TYPE=Release \
@@ -67,7 +67,7 @@ RUN set -x \
  && make && make install \
  && cd "$tempDir" \
 ### Build lightstep-tracer-cpp
- && git clone https://github.com/lightstep/lightstep-tracer-cpp.git \
+ && git clone -b v0.6.1 https://github.com/lightstep/lightstep-tracer-cpp.git \
  && cd lightstep-tracer-cpp \
  && mkdir .build && cd .build \
  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
