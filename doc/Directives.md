@@ -32,6 +32,14 @@ of the span for an NGINX request.
 Sets the [operation name](https://github.com/opentracing/specification/blob/master/specification.md#start-a-new-span)
 of the span for an NGINX location block.
 
+### `opentracing_trust_incoming_span`
+
+- **syntax** `opentracing_trust_incoming_span on|off`
+- **default**: `on`
+- **context**: `http`, `server`, `location`
+
+Enables or disables using OpenTracing spans from incoming requests as parent for created ones. Might be disabled for security reasons.
+
 ### `opentracing_tag`
 
 - **syntax** `opentracing_tag <key> <value>`

@@ -155,6 +155,7 @@ static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
 
   loc_conf->enable = NGX_CONF_UNSET;
   loc_conf->enable_locations = NGX_CONF_UNSET;
+  loc_conf->trust_incoming_span = NGX_CONF_UNSET;
 
   return loc_conf;
 }
@@ -177,6 +178,8 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
   if (prev->loc_operation_name_script.is_valid() &&
       !conf->loc_operation_name_script.is_valid())
     conf->loc_operation_name_script = prev->loc_operation_name_script;
+
+  ngx_conf_merge_value(conf->trust_incoming_span, prev->trust_incoming_span, 1);
 
   // Create a new array that joins `prev->tags` and `conf->tags`. Since tags
   // are set consecutively and setting a tag with the same key as a previous
@@ -234,6 +237,11 @@ static ngx_command_t opentracing_commands[] = {
          NGX_CONF_TAKE1,
      set_opentracing_location_operation_name, NGX_HTTP_LOC_CONF_OFFSET, 0,
      nullptr},
+    {ngx_string("opentracing_trust_incoming_span"),
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_TAKE1,
+     ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
+     offsetof(opentracing_loc_conf_t, trust_incoming_span), nullptr},
     {ngx_string("opentracing_tag"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
          NGX_CONF_TAKE2,
