@@ -141,7 +141,7 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
     }
     return NGX_ERROR;
   }
-  auto& tracer_factory = (*library_handle_maybe).tracer_factory();
+  auto& tracer_factory = library_handle_maybe->tracer_factory();
 
   // Construct a tracer and initiqlize the global tracer.
   std::ifstream in{to_string(main_conf->tracer_conf_file)};
