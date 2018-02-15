@@ -80,7 +80,11 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
       ngx_http_get_module_main_conf(request_, ngx_http_opentracing_module));
   auto tracer = opentracing::Tracer::Global();
   if (!tracer) throw InstrumentationFailure{};
-  auto parent_span_context = extract_span_context(*tracer, request_);
+
+  std::unique_ptr<opentracing::SpanContext> parent_span_context = nullptr;
+  if (loc_conf_->trust_incoming_span) {
+    parent_span_context = extract_span_context(*tracer, request_);
+  }
 
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
                  "starting opentracing request span for %p", request_);

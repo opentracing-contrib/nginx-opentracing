@@ -24,6 +24,7 @@ struct opentracing_loc_conf_t {
   ngx_flag_t enable_locations;
   NgxScript operation_name_script;
   NgxScript loc_operation_name_script;
+  ngx_flag_t trust_incoming_span;
   ngx_array_t *tags;
 };
 }  // namespace ngx_opentracing
