@@ -1,13 +1,13 @@
+#include <opentracing/dynamic_load.h>
 #include <cstdlib>
 #include <exception>
-#include <unordered_map>
-#include <utility>
 #include <fstream>
 #include <iterator>
-#include "utility.h"
+#include <unordered_map>
+#include <utility>
 #include "opentracing_conf.h"
 #include "opentracing_handler.h"
-#include <opentracing/dynamic_load.h>
+#include "utility.h"
 
 extern "C" {
 #include <nginx.h>
@@ -25,6 +25,9 @@ using ngx_opentracing::on_enter_block;
 using ngx_opentracing::on_log_request;
 using ngx_opentracing::NgxScript;
 using ngx_opentracing::to_string;
+
+static std::unique_ptr<const opentracing::DynamicTracingLibraryHandle>
+    opentracing_library_handle;
 
 //------------------------------------------------------------------------------
 // kDefaultOpentracingTags
@@ -125,9 +128,8 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
 
   // Load a tracer factory from the provided library.
   std::string error_message;
-  static const auto library_handle_maybe =
-      opentracing::DynamicallyLoadTracingLibrary(
-          to_string(main_conf->tracer_library).data(), error_message);
+  auto library_handle_maybe = opentracing::DynamicallyLoadTracingLibrary(
+      to_string(main_conf->tracer_library).data(), error_message);
   if (!library_handle_maybe) {
     if (!error_message.empty()) {
       ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
@@ -141,7 +143,9 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
     }
     return NGX_ERROR;
   }
-  auto& tracer_factory = library_handle_maybe->tracer_factory();
+  opentracing_library_handle.reset(new opentracing::DynamicTracingLibraryHandle{
+      std::move(*library_handle_maybe)});
+  auto &tracer_factory = opentracing_library_handle->tracer_factory();
 
   // Construct a tracer and initiqlize the global tracer.
   std::ifstream in{to_string(main_conf->tracer_conf_file)};
@@ -177,6 +181,23 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
 
   opentracing::Tracer::InitGlobal(std::move(*tracer_maybe));
   return NGX_OK;
+}
+
+//------------------------------------------------------------------------------
+// opentracing_exit_worker
+//------------------------------------------------------------------------------
+static void opentracing_exit_worker(ngx_cycle_t *cycle) {
+  // Close the global tracer if it's set and release the reference so as to
+  // ensure that any dynamically loaded tracer is destructed before the library
+  // handle is closed.
+  auto tracer = opentracing::Tracer::InitGlobal(nullptr);
+  if (tracer != nullptr) {
+    tracer->Close();
+    tracer.reset();
+  }
+  if (opentracing_library_handle != nullptr) {
+    opentracing_library_handle.reset();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -321,9 +342,8 @@ static ngx_command_t opentracing_commands[] = {
          NGX_CONF_TAKE2,
      set_opentracing_tag, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     {ngx_string("opentracing_load_tracer"),
-     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | 
-         NGX_CONF_TAKE2,
-     set_tracer, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_CONF_TAKE2, set_tracer,
+     NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     ngx_null_command};
 
 //------------------------------------------------------------------------------
@@ -339,6 +359,6 @@ ngx_module_t ngx_http_opentracing_module = {
     opentracing_init_worker, /* init process */
     nullptr,                 /* init thread */
     nullptr,                 /* exit thread */
-    nullptr,                 /* exit process */
+    opentracing_exit_worker, /* exit process */
     nullptr,                 /* exit master */
     NGX_MODULE_V1_PADDING};
