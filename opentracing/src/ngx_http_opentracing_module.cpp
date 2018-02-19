@@ -134,11 +134,11 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
     if (!error_message.empty()) {
       ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                     "Failed to load tracing library %V: %s",
-                    main_conf->tracer_library, error_message.c_str());
+                    &main_conf->tracer_library, error_message.c_str());
     } else {
       ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                     "Failed to load tracing library %V: %s",
-                    main_conf->tracer_library,
+                    &main_conf->tracer_library,
                     library_handle_maybe.error().message().c_str());
     }
     return NGX_ERROR;
@@ -152,7 +152,7 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
   if (!in.good()) {
     ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                   "Failed to open tracer configuration file %V",
-                  main_conf->tracer_conf_file);
+                  &main_conf->tracer_conf_file);
     return NGX_ERROR;
   }
   std::string tracer_configuration{std::istreambuf_iterator<char>{in},
@@ -160,7 +160,7 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
   if (!in.good()) {
     ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                   "Failed to read tracer configuration file %V",
-                  main_conf->tracer_conf_file);
+                  &main_conf->tracer_conf_file);
     return NGX_ERROR;
   }
 
