@@ -11,10 +11,13 @@ auto/configure \
 make modules
 cp objs/ngx_http_opentracing_module.so $NGINX_MODULES_PATH/
 cd /src/nginx-opentracing
-#export MOCKTRACER_LIBRARY=/usr/local/lib/libopentracing_mocktracer.so
-#export NGINX_OPENTRACING_MODULE="$NGINX_MODULES_PATH/ngx_http_opentracing_module.so"
-#cd test
-#for i in *;
-#do
-#  "$i/run.sh"
-#done
+export MOCKTRACER_LIBRARY=/usr/local/lib/libopentracing_mocktracer.so
+export NGINX_OPENTRACING_MODULE="$NGINX_MODULES_PATH/ngx_http_opentracing_module.so"
+export NGINX_OPENTRACING_TEST_DIR=/nginx-opentracing-test
+mkdir $NGINX_OPENTRACING_TEST_DIR
+chmod a+rwx $NGINX_OPENTRACING_TEST_DIR
+cd test
+for i in *;
+do
+  "$i/run.sh"
+done

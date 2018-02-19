@@ -1,10 +1,10 @@
-load_module $NGINX_OPENTRACING_MODULE;
+load_module "$NGINX_OPENTRACING_MODULE";
 
 events {}
 
 http {
   opentracing on;
-  opentracing_load_tracer $MOCKTRACER_LIBRARY $MOCKTRACER_CONFIG;
+  opentracing_load_tracer "$MOCKTRACER_LIBRARY" "$MOCKTRACER_CONFIG";
 
   upstream backend {
     server localhost:9001;
