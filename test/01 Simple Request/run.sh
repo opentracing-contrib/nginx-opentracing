@@ -57,6 +57,6 @@ rm -rf "$TEST_WORK_DIR"
 EXPECTED_SPAN_COUNT=2
 if [ $SPAN_COUNT != $EXPECTED_SPAN_COUNT ]
 then
-  >&2 echo "expected: $SPAN_COUNT == $EXPECTED_SPAN_COUNT"
+  >&2 echo "expected SPAN_COUNT == EXPECTED_SPAN_COUNT: got $SPAN_COUNT == $EXPECTED_SPAN_COUNT"
   exit -1
 fi
