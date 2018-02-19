@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Build nginx-opentracing-ci Docker image
+          command: docker build -t nginx-opentracing-ci ci
+      - run:
+          name: Build and Test
+          command: ./ci/run_ci_docker.sh './ci/do_ci.sh'
+
