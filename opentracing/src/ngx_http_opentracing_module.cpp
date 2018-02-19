@@ -1,4 +1,5 @@
 #include <opentracing/dynamic_load.h>
+#include <cerrno>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
@@ -150,7 +151,7 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
   // Construct a tracer and initiqlize the global tracer.
   std::ifstream in{to_string(main_conf->tracer_conf_file)};
   if (!in.good()) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
+    ngx_log_error(NGX_LOG_ERR, cycle->log, errno,
                   "Failed to open tracer configuration file %V",
                   &main_conf->tracer_conf_file);
     return NGX_ERROR;
@@ -158,7 +159,7 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
   std::string tracer_configuration{std::istreambuf_iterator<char>{in},
                                    std::istreambuf_iterator<char>{}};
   if (!in.good()) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
+    ngx_log_error(NGX_LOG_ERR, cycle->log, errno,
                   "Failed to read tracer configuration file %V",
                   &main_conf->tracer_conf_file);
     return NGX_ERROR;

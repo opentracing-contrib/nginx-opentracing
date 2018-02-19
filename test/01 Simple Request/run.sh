@@ -13,8 +13,8 @@ then
   exit -1
 fi
 
-TEMP_DIR=`mktemp -d`
 TEST_DIR=`dirname "$0"`
+TEMP_DIR=`mktemp -d $TEST_DIR/../nginx-test-01-XXXX`
 cd "$TEST_DIR"
 cp -r . $TEMP_DIR
 mkdir $TEMP_DIR/logs
@@ -30,8 +30,8 @@ echo "Starting date server"
 python3 $TEMP_DIR/date.py &
 DATE_SERVER_PID=$!
 echo "Starting nginx"
-nginx -p $TEMP_DIR -c $TEMP_DIR/nginx.conf
-sleep 2
+nginx -p $TEMP_DIR -c $TEMP_DIR/nginx.conf &
+sleep 1
 echo "Sending test data to nginx"
 curl localhost:8080/
 kill $DATE_SERVER_PID

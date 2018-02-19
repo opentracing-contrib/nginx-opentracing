@@ -11,7 +11,7 @@ class DateHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(str(datetime.datetime.now()))
+        self.wfile.write(str(datetime.datetime.now()).encode())
         return
 
 
