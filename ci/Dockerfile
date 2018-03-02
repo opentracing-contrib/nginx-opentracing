@@ -2,7 +2,7 @@ ARG NGINX_LABEL=latest
 
 FROM nginx:${NGINX_LABEL}
 
-ARG OPENTRACING_CPP_VERSION=v1.2.0
+ARG OPENTRACING_CPP_VERSION=v1.3.0
 
 RUN set -x \
   && apt-get update \
@@ -19,8 +19,7 @@ RUN set -x \
   && mkdir /src \
 ### Build opentracing-cpp
   && cd /src \
-#  && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
-  && git clone -b dlopen https://github.com/rnburn/opentracing-cpp.git \
+ && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release \
