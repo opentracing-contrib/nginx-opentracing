@@ -6,6 +6,13 @@
 
 Enables or disables OpenTracing for NGINX requests.
 
+### `opentracing_load_tracer`
+
+- **syntax** `opentracing_load_tracer <tracer_library> <tracer_config_file>`
+- **context**: `http`, `server`
+
+Dynamicaly loads in a tracer implementing the OpenTracing dynamic loading interface.
+
 ### `opentracing_trace_locations`
 
 - **syntax** `opentracing_trace_locations on|off`

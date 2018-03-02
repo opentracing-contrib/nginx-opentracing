@@ -17,6 +17,8 @@ struct opentracing_tag_t {
 
 struct opentracing_main_conf_t {
   ngx_array_t *tags;
+  ngx_str_t tracer_library;
+  ngx_str_t tracer_conf_file;
 };
 
 struct opentracing_loc_conf_t {
