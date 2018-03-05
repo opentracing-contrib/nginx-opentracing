@@ -181,6 +181,15 @@ void OpenTracingRequestInstrumentor::on_log_request() {
   add_status_tags(request_, *request_span_);
   add_script_tags(main_conf_->tags, request_, *request_span_);
 
+  // When opentracing_operation_name points to a variable and it can be
+  // initialized or modified at any phase of the request, so set the
+  // span operation name at request exit phase, which will take the latest
+  // value of the variable pointed to opentracing_operation_name directive
+  auto core_loc_conf = static_cast<ngx_http_core_loc_conf_t *>(
+      ngx_http_get_module_loc_conf(request_, ngx_http_core_module));
+  request_span_->SetOperationName(
+      get_request_operation_name(request_, core_loc_conf, loc_conf_));
+
   request_span_->Finish({opentracing::FinishTimestamp{finish_timestamp}});
 }
 }  // namespace ngx_opentracing
