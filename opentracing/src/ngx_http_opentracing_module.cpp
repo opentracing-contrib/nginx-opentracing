@@ -38,7 +38,8 @@ const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
     {ngx_string("nginx.worker_pid"), ngx_string("$pid")},
     {ngx_string("peer.address"), ngx_string("$remote_addr:$remote_port")},
     {ngx_string("http.method"), ngx_string("$request_method")},
-    {ngx_string("http.url"), ngx_string("$scheme://$http_host$request_uri")}};
+    {ngx_string("http.url"), ngx_string("$scheme://$http_host$request_uri")},
+    {ngx_string("http.host"), ngx_string("$http_host")}};
 
 //------------------------------------------------------------------------------
 // add_opentracing_tag
