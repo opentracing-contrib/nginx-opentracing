@@ -105,8 +105,6 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
         {opentracing::ChildOf(&request_span_->context())});
     if (!span_) throw InstrumentationFailure{};
   }
-
-  set_request_span_context();
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +113,6 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
 void OpenTracingRequestInstrumentor::on_change_block(
     ngx_http_core_loc_conf_t *core_loc_conf, opentracing_loc_conf_t *loc_conf) {
   on_exit_block();
-  auto prev_loc_conf = loc_conf_;
   loc_conf_ = loc_conf;
 
   if (loc_conf->enable_locations) {
@@ -128,12 +125,17 @@ void OpenTracingRequestInstrumentor::on_change_block(
         {opentracing::ChildOf(&request_span_->context())});
     if (!span_) throw InstrumentationFailure{};
   }
+}
 
-  // As an optimization, avoid injecting the request span context if neither the
-  // previous nor current location blocks are traced since the active span
-  // context will be the same.
-  if (prev_loc_conf->enable_locations || loc_conf->enable_locations)
-    set_request_span_context();
+//------------------------------------------------------------------------------
+// active_span
+//------------------------------------------------------------------------------
+opentracing::Span &OpenTracingRequestInstrumentor::active_span() {
+  if (loc_conf_->enable_locations) {
+    return *span_;
+  } else {
+    return *request_span_;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -155,17 +157,6 @@ void OpenTracingRequestInstrumentor::on_exit_block(
   } else {
     add_script_tags(loc_conf_->tags, request_, *request_span_);
   }
-}
-
-//------------------------------------------------------------------------------
-// set_request_span_context
-//------------------------------------------------------------------------------
-void OpenTracingRequestInstrumentor::set_request_span_context() {
-  if (loc_conf_->enable_locations)
-    inject_span_context(span_->tracer(), request_, span_->context());
-  else
-    inject_span_context(request_span_->tracer(), request_,
-                        request_span_->context());
 }
 
 //------------------------------------------------------------------------------
@@ -191,5 +182,21 @@ void OpenTracingRequestInstrumentor::on_log_request() {
       get_request_operation_name(request_, core_loc_conf, loc_conf_));
 
   request_span_->Finish({opentracing::FinishTimestamp{finish_timestamp}});
+}
+
+//------------------------------------------------------------------------------
+// consume_active_span_context_key
+//------------------------------------------------------------------------------
+ngx_str_t OpenTracingRequestInstrumentor::consume_active_span_context_key() {
+  ngx_str_t result = {};
+  return result;
+}
+
+//------------------------------------------------------------------------------
+// consume_active_span_context_value
+//------------------------------------------------------------------------------
+ngx_str_t OpenTracingRequestInstrumentor::consume_active_span_context_value() {
+  ngx_str_t result = {};
+  return result;
 }
 }  // namespace ngx_opentracing

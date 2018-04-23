@@ -1,35 +1,17 @@
-#include "opentracing_handler.h"
-#include <opentracing/tracer.h>
-#include <unordered_map>
-#include "opentracing_conf.h"
-#include "opentracing_request_instrumentor.h"
+#include "opentracing_context.h"
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
 }
 
 namespace ngx_opentracing {
-//------------------------------------------------------------------------------
-// OpenTracingContext
-//------------------------------------------------------------------------------
-namespace {
-class OpenTracingContext {
- public:
-  void on_enter_block(ngx_http_request_t *request);
-  void on_log_request(ngx_http_request_t *request);
-
- private:
-  std::unordered_map<const ngx_http_request_t *, OpenTracingRequestInstrumentor>
-      active_instrumentors_;
-};
-}  // namespace
 
 //------------------------------------------------------------------------------
-// get_handler_context
+// instance
 //------------------------------------------------------------------------------
-static OpenTracingContext &get_handler_context() {
-  static OpenTracingContext handler_context{};
-  return handler_context;
+OpenTracingContext &OpenTracingContext::instance() {
+  static OpenTracingContext context;
+  return context;
 }
 
 //------------------------------------------------------------------------------
@@ -81,11 +63,6 @@ void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
   }
 }
 
-ngx_int_t on_enter_block(ngx_http_request_t *request) {
-  get_handler_context().on_enter_block(request);
-  return NGX_DECLINED;
-}
-
 //------------------------------------------------------------------------------
 // on_log_request
 //------------------------------------------------------------------------------
@@ -99,10 +76,5 @@ void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
                   "OpenTracing instrumentation failed for request %p", request);
   }
   active_instrumentors_.erase(instrumentor_iter);
-}
-
-ngx_int_t on_log_request(ngx_http_request_t *request) {
-  get_handler_context().on_log_request(request);
-  return NGX_DECLINED;
 }
 }  // namespace ngx_opentracing
