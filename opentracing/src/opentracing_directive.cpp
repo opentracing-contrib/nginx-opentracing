@@ -4,6 +4,8 @@
 #include "opentracing_conf.h"
 #include "opentracing_conf_handler.h"
 #include "opentracing_variable.h"
+#include "discover_span_context_keys.h"
+#include "utility.h"
 
 #include <algorithm>
 #include <iostream>
@@ -67,7 +69,7 @@ char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,
 //------------------------------------------------------------------------------
 char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
                                     void * /*conf*/) {
-  std::cout << "nufnufwoof\n";
+  std::cout << "opentracing_propagation_context" << std::endl;
   auto old_args = cf->args;
 
   ngx_str_t args[] = {ngx_string("proxy_set_header"), {}, {}};
@@ -124,11 +126,20 @@ char *set_opentracing_location_operation_name(ngx_conf_t *cf,
 // set_tracer
 //------------------------------------------------------------------------------
 char *set_tracer(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
+  std::cerr << "set_tracer" << std::endl;
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
   auto values = static_cast<ngx_str_t *>(cf->args->elts);
   main_conf->tracer_library = values[1];
   main_conf->tracer_conf_file = values[2];
+  auto result =  discover_span_context_keys(
+      cf->log,
+      to_string(main_conf->tracer_library).c_str(),
+      to_string(main_conf->tracer_conf_file).c_str()
+  );
+  if (result != NGX_OK) {
+    return static_cast<char*>(NGX_CONF_ERROR);
+  }
   return static_cast<char *>(NGX_CONF_OK);
 }
 }  // namespace ngx_opentracing

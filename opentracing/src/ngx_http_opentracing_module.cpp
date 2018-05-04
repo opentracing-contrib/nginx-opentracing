@@ -6,11 +6,13 @@
 #include <iterator>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
 #include "opentracing_conf.h"
 #include "opentracing_context.h"
 #include "opentracing_directive.h"
 #include "opentracing_variable.h"
 #include "utility.h"
+#include "load_tracer.h"
 
 extern "C" {
 #include <nginx.h>
@@ -53,6 +55,7 @@ const std::pair<ngx_str_t, ngx_str_t> default_opentracing_tags[] = {
 // opentracing_module_init
 //------------------------------------------------------------------------------
 static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
+  std::cout << "module init" << std::endl;
   auto core_main_config = static_cast<ngx_http_core_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module));
   auto main_conf = static_cast<opentracing_main_conf_t *>(
@@ -99,60 +102,18 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
     return NGX_OK;
   }
 
-  // Load a tracer factory from the provided library.
-  std::string error_message;
-  auto library_handle_maybe = opentracing::DynamicallyLoadTracingLibrary(
-      to_string(main_conf->tracer_library).data(), error_message);
-  if (!library_handle_maybe) {
-    if (!error_message.empty()) {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to load tracing library %V: %s",
-                    &main_conf->tracer_library, error_message.c_str());
-    } else {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to load tracing library %V: %s",
-                    &main_conf->tracer_library,
-                    library_handle_maybe.error().message().c_str());
-    }
-    return NGX_ERROR;
-  }
-  opentracing_library_handle.reset(new opentracing::DynamicTracingLibraryHandle{
-      std::move(*library_handle_maybe)});
-  auto &tracer_factory = opentracing_library_handle->tracer_factory();
-
-  // Construct a tracer and initiqlize the global tracer.
-  std::ifstream in{to_string(main_conf->tracer_conf_file)};
-  if (!in.good()) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, errno,
-                  "Failed to open tracer configuration file %V",
-                  &main_conf->tracer_conf_file);
-    return NGX_ERROR;
-  }
-  std::string tracer_configuration{std::istreambuf_iterator<char>{in},
-                                   std::istreambuf_iterator<char>{}};
-  if (!in.good()) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, errno,
-                  "Failed to read tracer configuration file %V",
-                  &main_conf->tracer_conf_file);
-    return NGX_ERROR;
+  std::unique_ptr<opentracing::DynamicTracingLibraryHandle> handle{
+      new opentracing::DynamicTracingLibraryHandle{}};
+  std::shared_ptr<opentracing::Tracer> tracer;
+  auto result = ngx_opentracing::load_tracer(
+      cycle->log, to_string(main_conf->tracer_library).data(),
+      to_string(main_conf->tracer_conf_file).data(), *handle, tracer);
+  if (result != NGX_OK) {
+    return result;
   }
 
-  error_message.clear();
-  auto tracer_maybe =
-      tracer_factory.MakeTracer(tracer_configuration.c_str(), error_message);
-  if (!tracer_maybe) {
-    if (!error_message.empty()) {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to construct tracer: %s", error_message.c_str());
-    } else {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to construct tracer: %s",
-                    tracer_maybe.error().message().c_str());
-    }
-    return NGX_ERROR;
-  }
-
-  opentracing::Tracer::InitGlobal(std::move(*tracer_maybe));
+  opentracing_library_handle = std::move(handle);
+  opentracing::Tracer::InitGlobal(std::move(tracer));
   return NGX_OK;
 }
 
