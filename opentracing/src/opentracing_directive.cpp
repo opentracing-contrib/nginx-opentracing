@@ -7,6 +7,8 @@
 #include "discover_span_context_keys.h"
 #include "utility.h"
 
+#include <opentracing/string_view.h>
+
 #include <algorithm>
 #include <iostream>
 
@@ -132,11 +134,12 @@ char *set_tracer(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
   auto values = static_cast<ngx_str_t *>(cf->args->elts);
   main_conf->tracer_library = values[1];
   main_conf->tracer_conf_file = values[2];
-  auto result =  discover_span_context_keys(
-      cf->log,
-      to_string(main_conf->tracer_library).c_str(),
-      to_string(main_conf->tracer_conf_file).c_str()
-  );
+  main_conf->span_context_keys =
+      ngx_array_create(cf->pool, 0, sizeof(opentracing::string_view));
+  auto result = discover_span_context_keys(
+      cf->log, to_string(main_conf->tracer_library).c_str(),
+      to_string(main_conf->tracer_conf_file).c_str(),
+      main_conf->span_context_keys);
   if (result != NGX_OK) {
     return static_cast<char*>(NGX_CONF_ERROR);
   }
