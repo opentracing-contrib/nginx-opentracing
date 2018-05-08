@@ -9,6 +9,7 @@
 
 #include <opentracing/string_view.h>
 
+#include <string>
 #include <algorithm>
 #include <iostream>
 
@@ -34,18 +35,13 @@ static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
 }
 
 //------------------------------------------------------------------------------
-// add_dollar_variable_prefix
+// make_span_context_value_variable
 //------------------------------------------------------------------------------
-/* static ngx_str_t add_dollar_variable_prefix(ngx_pool_t *pool, */
-/*                                             const std::string &s) { */
-/*   ngx_str_t result; */
-/*   result.len = s.size() + 1; */
-/*   result.data = static_cast<unsigned char *>(ngx_palloc(pool, result.len)); */
-/*   if (!result.data) return {0, nullptr}; */
-/*   *result.data = '$'; */
-/*   std::copy(s.begin(), s.end(), result.data + 1); */
-/*   return result; */
-/* } */
+static ngx_str_t make_span_context_value_variable(ngx_pool_t *pool, int index) {
+  std::string result =
+      "$opentracing_internal_span_context_value" + std::to_string(index);
+  return to_ngx_str(pool, result);
+}
 
 //------------------------------------------------------------------------------
 // add_opentracing_tag
@@ -93,7 +89,7 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
     args[1] = ngx_str_t{keys[key_index].size(),
                         reinterpret_cast<unsigned char *>(
                             const_cast<char *>(keys[key_index].data()))};
-    args[2] = ngx_string("abc123");
+    args[2] = make_span_context_value_variable(cf->pool, key_index);
     auto rcode = opentracing_conf_handler(cf, 0);
     if (rcode != NGX_OK) {
       cf->args = old_args;
