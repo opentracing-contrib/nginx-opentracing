@@ -4,7 +4,6 @@ ngx_module_name=$ngx_addon_name
 ngx_module_incs=
 ngx_module_deps=" \
   $ngx_addon_dir/src/opentracing_conf.h \
-  $ngx_addon_dir/src/opentracing_context.h \
   $ngx_addon_dir/src/opentracing_directive.h \
   $ngx_addon_dir/src/opentracing_variable.h \
   $ngx_addon_dir/src/opentracing_handler.h \
@@ -21,7 +20,6 @@ ngx_module_srcs=" \
   $ngx_addon_dir/src/inject_span_context.cpp \
   $ngx_addon_dir/src/discover_span_context_keys.cpp \
   $ngx_addon_dir/src/load_tracer.cpp \
-  $ngx_addon_dir/src/opentracing_context.cpp \
   $ngx_addon_dir/src/opentracing_directive.cpp \
   $ngx_addon_dir/src/opentracing_variable.cpp \
   $ngx_addon_dir/src/opentracing_handler.cpp \
