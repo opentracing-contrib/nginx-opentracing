@@ -1,18 +1,19 @@
+#include "opentracing_conf.h"
+#include "opentracing_directive.h"
+#include "opentracing_variable.h"
+#include "opentracing_handler.h"
+#include "utility.h"
+#include "load_tracer.h"
+
 #include <opentracing/dynamic_load.h>
+
 #include <cerrno>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
 #include <iterator>
-#include <unordered_map>
 #include <utility>
 #include <iostream>
-#include "opentracing_conf.h"
-#include "opentracing_context.h"
-#include "opentracing_directive.h"
-#include "opentracing_variable.h"
-#include "utility.h"
-#include "load_tracer.h"
 
 extern "C" {
 #include <nginx.h>
@@ -23,19 +24,7 @@ extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
 }
 
-using ngx_opentracing::opentracing_main_conf_t;
-using ngx_opentracing::opentracing_loc_conf_t;
-using ngx_opentracing::opentracing_tag_t;
-using ngx_opentracing::NgxScript;
-using ngx_opentracing::to_string;
-using ngx_opentracing::OpenTracingContext;
-using ngx_opentracing::propagate_opentracing_context;
-using ngx_opentracing::set_opentracing_tag;
-using ngx_opentracing::set_opentracing_operation_name;
-using ngx_opentracing::set_opentracing_location_operation_name;
-using ngx_opentracing::set_tracer;
-using ngx_opentracing::add_opentracing_tag;
-using ngx_opentracing::add_variables;
+using namespace ngx_opentracing;
 
 static std::unique_ptr<const opentracing::DynamicTracingLibraryHandle>
     opentracing_library_handle;
@@ -65,18 +54,12 @@ static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
   auto handler = static_cast<ngx_http_handler_pt *>(ngx_array_push(
       &core_main_config->phases[NGX_HTTP_PREACCESS_PHASE].handlers));
   if (handler == nullptr) return NGX_ERROR;
-  *handler = [](ngx_http_request_t *request) -> ngx_int_t {
-    OpenTracingContext::instance().on_enter_block(request);
-    return NGX_DECLINED;
-  };
+  *handler = on_enter_block;
 
   handler = static_cast<ngx_http_handler_pt *>(
       ngx_array_push(&core_main_config->phases[NGX_HTTP_LOG_PHASE].handlers));
   if (handler == nullptr) return NGX_ERROR;
-  *handler = [](ngx_http_request_t *request) -> ngx_int_t {
-    OpenTracingContext::instance().on_log_request(request);
-    return NGX_DECLINED;
-  };
+  *handler = on_log_request;
 
   // Add default span tags.
   const auto num_default_tags =
