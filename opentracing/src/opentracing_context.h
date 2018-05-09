@@ -15,8 +15,5 @@ class OpenTracingContext {
 
  private:
   OpenTracingContext() = default;
-
-  std::unordered_map<const ngx_http_request_t *, OpenTracingRequestInstrumentor>
-      active_instrumentors_;
 };
 }  // namespace ngx_opentracing

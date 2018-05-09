@@ -33,48 +33,44 @@ static bool is_opentracing_enabled(
 //------------------------------------------------------------------------------
 // on_enter_block
 //------------------------------------------------------------------------------
-void OpenTracingContext::on_enter_block(ngx_http_request_t *request) {
+void OpenTracingContext::on_enter_block(ngx_http_request_t *request) try {
   auto core_loc_conf = static_cast<ngx_http_core_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_core_module));
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_opentracing_module));
 
-  auto instrumentor_iter = active_instrumentors_.find(request);
-  if (instrumentor_iter == active_instrumentors_.end()) {
+  auto instrumentor = static_cast<OpenTracingRequestInstrumentor *>(
+      ngx_http_get_module_ctx(request, ngx_http_opentracing_module));
+  if (instrumentor == nullptr) {
     if (!is_opentracing_enabled(request, core_loc_conf, loc_conf)) return;
-    try {
-      active_instrumentors_.emplace(
-          request,
-          OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf});
-    } catch (const InstrumentationFailure &) {
-      ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                    "OpenTracing instrumentation failed for request %p",
-                    request);
-    }
+    instrumentor =
+        new OpenTracingRequestInstrumentor{request, core_loc_conf, loc_conf};
+    ngx_http_set_ctx(
+        request,
+        static_cast<void*>(instrumentor),
+        ngx_http_opentracing_module);
   } else {
     try {
-      instrumentor_iter->second.on_change_block(core_loc_conf, loc_conf);
-    } catch (const InstrumentationFailure &) {
-      active_instrumentors_.erase(instrumentor_iter);
+      instrumentor->on_change_block(core_loc_conf, loc_conf);
+    } catch(...) {
+      delete instrumentor;
+      ngx_http_set_ctx(request, nullptr, ngx_http_opentracing_module);
+      throw;
+    }
+  }
+} catch (const InstrumentationFailure&) {
       ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                     "OpenTracing instrumentation failed for request %p",
                     request);
-    }
-  }
 }
 
 //------------------------------------------------------------------------------
 // on_log_request
 //------------------------------------------------------------------------------
 void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
-  auto instrumentor_iter = active_instrumentors_.find(request);
-  if (instrumentor_iter == active_instrumentors_.end()) return;
-  try {
-    instrumentor_iter->second.on_log_request();
-  } catch (const InstrumentationFailure &) {
-    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "OpenTracing instrumentation failed for request %p", request);
-  }
-  active_instrumentors_.erase(instrumentor_iter);
+  auto instrumentor = static_cast<OpenTracingRequestInstrumentor *>(
+      ngx_http_get_module_ctx(request, ngx_http_opentracing_module));
+  if (instrumentor == nullptr) return;
+  ngx_http_set_ctx(request, nullptr, ngx_http_opentracing_module);
 }
 }  // namespace ngx_opentracing
