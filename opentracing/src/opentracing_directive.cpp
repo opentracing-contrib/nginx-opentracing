@@ -39,7 +39,7 @@ static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
 //------------------------------------------------------------------------------
 static ngx_str_t make_span_context_value_variable(ngx_pool_t *pool, int index) {
   std::string result =
-      "$opentracing_internal_span_context_value" + std::to_string(index);
+    "$" OPENTRACING_SPAN_CONTEXT_HEADER_VALUE + std::to_string(index);
   return to_ngx_str(pool, result);
 }
 

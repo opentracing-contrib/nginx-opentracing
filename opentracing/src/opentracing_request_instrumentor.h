@@ -1,10 +1,12 @@
 #pragma once
 
+#include "opentracing_conf.h"
+#include "span_context_querier.h"
+
 #include <opentracing/tracer.h>
 #include <chrono>
 #include <exception>
 #include <memory>
-#include "opentracing_conf.h"
 
 extern "C" {
 #include <nginx.h>
@@ -32,14 +34,13 @@ class OpenTracingRequestInstrumentor {
 
   void on_log_request();
 
-  ngx_str_t consume_active_span_context_key();
-
-  ngx_str_t consume_active_span_context_value();
+  ngx_str_t lookup_span_context_value(int value_index);
 
  private:
   ngx_http_request_t *request_;
   opentracing_main_conf_t *main_conf_;
   opentracing_loc_conf_t *loc_conf_;
+  SpanContextQuerier span_context_querier_;
   std::unique_ptr<opentracing::Span> request_span_;
   std::unique_ptr<opentracing::Span> span_;
 

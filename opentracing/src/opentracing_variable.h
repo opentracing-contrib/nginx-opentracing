@@ -11,6 +11,9 @@ extern "C" {
 #include <utility>
 #include <vector>
 
+#define OPENTRACING_SPAN_CONTEXT_HEADER_VALUE \
+  "opentracing_internal_span_context_value"
+
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------
 // get_context_propagation_header_variable_names

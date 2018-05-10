@@ -75,9 +75,12 @@ static void add_status_tags(const ngx_http_request_t *request,
 OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
     ngx_http_request_t *request, ngx_http_core_loc_conf_t *core_loc_conf,
     opentracing_loc_conf_t *loc_conf)
-    : request_{request}, loc_conf_{loc_conf} {
-  main_conf_ = static_cast<opentracing_main_conf_t *>(
-      ngx_http_get_module_main_conf(request_, ngx_http_opentracing_module));
+    : request_{request},
+      main_conf_{
+          static_cast<opentracing_main_conf_t *>(ngx_http_get_module_main_conf(
+              request_, ngx_http_opentracing_module))},
+      loc_conf_{loc_conf},
+      span_context_querier_{*main_conf_} {
   auto tracer = opentracing::Tracer::Global();
   if (!tracer) throw InstrumentationFailure{};
 
@@ -185,18 +188,11 @@ void OpenTracingRequestInstrumentor::on_log_request() {
 }
 
 //------------------------------------------------------------------------------
-// consume_active_span_context_key
+// lookup_span_context_value
 //------------------------------------------------------------------------------
-ngx_str_t OpenTracingRequestInstrumentor::consume_active_span_context_key() {
-  ngx_str_t result = {};
-  return result;
-}
-
-//------------------------------------------------------------------------------
-// consume_active_span_context_value
-//------------------------------------------------------------------------------
-ngx_str_t OpenTracingRequestInstrumentor::consume_active_span_context_value() {
-  ngx_str_t result = {};
-  return result;
+ngx_str_t OpenTracingRequestInstrumentor::lookup_span_context_value(
+    int value_index) {
+  return span_context_querier_.lookup_value(request_, active_span(),
+                                            value_index);
 }
 }  // namespace ngx_opentracing
