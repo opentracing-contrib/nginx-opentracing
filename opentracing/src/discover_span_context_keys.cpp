@@ -1,11 +1,11 @@
 #include "discover_span_context_keys.h"
 #include "load_tracer.h"
 
-#include <new>
 #include <opentracing/ext/tags.h>
 #include <opentracing/propagation.h>
 #include <algorithm>
 #include <iostream>
+#include <new>
 
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------

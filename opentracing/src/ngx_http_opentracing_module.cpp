@@ -7,11 +7,8 @@
 
 #include <opentracing/dynamic_load.h>
 
-#include <cerrno>
 #include <cstdlib>
 #include <exception>
-#include <fstream>
-#include <iostream>
 #include <iterator>
 #include <utility>
 

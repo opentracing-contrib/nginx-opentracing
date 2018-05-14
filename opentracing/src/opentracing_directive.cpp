@@ -10,7 +10,6 @@
 #include <opentracing/string_view.h>
 
 #include <algorithm>
-#include <iostream>
 #include <string>
 
 extern "C" {
@@ -97,7 +96,7 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
   }
   cf->args = old_args;
   return static_cast<char *>(NGX_CONF_OK);
-} catch (const std::exception& e) {
+} catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0,
                 "opentracing_propatate_context failed: %s", e.what());
   return static_cast<char *>(NGX_CONF_ERROR);

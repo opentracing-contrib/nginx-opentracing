@@ -11,7 +11,8 @@ NgxScript::NgxScript() noexcept
 //------------------------------------------------------------------------------
 // compile
 //------------------------------------------------------------------------------
-ngx_int_t NgxScript::compile(ngx_conf_t *cf, const ngx_str_t &pattern) noexcept {
+ngx_int_t NgxScript::compile(ngx_conf_t *cf,
+                             const ngx_str_t &pattern) noexcept {
   pattern_ = pattern;
   lengths_ = nullptr;
   values_ = nullptr;

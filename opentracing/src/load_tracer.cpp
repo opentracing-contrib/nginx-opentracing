@@ -5,10 +5,10 @@
 #include <fstream>
 
 namespace ngx_opentracing {
-ngx_int_t load_tracer(
-    ngx_log_t* log, const char* tracer_library, const char* config_file,
-    opentracing::DynamicTracingLibraryHandle& handle,
-    std::shared_ptr<opentracing::Tracer>& tracer) {
+ngx_int_t load_tracer(ngx_log_t* log, const char* tracer_library,
+                      const char* config_file,
+                      opentracing::DynamicTracingLibraryHandle& handle,
+                      std::shared_ptr<opentracing::Tracer>& tracer) {
   std::string error_message;
 
   // Open the library handle
@@ -61,5 +61,5 @@ ngx_int_t load_tracer(
   tracer = std::move(*tracer_maybe);
 
   return NGX_OK;
-} 
+}
 }  // namespace ngx_opentracing

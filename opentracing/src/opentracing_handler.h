@@ -19,4 +19,4 @@ ngx_int_t on_enter_block(ngx_http_request_t *request) noexcept;
 // on_log_request
 //------------------------------------------------------------------------------
 ngx_int_t on_log_request(ngx_http_request_t *request) noexcept;
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

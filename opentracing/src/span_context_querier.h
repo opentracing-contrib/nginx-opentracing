@@ -29,4 +29,4 @@ class SpanContextQuerier {
   void expand_span_context_values(ngx_http_request_t* request,
                                   const opentracing::Span& span);
 };
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing

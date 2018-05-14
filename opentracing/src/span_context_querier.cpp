@@ -5,9 +5,9 @@
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
 
-#include <new>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <new>
 
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
   opentracing::expected<void> Set(
       opentracing::string_view key,
       opentracing::string_view value) const override {
-    for (int index=0; index<num_keys_; ++index) {
+    for (int index = 0; index < num_keys_; ++index) {
       if (keys_[index] == key) {
         auto data =
             static_cast<char*>(ngx_pnalloc(request_->pool, value.size()));
@@ -73,7 +73,7 @@ class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
   opentracing::string_view* keys_;
   opentracing::string_view* values_;
 };
-}
+}  // namespace
 
 //------------------------------------------------------------------------------
 // expand_span_context_values
