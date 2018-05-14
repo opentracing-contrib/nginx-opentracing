@@ -5,7 +5,6 @@
 
 #include <opentracing/tracer.h>
 #include <chrono>
-#include <exception>
 #include <memory>
 
 extern "C" {
@@ -16,13 +15,6 @@ extern "C" {
 }
 
 namespace ngx_opentracing {
-struct InstrumentationFailure : std::exception {
-  InstrumentationFailure() = default;
-  const char *what() const noexcept override {
-    return "InstrumentationFailure";
-  }
-};
-
 class OpenTracingRequestInstrumentor {
  public:
   OpenTracingRequestInstrumentor(ngx_http_request_t *request,

@@ -13,7 +13,7 @@ namespace ngx_opentracing {
 static bool is_opentracing_enabled(
     const ngx_http_request_t *request,
     const ngx_http_core_loc_conf_t *core_loc_conf,
-    const opentracing_loc_conf_t *loc_conf) {
+    const opentracing_loc_conf_t *loc_conf) noexcept {
   // Check if this is a main request instead of a subrequest.
   if (request == request->main)
     return loc_conf->enable;
@@ -26,7 +26,7 @@ static bool is_opentracing_enabled(
 //------------------------------------------------------------------------------
 // on_enter_block
 //------------------------------------------------------------------------------
-ngx_int_t on_enter_block(ngx_http_request_t *request) try {
+ngx_int_t on_enter_block(ngx_http_request_t *request) noexcept try {
   auto core_loc_conf = static_cast<ngx_http_core_loc_conf_t *>(
       ngx_http_get_module_loc_conf(request, ngx_http_core_module));
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
@@ -51,24 +51,26 @@ ngx_int_t on_enter_block(ngx_http_request_t *request) try {
     }
   }
   return NGX_DECLINED;
-} catch (const InstrumentationFailure &) {
+} catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                "OpenTracing instrumentation failed for request %p", request);
+                "OpenTracing instrumentation failed for request %p: %s",
+                request, e.what());
   return NGX_DECLINED;
 }
 
 //------------------------------------------------------------------------------
 // on_log_request
 //------------------------------------------------------------------------------
-ngx_int_t on_log_request(ngx_http_request_t *request) {
+ngx_int_t on_log_request(ngx_http_request_t *request) noexcept {
   auto instrumentor = static_cast<OpenTracingRequestInstrumentor *>(
       ngx_http_get_module_ctx(request, ngx_http_opentracing_module));
   if (instrumentor == nullptr) return NGX_DECLINED;
   try {
     instrumentor->on_log_request();
-  } catch (const InstrumentationFailure &) {
+  } catch (const std::exception &e) {
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                  "OpenTracing instrumentation failed for request %p", request);
+                  "OpenTracing instrumentation failed for request %p: %s",
+                  request, e.what());
   }
   delete instrumentor;
   ngx_http_set_ctx(request, nullptr, ngx_http_opentracing_module);

@@ -1,6 +1,8 @@
 #include "opentracing_request_instrumentor.h"
 #include "utility.h"
 
+#include <stdexcept>
+
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
 }
@@ -82,7 +84,7 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
       loc_conf_{loc_conf},
       span_context_querier_{*main_conf_} {
   auto tracer = opentracing::Tracer::Global();
-  if (!tracer) throw InstrumentationFailure{};
+  if (!tracer) throw std::runtime_error{"no global tracer set"};
 
   std::unique_ptr<opentracing::SpanContext> parent_span_context = nullptr;
   if (loc_conf_->trust_incoming_span) {
@@ -96,7 +98,7 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
       {opentracing::ChildOf(parent_span_context.get()),
        opentracing::StartTimestamp{
            to_system_timestamp(request->start_sec, request->start_msec)}});
-  if (!request_span_) throw InstrumentationFailure{};
+  if (!request_span_) throw std::runtime_error{"tracer->StartSpan failed"};
 
   if (loc_conf_->enable_locations) {
     ngx_log_debug3(
@@ -106,7 +108,7 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
     span_ = tracer->StartSpan(
         get_loc_operation_name(request_, core_loc_conf, loc_conf_),
         {opentracing::ChildOf(&request_span_->context())});
-    if (!span_) throw InstrumentationFailure{};
+    if (!span_) throw std::runtime_error{"tracer->StartSpan failed"};
   }
 }
 
@@ -126,7 +128,7 @@ void OpenTracingRequestInstrumentor::on_change_block(
     span_ = request_span_->tracer().StartSpan(
         get_loc_operation_name(request_, core_loc_conf, loc_conf),
         {opentracing::ChildOf(&request_span_->context())});
-    if (!span_) throw InstrumentationFailure{};
+    if (!span_) throw std::runtime_error{"tracer->StartSpan failed"};
   }
 }
 
