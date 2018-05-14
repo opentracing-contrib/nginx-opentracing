@@ -1,17 +1,17 @@
 #include "opentracing_directive.h"
 
+#include "discover_span_context_keys.h"
 #include "ngx_script.h"
 #include "opentracing_conf.h"
 #include "opentracing_conf_handler.h"
 #include "opentracing_variable.h"
-#include "discover_span_context_keys.h"
 #include "utility.h"
 
 #include <opentracing/string_view.h>
 
-#include <string>
 #include <algorithm>
 #include <iostream>
+#include <string>
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -22,7 +22,7 @@ namespace ngx_opentracing {
 // set_script
 //------------------------------------------------------------------------------
 static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
-                        NgxScript &script) {
+                        NgxScript &script) noexcept {
   if (script.is_valid()) return const_cast<char *>("is duplicate");
 
   auto value = static_cast<ngx_str_t *>(cf->args->elts);
@@ -39,7 +39,7 @@ static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
 //------------------------------------------------------------------------------
 static ngx_str_t make_span_context_value_variable(ngx_pool_t *pool, int index) {
   std::string result =
-    "$" OPENTRACING_SPAN_CONTEXT_HEADER_VALUE + std::to_string(index);
+      "$" OPENTRACING_SPAN_CONTEXT_HEADER_VALUE + std::to_string(index);
   return to_ngx_str(pool, result);
 }
 
@@ -47,7 +47,7 @@ static ngx_str_t make_span_context_value_variable(ngx_pool_t *pool, int index) {
 // add_opentracing_tag
 //------------------------------------------------------------------------------
 char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,
-                          ngx_str_t value) {
+                          ngx_str_t value) noexcept {
   if (!tags) return static_cast<char *>(NGX_CONF_ERROR);
 
   auto tag = static_cast<opentracing_tag_t *>(ngx_array_push(tags));
@@ -66,8 +66,7 @@ char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,
 // propagate_opentracing_context
 //------------------------------------------------------------------------------
 char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
-                                    void * /*conf*/) {
-  std::cout << "opentracing_propagation_context" << std::endl;
+                                    void * /*conf*/) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
   if (main_conf->span_context_keys == nullptr) {
@@ -97,14 +96,18 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
     }
   }
   cf->args = old_args;
-
   return static_cast<char *>(NGX_CONF_OK);
+} catch (const std::exception& e) {
+  ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+                "opentracing_propatate_context failed: %s", e.what());
+  return static_cast<char *>(NGX_CONF_ERROR);
 }
 
 //------------------------------------------------------------------------------
 // set_opentracing_tag
 //------------------------------------------------------------------------------
-char *set_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
+char *set_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
+                          void *conf) noexcept {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
   if (!loc_conf->tags)
     loc_conf->tags = ngx_array_create(cf->pool, 1, sizeof(opentracing_tag_t));
@@ -116,7 +119,7 @@ char *set_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
 // set_opentracing_operation_name
 //------------------------------------------------------------------------------
 char *set_opentracing_operation_name(ngx_conf_t *cf, ngx_command_t *command,
-                                     void *conf) {
+                                     void *conf) noexcept {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
   return set_script(cf, command, loc_conf->operation_name_script);
 }
@@ -126,7 +129,7 @@ char *set_opentracing_operation_name(ngx_conf_t *cf, ngx_command_t *command,
 //------------------------------------------------------------------------------
 char *set_opentracing_location_operation_name(ngx_conf_t *cf,
                                               ngx_command_t *command,
-                                              void *conf) {
+                                              void *conf) noexcept {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
   return set_script(cf, command, loc_conf->loc_operation_name_script);
 }
@@ -134,8 +137,8 @@ char *set_opentracing_location_operation_name(ngx_conf_t *cf,
 //------------------------------------------------------------------------------
 // set_tracer
 //------------------------------------------------------------------------------
-char *set_tracer(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
-  std::cerr << "set_tracer" << std::endl;
+char *set_tracer(ngx_conf_t *cf, ngx_command_t *command,
+                 void *conf) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
   auto values = static_cast<ngx_str_t *>(cf->args->elts);
@@ -145,8 +148,11 @@ char *set_tracer(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
       cf->pool, cf->log, to_string(main_conf->tracer_library).c_str(),
       to_string(main_conf->tracer_conf_file).c_str());
   if (main_conf->span_context_keys == nullptr) {
-    return static_cast<char*>(NGX_CONF_ERROR);
+    return static_cast<char *>(NGX_CONF_ERROR);
   }
   return static_cast<char *>(NGX_CONF_OK);
+} catch (const std::exception &e) {
+  ngx_log_error(NGX_LOG_ERR, cf->log, 0, "set_tracer failed: %s", e.what());
+  return static_cast<char *>(NGX_CONF_ERROR);
 }
 }  // namespace ngx_opentracing

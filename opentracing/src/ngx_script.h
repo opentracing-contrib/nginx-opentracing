@@ -11,12 +11,12 @@ namespace ngx_opentracing {
 class NgxScript {
  public:
   // Note: Constructor is compatible with begin zero initialized.
-  NgxScript();
+  NgxScript() noexcept;
 
-  bool is_valid() const { return pattern_.data; }
+  bool is_valid() const noexcept { return pattern_.data; }
 
-  ngx_int_t compile(ngx_conf_t *cf, const ngx_str_t &pattern);
-  ngx_str_t run(ngx_http_request_t *request) const;
+  ngx_int_t compile(ngx_conf_t *cf, const ngx_str_t &pattern) noexcept;
+  ngx_str_t run(ngx_http_request_t *request) const noexcept;
 
  private:
   ngx_str_t pattern_;

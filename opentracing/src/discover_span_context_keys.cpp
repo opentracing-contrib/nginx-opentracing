@@ -1,10 +1,11 @@
 #include "discover_span_context_keys.h"
 #include "load_tracer.h"
 
-#include <opentracing/propagation.h>
+#include <new>
 #include <opentracing/ext/tags.h>
-#include <iostream>
+#include <opentracing/propagation.h>
 #include <algorithm>
+#include <iostream>
 
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------
@@ -19,11 +20,9 @@ class HeaderKeyWriter : public opentracing::HTTPHeadersWriter {
   opentracing::expected<void> Set(
       opentracing::string_view key,
       opentracing::string_view value) const override {
-    auto data =
-        static_cast<char*>(ngx_palloc(pool_, key.size()));
+    auto data = static_cast<char*>(ngx_palloc(pool_, key.size()));
     if (data == nullptr) {
-      return opentracing::make_unexpected(
-          std::make_error_code(std::errc::not_enough_memory));
+      throw std::bad_alloc{};
     }
     std::copy_n(key.data(), key.size(), data);
 
@@ -31,11 +30,12 @@ class HeaderKeyWriter : public opentracing::HTTPHeadersWriter {
 
     return {};
   }
+
  private:
   ngx_pool_t* pool_;
   std::vector<opentracing::string_view>& keys_;
 };
-}
+}  // namespace
 
 //------------------------------------------------------------------------------
 // discover_span_context_keys
@@ -53,25 +53,25 @@ ngx_array_t* discover_span_context_keys(ngx_pool_t* pool, ngx_log_t* log,
   auto span = tracer->StartSpan("dummySpan");
   std::vector<opentracing::string_view> keys;
   HeaderKeyWriter carrier_writer{pool, keys};
-  /* auto carrier_writer = HeaderKeyWriter{span_context_keys}; */
   auto was_successful = tracer->Inject(span->context(), carrier_writer);
   span->SetTag(opentracing::ext::sampling_priority, 0);
   if (!was_successful) {
     ngx_log_error(NGX_LOG_ERR, log, 0,
-                  "Failed to discover span context tags: %s",
+                  "failed to discover span context tags: %s",
                   was_successful.error().message().c_str());
     return nullptr;
   }
   ngx_array_t* result =
       ngx_array_create(pool, keys.size(), sizeof(opentracing::string_view));
   if (result == nullptr) {
-    return result;
+    throw std::bad_alloc{};
   }
 
   for (auto key : keys) {
-    auto element = static_cast<opentracing::string_view*>(ngx_array_push(result));
+    auto element =
+        static_cast<opentracing::string_view*>(ngx_array_push(result));
     *element = key;
   }
   return result;
 }
-} // namespace ngx_opentracing
+}  // namespace ngx_opentracing
