@@ -16,13 +16,7 @@ extern "C" {
 
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------
-// get_context_propagation_header_variable_names
-//------------------------------------------------------------------------------
-const std::vector<std::pair<std::string, std::string>>&
-get_context_propagation_header_variable_names();
-
-//------------------------------------------------------------------------------
 // add_variables
 //------------------------------------------------------------------------------
-ngx_int_t add_variables(ngx_conf_t* cf);
+ngx_int_t add_variables(ngx_conf_t* cf) noexcept;
 }  // namespace ngx_opentracing
