@@ -1,9 +1,9 @@
+#include "load_tracer.h"
 #include "opentracing_conf.h"
 #include "opentracing_directive.h"
-#include "opentracing_variable.h"
 #include "opentracing_handler.h"
+#include "opentracing_variable.h"
 #include "utility.h"
-#include "load_tracer.h"
 
 #include <opentracing/dynamic_load.h>
 
@@ -11,9 +11,9 @@
 #include <cstdlib>
 #include <exception>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include <utility>
-#include <iostream>
 
 extern "C" {
 #include <nginx.h>
@@ -43,8 +43,7 @@ const std::pair<ngx_str_t, ngx_str_t> default_opentracing_tags[] = {
 //------------------------------------------------------------------------------
 // opentracing_module_init
 //------------------------------------------------------------------------------
-static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
-  std::cout << "module init" << std::endl;
+static ngx_int_t opentracing_module_init(ngx_conf_t *cf) noexcept {
   auto core_main_config = static_cast<ngx_http_core_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module));
   auto main_conf = static_cast<opentracing_main_conf_t *>(
@@ -78,7 +77,7 @@ static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
 //------------------------------------------------------------------------------
 // opentracing_init_worker
 //------------------------------------------------------------------------------
-static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
+static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_cycle_get_module_main_conf(cycle, ngx_http_opentracing_module));
   if (!main_conf->tracer_library.data) {
@@ -98,12 +97,16 @@ static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
   opentracing_library_handle = std::move(handle);
   opentracing::Tracer::InitGlobal(std::move(tracer));
   return NGX_OK;
+} catch (const std::exception &e) {
+  ngx_log_error(NGX_LOG_ERR, cycle->log, 0, "failed to initialize tracer: %s",
+                e.what());
+  return NGX_ERROR;
 }
 
 //------------------------------------------------------------------------------
 // opentracing_exit_worker
 //------------------------------------------------------------------------------
-static void opentracing_exit_worker(ngx_cycle_t *cycle) {
+static void opentracing_exit_worker(ngx_cycle_t *cycle) noexcept {
   // Close the global tracer if it's set and release the reference so as to
   // ensure that any dynamically loaded tracer is destructed before the library
   // handle is closed.
@@ -120,7 +123,7 @@ static void opentracing_exit_worker(ngx_cycle_t *cycle) {
 //------------------------------------------------------------------------------
 // create_opentracing_main_conf
 //------------------------------------------------------------------------------
-static void *create_opentracing_main_conf(ngx_conf_t *conf) {
+static void *create_opentracing_main_conf(ngx_conf_t *conf) noexcept {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
   // Default initialize members.
@@ -132,7 +135,7 @@ static void *create_opentracing_main_conf(ngx_conf_t *conf) {
 //------------------------------------------------------------------------------
 // create_opentracing_loc_conf
 //------------------------------------------------------------------------------
-static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
+static void *create_opentracing_loc_conf(ngx_conf_t *conf) noexcept {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
   if (!loc_conf) return nullptr;
@@ -148,7 +151,7 @@ static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
 // merge_opentracing_loc_conf
 //------------------------------------------------------------------------------
 static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
-                                        void *child) {
+                                        void *child) noexcept {
   auto prev = static_cast<opentracing_loc_conf_t *>(parent);
   auto conf = static_cast<opentracing_loc_conf_t *>(child);
 

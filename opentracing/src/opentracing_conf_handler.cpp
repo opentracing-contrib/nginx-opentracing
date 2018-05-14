@@ -10,7 +10,7 @@ static ngx_uint_t argument_number[] = {
 //------------------------------------------------------------------------------
 // opentracing_conf_handler
 //------------------------------------------------------------------------------
-ngx_int_t opentracing_conf_handler(ngx_conf_t *cf, ngx_int_t last) {
+ngx_int_t opentracing_conf_handler(ngx_conf_t *cf, ngx_int_t last) noexcept {
   char *rv;
   void *conf, **confp;
   ngx_uint_t i, found;

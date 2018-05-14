@@ -13,5 +13,5 @@ namespace ngx_opentracing {
 // this is necessary for OpenTracing's implementation of context propagation.
 //
 // See http://mailman.nginx.org/pipermail/nginx-devel/2018-March/011008.html
-ngx_int_t opentracing_conf_handler(ngx_conf_t *cf, ngx_int_t last);
+ngx_int_t opentracing_conf_handler(ngx_conf_t *cf, ngx_int_t last) noexcept;
 }  // namespace ngx_opentracing
