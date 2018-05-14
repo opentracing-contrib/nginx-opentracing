@@ -11,10 +11,6 @@ namespace ngx_opentracing {
 std::unique_ptr<opentracing::SpanContext> extract_span_context(
     const opentracing::Tracer &tracer, const ngx_http_request_t *request);
 
-void inject_span_context(const opentracing::Tracer &tracer,
-                         ngx_http_request_t *request,
-                         const opentracing::SpanContext &span_context);
-
 //------------------------------------------------------------------------------
 // get_loc_operation_name
 //------------------------------------------------------------------------------

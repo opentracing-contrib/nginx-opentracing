@@ -18,7 +18,6 @@ ngx_module_srcs=" \
   $ngx_addon_dir/src/ngx_http_opentracing_module.cpp \
   $ngx_addon_dir/src/ngx_script.cpp \
   $ngx_addon_dir/src/extract_span_context.cpp \
-  $ngx_addon_dir/src/inject_span_context.cpp \
   $ngx_addon_dir/src/discover_span_context_keys.cpp \
   $ngx_addon_dir/src/load_tracer.cpp \
   $ngx_addon_dir/src/opentracing_directive.cpp \
