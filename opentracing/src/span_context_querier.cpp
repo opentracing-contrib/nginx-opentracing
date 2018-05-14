@@ -30,8 +30,7 @@ ngx_str_t SpanContextQuerier::lookup_value(ngx_http_request_t* request,
     expand_span_context_values(request, span);
   }
   auto value = values_[value_index];
-  return {value.size(),
-          reinterpret_cast<unsigned char*>(const_cast<char*>(value.data()))};
+  return to_ngx_str(value);
 }
 
 //------------------------------------------------------------------------------
