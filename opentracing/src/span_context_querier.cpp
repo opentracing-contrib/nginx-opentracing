@@ -1,8 +1,11 @@
 #include "span_context_querier.h"
 
+#include "utility.h"
+
 #include <opentracing/propagation.h>
 #include <opentracing/tracer.h>
 
+#include <new>
 #include <cassert>
 #include <algorithm>
 
@@ -10,7 +13,8 @@ namespace ngx_opentracing {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SpanContextQuerier::SpanContextQuerier(const opentracing_main_conf_t& conf)
+SpanContextQuerier::SpanContextQuerier(
+    const opentracing_main_conf_t& conf) noexcept
     : num_keys_{static_cast<int>(conf.span_context_keys->nelts)},
       keys_{static_cast<opentracing::string_view*>(
           conf.span_context_keys->elts)} {}
@@ -48,14 +52,18 @@ class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
       if (keys_[index] == key) {
         auto data =
             static_cast<char*>(ngx_pnalloc(request_->pool, value.size()));
-        // TODO: check for null
+        if (data == nullptr) {
+          throw std::bad_alloc{};
+        }
         std::copy_n(value.data(), value.size(), data);
         values_[index] = opentracing::string_view{data, value.size()};
         return {};
       }
     }
 
-    // TODO: Key not found, print something
+    ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
+                  "droping span context key %V for request %p", to_ngx_str(key),
+                  request_);
     return {};
   }
 
@@ -75,8 +83,15 @@ void SpanContextQuerier::expand_span_context_values(
   values_span_ = &span;
   values_ = static_cast<opentracing::string_view*>(
       ngx_pcalloc(request->pool, sizeof(opentracing::string_view) * num_keys_));
+  if (values_ == nullptr) {
+    throw std::bad_alloc{};
+  }
   SpanContextValueExpander carrier{request, num_keys_, keys_, values_};
   auto was_successful = span.tracer().Inject(span.context(), carrier);
-  // TODO: check was_successful
+  if (!was_successful) {
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "Tracer.inject() failed for request %p: %s", request,
+                  was_successful.error().message().c_str());
+  }
 }
 }  // namespace ngx_opentracing

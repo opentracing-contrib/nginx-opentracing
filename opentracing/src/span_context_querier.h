@@ -14,10 +14,10 @@ extern "C" {
 namespace ngx_opentracing {
 class SpanContextQuerier {
  public:
-  explicit SpanContextQuerier(const opentracing_main_conf_t& conf);
+  explicit SpanContextQuerier(const opentracing_main_conf_t& conf) noexcept;
 
-  ngx_str_t lookup_value(ngx_http_request_t* request, const opentracing::Span& span,
-                         int value_index);
+  ngx_str_t lookup_value(ngx_http_request_t* request,
+                         const opentracing::Span& span, int value_index);
 
  private:
   int num_keys_;
