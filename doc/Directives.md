@@ -6,20 +6,20 @@
 
 Enables or disables OpenTracing for NGINX requests.
 
-### `opentracing_propagate_context`
-
-- **syntax** `opentracing_propagate_context`
-- **context**: `location`
-
-Propagates the active span context for upstream requests. See
-[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html).
-
 ### `opentracing_load_tracer`
 
 - **syntax** `opentracing_load_tracer <tracer_library> <tracer_config_file>`
 - **context**: `http`, `server`
 
 Dynamicaly loads in a tracer implementing the OpenTracing dynamic loading interface.
+
+### `opentracing_propagate_context`
+
+- **syntax** `opentracing_propagate_context`
+- **context**: `location`
+
+Propagates the active span context for upstream requests. (See
+[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
 
 ### `opentracing_trace_locations`
 
