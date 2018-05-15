@@ -64,6 +64,27 @@ char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,
 //------------------------------------------------------------------------------
 // propagate_opentracing_context
 //------------------------------------------------------------------------------
+// Sets up headers to be added so that the active span context is propagated
+// upstream when using ngx_http_proxy_module.
+//
+// The directive gets translated to the directives
+//
+//      proxy_set_header span_context_key0
+//      $opentracing_internal_span_context_value0 proxy_set_header
+//      span_context_key1 $opentracing_internal_span_context_value1
+//      ...
+//      proxy_set_header span_context_keyN
+//      $opentracing_internal_span_context_valueN
+//
+// where opentracing_internal_span_context_value is a prefix variable that
+// expands to the corresponding value of the active span context.
+//
+// The key value of proxy_set_header isn't allowed to be a variable, so the keys
+// used for propagation need to be discovered before this directive is called.
+// (See set_tracer below).
+//
+// This approach was dicussed here
+//     http://mailman.nginx.org/pipermail/nginx-devel/2018-March/011008.html
 char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
                                     void * /*conf*/) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
@@ -143,12 +164,20 @@ char *set_tracer(ngx_conf_t *cf, ngx_command_t *command,
   auto values = static_cast<ngx_str_t *>(cf->args->elts);
   main_conf->tracer_library = values[1];
   main_conf->tracer_conf_file = values[2];
+
+  // In order for span context propagation to work, the keys used by a tracer
+  // need to be known ahead of time. OpenTracing-C++ doesn't currently have any
+  // API for this, so we attempt to do this by creating and injecting a dummy
+  // span context.
+  //
+  // See also propagate_opentracing_context.
   main_conf->span_context_keys = discover_span_context_keys(
       cf->pool, cf->log, to_string(main_conf->tracer_library).c_str(),
       to_string(main_conf->tracer_conf_file).c_str());
   if (main_conf->span_context_keys == nullptr) {
     return static_cast<char *>(NGX_CONF_ERROR);
   }
+
   return static_cast<char *>(NGX_CONF_OK);
 } catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0, "set_tracer failed: %s", e.what());

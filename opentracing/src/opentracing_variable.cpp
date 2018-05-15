@@ -53,6 +53,10 @@ static uint32_t extract_variable_index(opentracing::string_view variable_name) {
 //------------------------------------------------------------------------------
 // expand_span_context_value_variable
 //------------------------------------------------------------------------------
+// Expands to the ith value of the active span context where i is determined
+// from the variable's suffix.
+//
+// See propagate_opentracing_context
 static ngx_int_t expand_span_context_value_variable(
     ngx_http_request_t* request, ngx_http_variable_value_t* variable_value,
     uintptr_t data) noexcept try {

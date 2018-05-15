@@ -40,6 +40,14 @@ class HeaderKeyWriter : public opentracing::HTTPHeadersWriter {
 //------------------------------------------------------------------------------
 // discover_span_context_keys
 //------------------------------------------------------------------------------
+// Loads the vendor tracing library and creates a dummy span so as to obtain
+// a list of the keys used for span context propagation. This is necessary to
+// make context propagation work for requests proxied upstream.
+//
+// See propagate_opentracing_context, set_tracer.
+//
+// Note: Any keys that a tracer might use for propagation that aren't discovered
+// discovered here will get dropped during propagation.
 ngx_array_t* discover_span_context_keys(ngx_pool_t* pool, ngx_log_t* log,
                                         const char* tracing_library,
                                         const char* tracer_config_file) {

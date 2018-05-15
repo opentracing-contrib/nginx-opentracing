@@ -60,9 +60,13 @@ class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
       }
     }
 
+    // If we got here, then the tracer is using a key for propagation that
+    // wasn't discovered at initialization. (See set_tracer). It won't be
+    // propagated so log an error.
     ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
-                  "droping span context key %V for request %p", to_ngx_str(key),
-                  request_);
+                  "dropping span context key %V for request %p",
+                  to_ngx_str(key), request_);
+
     return {};
   }
 

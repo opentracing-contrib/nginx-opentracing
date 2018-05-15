@@ -188,6 +188,13 @@ void OpenTracingRequestInstrumentor::on_log_request() {
 //------------------------------------------------------------------------------
 // lookup_span_context_value
 //------------------------------------------------------------------------------
+// Expands the active span context into a list of key-value pairs and returns
+// the `value_index`-th value.
+//
+// Note: there's caching so that if lookup_span_context_value is repeatedly
+// called for the same active span context, it will only be expanded once.
+//
+// See propagate_opentracing_context
 ngx_str_t OpenTracingRequestInstrumentor::lookup_span_context_value(
     int value_index) {
   return span_context_querier_.lookup_value(request_, active_span(),
