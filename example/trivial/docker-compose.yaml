@@ -1,0 +1,48 @@
+version: '2'
+services:
+
+  nginx:
+    build:
+      context: ../../
+      dockerfile: ./Dockerfile
+    networks:
+      trivial_example:
+        aliases:
+          - nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./zipkin-config.json:/etc/zipkin-config.json
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+  app-service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    networks:
+      trivial_example:
+        aliases:
+          - app-service
+    expose:
+      - "9001"
+    ports:
+      - "9001:9001"
+    command: 
+      - /app/server
+      - -collector_host
+      - zipkin
+
+  zipkin:
+    image: openzipkin/zipkin
+    networks:
+      trivial_example:
+        aliases:
+          - zipkin
+    expose:
+      - "9411"
+    ports:
+      - "9411:9411"
+
+networks:
+  trivial_example: {}
