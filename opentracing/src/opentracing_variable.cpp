@@ -23,7 +23,7 @@ namespace ngx_opentracing {
 static uint32_t extract_variable_index(opentracing::string_view variable_name) {
   static const auto prefix_length =
       std::strlen(OPENTRACING_SPAN_CONTEXT_HEADER_VALUE);
-  if (prefix_length <= variable_name.size()) {
+  if (variable_name.size() <= prefix_length) {
     throw std::runtime_error{"invalid variable name length " +
                              std::to_string(variable_name.size())};
   }

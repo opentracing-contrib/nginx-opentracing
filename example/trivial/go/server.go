@@ -21,6 +21,9 @@ var collectorHost = flag.String("collector_host", "localhost", "Host for Zipkin 
 var collectorPort = flag.String("collector_port", "9411", "Port for Zipkin Collector")
 
 func handler(w http.ResponseWriter, r *http.Request) {
+  for k, v := range r.Header {
+    fmt.Fprintf(w, "Header field %q, Value %q\n", k, v)
+  }
 	wireContext, _ := opentracing.GlobalTracer().Extract(
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(r.Header))
