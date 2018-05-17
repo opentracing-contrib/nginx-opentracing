@@ -23,16 +23,23 @@ Building
 ```
 $ tar zxvf nginx-1.9.x.tar.gz
 $ cd nginx-1.9.x
-$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing \
-              # To enable tracing with Jaeger
-              --add-dynamic-module=/absolute/path/to/nginx-opentracing/jaeger \
-              # To enable tracing with Zipkin
-              --add-dynamic-module=/absolute/path/to/nginx-opentracing/zipkin \  
-              # To enable tracing with LightStep
-              --add-dynamic-module=/absolute/path/to/nginx-opentracing/lightstep
+$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing
 $ make && sudo make install
 ```
 
+You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
+https://github.com/lightstep/lightstep-tracer-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
+```
+# Jaeger
+wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.0/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
+
+# LightStep
+wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.7.0/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so
+
+# Zipkin
+wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.3.1/linux-amd64-libzipkin_opentracing_plugin.so.gz  gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
+
+```
 
 Getting Started
 ---------------
@@ -78,8 +85,5 @@ http {
 
 See [Tutorial](doc/Tutorial.md) for a more complete example,
 [Reference](doc/Directives.md) for a list of available OpenTracing-related
-directives, and [Jaeger](jaeger/doc/Directives.md),
-[Zipkin](zipkin/doc/Directives.md), and
-[LightStep](lightstep/doc/Directives.md) for a list of vendor tracing
 directives.
 
