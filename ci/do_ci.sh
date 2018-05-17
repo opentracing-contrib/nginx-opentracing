@@ -6,14 +6,13 @@ cd /src
 wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz
 tar zxf nginx-release-${NGINX_VERSION}.tar.gz
 cd /src/nginx-release-${NGINX_VERSION}
-export ASAN_OPTIONS=detect_leaks=0 # Need to temporarily turn off leak sanitizer otherwise we get an error when building
+export ASAN_OPTIONS=detect_leaks=0 # Disable leak sanitizer to get around false positives in nginx
 auto/configure \
   --with-compat \
   --with-debug \
   --with-cc-opt="-fno-omit-frame-pointer -fsanitize=address" \
   --with-ld-opt="-lasan -fno-omit-frame-pointer -fsanitize=address" \
   --add-dynamic-module=/src/nginx-opentracing/opentracing 
-export ASAN_OPTIONS=detect_leaks=1
 make && make install
 export PATH=/usr/local/nginx/sbin:$PATH
 NGINX_MODULES_PATH=/usr/local/nginx/modules/
