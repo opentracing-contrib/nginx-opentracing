@@ -60,6 +60,7 @@ RUN set -x \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
+  && ln -s /usr/local/lib/libzipkin_opentracing.so /usr/local/lib/libzipkin_opentracing_plugin.so \
 ### Build Jaeger cpp-client
   && git clone -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
   && cd jaeger-cpp-client \
@@ -70,6 +71,7 @@ RUN set -x \
   && make && make install \
   && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
   && cd "$tempDir" \
+  && ln -s /usr/local/lib/libjaegertracing.so /usr/local/lib/libjaegertracing_plugin.so \
 ### Build gRPC
   && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
@@ -84,6 +86,7 @@ RUN set -x \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
+  && ln -s /usr/local/lib/liblightstep_tracer.so /usr/local/lib/liblightstep_tracer_plugin.so \
 ### Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \

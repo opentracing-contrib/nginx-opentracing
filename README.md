@@ -43,6 +43,36 @@ wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.
 
 Getting Started
 ---------------
+First, write a configuration for the tracer used. Below's an example of what
+a Jaeger configuration might look like:
+
+/etc/jaeger-nginx-config.json
+```
+{
+  "service_name": "nginx",
+  "sampler": {
+    "type": "const",
+    "param": 1
+  },
+  "reporter": {
+    "localAgentHostPort": "jaeger:6831"
+  },
+  "headers": {
+    "jaegerDebugHeader": "jaeger-debug-id",
+    "jaegerBaggageHeader": "jaeger-baggage",
+    "traceBaggageHeaderPrefix": "uberctx-",
+  },
+  "baggage_restrictions": {
+    "denyBaggageOnInitializationFailure": false,
+    "hostPort": ""
+  }
+}
+```
+
+See the vendor documentation for details on what options are available.
+
+You can then set up NGINX for distributed tracing by adding the following to
+nginx.conf:
 ```
 # Load the OpenTracing dynamic module.
 load_module modules/ngx_http_opentracing_module.so;
@@ -56,16 +86,13 @@ load_module modules/ngx_http_opentracing_module.so;
 #   load_module modules/ngx_http_lightstep_module.so;
 
 http {
-  # Configure your vendor's tracer.
-  # For example,
-  #     jaeger_service_name my-nginx-server;
-  #     ...
-  # or
-  #     zipkin_collector_host localhost;
-  #     ...
-  # or
-  #     lightstep_access_token ACCESSTOKEN;
-  #     ....
+  # Load a vendor tracer
+  opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/jaeger-nginx-config.json;
+
+  # or 
+  #   opentracing_load_tracer /usr/local/lib/liblightstep_tracer_plugin.so /path/to/config;
+  # or 
+  #   opentracing_load_tracer /usr/local/lib/libzipkin_opentracing_plugin.so /path/to/config;
 
   # Enable tracing for all requests.
   opentracing on;
@@ -73,12 +100,21 @@ http {
   # Optionally, set additional tags.
   opentracing_tag http_user_agent $http_user_agent;
 
-  location ~ \.php$ {
+  upstream backend {
+    server app-service:9001;
+  }
+
+  location ~ {
     # The operation name used for spans defaults to the name of the location
     # block, but you can use this directive to customize it.
     opentracing_operation_name $uri;
 
-    fastcgi_pass 127.0.0.1:1025;
+    # Propagate the trace context upstream, so that the trace can be continued
+    # by the backend.
+    # See http://opentracing.io/documentation/pages/api/cross-process-tracing.html
+    opentracing_propagate_context;
+
+    proxy_pass http://backend;
   }
 }
 ```
@@ -86,4 +122,3 @@ http {
 See [Tutorial](doc/Tutorial.md) for a more complete example,
 [Reference](doc/Directives.md) for a list of available OpenTracing-related
 directives.
-
