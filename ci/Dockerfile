@@ -2,7 +2,7 @@ ARG NGINX_LABEL=latest
 
 FROM nginx:${NGINX_LABEL}
 
-ARG OPENTRACING_CPP_VERSION=v1.3.0
+ARG OPENTRACING_CPP_VERSION=v1.4.0
 
 RUN set -x \
   && apt-get update \
