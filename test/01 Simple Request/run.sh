@@ -35,9 +35,12 @@ export MOCKTRACER_OUTPUT_FILE="$TEST_WORK_DIR/spans.json"
 envsubst <"$TEST_WORK_DIR/nginx.conf.in" > "$TEST_WORK_DIR/nginx.conf"
 envsubst <"$TEST_WORK_DIR/tracer-configuration.json.in" > "$MOCKTRACER_CONFIG"
 chmod a+rx "$MOCKTRACER_CONFIG"
+touch "$MOCKTRACER_OUTPUT_FILE"
+chmod a+rwx "$MOCKTRACER_OUTPUT_FILE"
 ls -ld "$NGINX_OPENTRACING_TEST_DIR"
 ls -ld "$TEST_WORK_DIR"
 ls -l "$MOCKTRACER_CONFIG"
+ls -l "$MOCKTRACER_OUTPUT_FILE"
 
 echo "Starting date server"
 python3 "$TEST_WORK_DIR/date.py" &

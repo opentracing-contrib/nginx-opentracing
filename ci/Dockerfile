@@ -1,6 +1,4 @@
-ARG NGINX_LABEL=latest
-
-FROM nginx:${NGINX_LABEL}
+FROM ubuntu:17.10
 
 ARG OPENTRACING_CPP_VERSION=v1.4.0
 
@@ -16,20 +14,17 @@ RUN set -x \
               jq \
               ca-certificates \
               wget \
+              libpcre3 libpcre3-dev \
+              zlib1g-dev \
   && mkdir /src \
 ### Build opentracing-cpp
   && cd /src \
  && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
-  && cmake -DCMAKE_BUILD_TYPE=Release \
+  && cmake -DCMAKE_BUILD_TYPE=Debug \
+           -DCMAKE_CXX_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
+           -DCMAKE_SHARED_LINKER_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
+           -DCMAKE_EXE_LINKER_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
            -DBUILD_TESTING=OFF .. \
-  && make && make install \
-### Get nginx sources
-  && cd /src \
-  && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
-  && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
-  && apt-get update \
-  && apt-get build-dep -y nginx=${NGINX_VERSION} \
-  && wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
-  && tar zxf nginx-release-${NGINX_VERSION}.tar.gz \
+  && make && make install
