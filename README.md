@@ -101,8 +101,8 @@ http {
     # block, but you can use this directive to customize it.
     opentracing_operation_name $uri;
 
-    # Propagate the trace context upstream, so that the trace can be continued
-    # by the backend.
+    # Propagate the active span context upstream, so that the trace can be
+    # continued by the backend.
     # See http://opentracing.io/documentation/pages/api/cross-process-tracing.html
     opentracing_propagate_context;
 
