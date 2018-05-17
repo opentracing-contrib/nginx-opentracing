@@ -77,14 +77,6 @@ nginx.conf:
 # Load the OpenTracing dynamic module.
 load_module modules/ngx_http_opentracing_module.so;
 
-# Load a vendor OpenTracing dynamic module.
-# For example,
-#   load_module modules/ngx_http_jaeger_module.so;
-# or
-#   load_module modules/ngx_http_zipkin_module.so;
-# or
-#   load_module modules/ngx_http_lightstep_module.so;
-
 http {
   # Load a vendor tracer
   opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/jaeger-nginx-config.json;
