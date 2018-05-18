@@ -25,6 +25,7 @@ struct zipkin_main_conf_t {
   ngx_str_t collector_host;
   ngx_str_t collector_port;
   ngx_str_t service_name;
+  ngx_str_t sample_rate;
 };
 
 //------------------------------------------------------------------------------
@@ -44,6 +45,11 @@ static ngx_int_t zipkin_init_worker(ngx_cycle_t *cycle) {
     tracer_options.service_name = to_string(main_conf->service_name);
   else
     tracer_options.service_name = "nginx";
+  if (main_conf->sample_rate.data)
+    tracer_options.sample_rate = std::stod(to_string(main_conf->sample_rate));
+  else
+    tracer_options.sample_rate = 1.0;
+  
   auto tracer = makeZipkinOtTracer(tracer_options);
   if (!tracer) {
     ngx_log_error(NGX_LOG_ERR, cycle->log, 0, "Failed to create Zipkin tracer");
@@ -91,7 +97,10 @@ static ngx_command_t zipkin_commands[] = {
      offsetof(zipkin_main_conf_t, collector_host), nullptr},
     {ngx_string("zipkin_collector_port"), NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
      ngx_conf_set_str_slot, NGX_HTTP_MAIN_CONF_OFFSET,
-     offsetof(zipkin_main_conf_t, collector_port), nullptr}};
+     offsetof(zipkin_main_conf_t, collector_port), nullptr},
+    {ngx_string("zipkin_sample_rate"), NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_str_slot, NGX_HTTP_MAIN_CONF_OFFSET,
+     offsetof(zipkin_main_conf_t, sample_rate), nullptr}};
 
 //------------------------------------------------------------------------------
 // ngx_http_zipkin_module
