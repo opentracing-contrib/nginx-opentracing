@@ -1,4 +1,4 @@
-#include "opentracing_request_instrumentor.h"
+#include "opentracing_context.h"
 #include "utility.h"
 
 #include <stdexcept>
@@ -68,11 +68,11 @@ static void add_status_tags(const ngx_http_request_t *request,
 }
 
 //------------------------------------------------------------------------------
-// OpenTracingRequestInstrumentor
+// OpenTracingContext
 //------------------------------------------------------------------------------
-OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
-    ngx_http_request_t *request, ngx_http_core_loc_conf_t *core_loc_conf,
-    opentracing_loc_conf_t *loc_conf)
+OpenTracingContext::OpenTracingContext(ngx_http_request_t *request,
+                                       ngx_http_core_loc_conf_t *core_loc_conf,
+                                       opentracing_loc_conf_t *loc_conf)
     : request_{request},
       main_conf_{
           static_cast<opentracing_main_conf_t *>(ngx_http_get_module_main_conf(
@@ -111,7 +111,7 @@ OpenTracingRequestInstrumentor::OpenTracingRequestInstrumentor(
 //------------------------------------------------------------------------------
 // on_change_block
 //------------------------------------------------------------------------------
-void OpenTracingRequestInstrumentor::on_change_block(
+void OpenTracingContext::on_change_block(
     ngx_http_core_loc_conf_t *core_loc_conf, opentracing_loc_conf_t *loc_conf) {
   on_exit_block();
   loc_conf_ = loc_conf;
@@ -131,7 +131,7 @@ void OpenTracingRequestInstrumentor::on_change_block(
 //------------------------------------------------------------------------------
 // active_span
 //------------------------------------------------------------------------------
-opentracing::Span &OpenTracingRequestInstrumentor::active_span() {
+opentracing::Span &OpenTracingContext::active_span() {
   if (loc_conf_->enable_locations) {
     return *span_;
   } else {
@@ -142,7 +142,7 @@ opentracing::Span &OpenTracingRequestInstrumentor::active_span() {
 //------------------------------------------------------------------------------
 // on_exit_block
 //------------------------------------------------------------------------------
-void OpenTracingRequestInstrumentor::on_exit_block(
+void OpenTracingContext::on_exit_block(
     std::chrono::steady_clock::time_point finish_timestamp) {
   // Set default and custom tags for the block. Many nginx variables won't be
   // available when a block is first entered, so set tags when the block is
@@ -163,7 +163,7 @@ void OpenTracingRequestInstrumentor::on_exit_block(
 //------------------------------------------------------------------------------
 // on_log_request
 //------------------------------------------------------------------------------
-void OpenTracingRequestInstrumentor::on_log_request() {
+void OpenTracingContext::on_log_request() {
   auto finish_timestamp = std::chrono::steady_clock::now();
 
   on_exit_block(finish_timestamp);
@@ -195,9 +195,103 @@ void OpenTracingRequestInstrumentor::on_log_request() {
 // called for the same active span context, it will only be expanded once.
 //
 // See propagate_opentracing_context
-ngx_str_t OpenTracingRequestInstrumentor::lookup_span_context_value(
-    int value_index) {
+ngx_str_t OpenTracingContext::lookup_span_context_value(int value_index) {
   return span_context_querier_.lookup_value(request_, active_span(),
                                             value_index);
+}
+
+//------------------------------------------------------------------------------
+// cleanup_opentracing_context
+//------------------------------------------------------------------------------
+static void cleanup_opentracing_context(void *data) noexcept {
+  delete static_cast<OpenTracingContext *>(data);
+}
+
+//------------------------------------------------------------------------------
+// find_opentracing_cleanup
+//------------------------------------------------------------------------------
+static ngx_pool_cleanup_t *find_opentracing_cleanup(
+    ngx_http_request_t *request) {
+  for (auto cleanup = request->pool->cleanup; cleanup;
+       cleanup = cleanup->next) {
+    if (cleanup->handler == cleanup_opentracing_context) {
+      return cleanup;
+    }
+  }
+  return nullptr;
+}
+
+//------------------------------------------------------------------------------
+// get_opentracing_context
+//------------------------------------------------------------------------------
+OpenTracingContext *get_opentracing_context(
+    ngx_http_request_t *request) noexcept {
+  auto context = static_cast<OpenTracingContext *>(
+      ngx_http_get_module_ctx(request, ngx_http_opentracing_module));
+  if (context != nullptr || !request->internal) {
+    return context;
+  }
+
+  // If this is an internal redirect, the OpenTracingContext will have been
+  // reset, but we can still recover it from the cleanup handler.
+  //
+  // See set_opentracing_context below.
+  auto cleanup = find_opentracing_cleanup(request);
+  if (cleanup != nullptr) {
+    context = static_cast<OpenTracingContext *>(cleanup->data);
+  }
+
+  // If we found a context, attach with ngx_http_set_ctx so that we don't have
+  // to loop through the cleanup handlers again.
+  if (context != nullptr) {
+    ngx_http_set_ctx(request, static_cast<void *>(context),
+                     ngx_http_opentracing_module);
+  }
+
+  return context;
+}
+
+//------------------------------------------------------------------------------
+// set_opentracing_context
+//------------------------------------------------------------------------------
+// Attaches an OpenTracingContext to a request.
+//
+// Note that internal redirects for nginx will clear any data attached via
+// ngx_http_set_ctx. Since OpenTracingContext needs to persist across
+// redirection, as a workaround the context is stored in a cleanup handler where
+// it can be later recovered.
+//
+// See the discussion in
+//    https://forum.nginx.org/read.php?29,272403,272403#msg-272403
+// or the approach taken by the standard nginx realip module.
+void set_opentracing_context(ngx_http_request_t *request,
+                             OpenTracingContext *context) {
+  auto cleanup = ngx_pool_cleanup_add(request->pool, 0);
+  if (cleanup == nullptr) {
+    delete context;
+    throw std::runtime_error{"failed to allocate cleanup handler"};
+  }
+  cleanup->data = static_cast<void *>(context);
+  cleanup->handler = cleanup_opentracing_context;
+  ngx_http_set_ctx(request, static_cast<void *>(context),
+                   ngx_http_opentracing_module);
+}
+
+//------------------------------------------------------------------------------
+// destroy_opentracing_context
+//------------------------------------------------------------------------------
+// Supports early destruction of the OpenTracingContext (in case of an
+// unrecoverable error).
+void destroy_opentracing_context(ngx_http_request_t *request) noexcept {
+  auto cleanup = find_opentracing_cleanup(request);
+  if (cleanup == nullptr) {
+    ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                  "Unable to find OpenTracing cleanup handler for request %p",
+                  request);
+    return;
+  }
+  delete static_cast<OpenTracingContext *>(cleanup->data);
+  cleanup->data = nullptr;
+  ngx_http_set_ctx(request, nullptr, ngx_http_opentracing_module);
 }
 }  // namespace ngx_opentracing

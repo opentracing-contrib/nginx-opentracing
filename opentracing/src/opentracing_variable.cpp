@@ -1,6 +1,6 @@
 #include "opentracing_variable.h"
 
-#include "opentracing_request_instrumentor.h"
+#include "opentracing_context.h"
 #include "utility.h"
 
 #include <opentracing/string_view.h>
@@ -63,15 +63,13 @@ static ngx_int_t expand_span_context_value_variable(
   auto& variable_name = *reinterpret_cast<ngx_str_t*>(data);
   auto variable_index = extract_variable_index(to_string_view(variable_name));
 
-  auto instrumentor = static_cast<OpenTracingRequestInstrumentor*>(
+  auto context = static_cast<OpenTracingContext*>(
       ngx_http_get_module_ctx(request, ngx_http_opentracing_module));
-  if (instrumentor == nullptr) {
-    throw std::runtime_error{
-        "no OpenTracingRequestInstrumentor attached to request"};
+  if (context == nullptr) {
+    throw std::runtime_error{"no OpenTracingContext attached to request"};
   }
 
-  auto span_context_value =
-      instrumentor->lookup_span_context_value(variable_index);
+  auto span_context_value = context->lookup_span_context_value(variable_index);
 
   variable_value->len = span_context_value.len;
   variable_value->valid = 1;

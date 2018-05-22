@@ -101,6 +101,7 @@ RUN set -x \
         --add-dynamic-module=/src/opentracing \
         --with-cc-opt="-I$HUNTER_INSTALL_DIR/include" \
         --with-ld-opt="-L$HUNTER_INSTALL_DIR/lib" \
+        --with-debug \
   && make modules \
   && cp objs/ngx_http_opentracing_module.so $NGINX_MODULES_PATH/ \
 	# if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
