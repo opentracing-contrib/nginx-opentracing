@@ -56,7 +56,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                         os.path.join(test_log, "nginx-error.log"))
 
     def tearDown(self):
-        self._stopEnvironment()
+        self._stopDocker()
         logdir = None
 
         if "LOG_DIR" in os.environ:
@@ -66,17 +66,21 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.client.close()
         self.conn.close()
 
-    def _stopEnvironment(self):
+    def _stopDocker(self):
         if not self.running:
             return
         self.running = False
-        print("**** bringing docker down ***")
         subprocess.check_call(["docker-compose", "down"])
         stdout, stderr = self.environment_handle.communicate()
         self.environment_stdout = stdout
         self.environment_stderr = stderr
         self.environment_returncode = self.environment_handle.returncode
 
+    def _stopEnvironment(self):
+        if not self.running:
+            return
+        self._stopDocker()
+        self.assertEqual(self.environment_returncode, 0)
         with open(os.path.join(self.workdir, "traces", "nginx.json")) as f:
             self.nginx_traces = json.load(f)
 
@@ -88,7 +92,6 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.assertEqual(response.status, 200)
         print("**** stopping environment ***")
         self._stopEnvironment()
-        self.assertEqual(self.environment_returncode, 0)
 
         self.assertEqual(len(self.nginx_traces), 2)
 
