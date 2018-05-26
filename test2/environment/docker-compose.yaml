@@ -1,0 +1,47 @@
+version: '2'
+services:
+
+  nginx:
+    image: nginx-opentracing-test/nginx
+    networks:
+      testnet:
+        aliases:
+          - nginx
+    privileged: true
+    volumes:
+      - ./nginx.conf:/usr/local/nginx/conf/nginx.conf
+      - ./lsan-suppress.txt:/lsan-suppress.txt
+      - ./traces/nginx.json:/trace.json
+      - ./tracer-config.json:/tracer-config.json
+      - ./logs/debug.log:/usr/local/nginx/logs/debug.log
+      - ./logs/error.log:/usr/local/nginx/logs/error.log
+    environment:
+      - LD_LIBRARY_PATH=/usr/local/lib
+      - ASAN_OPTIONS=detect_leaks=1
+      - LSAN_OPTIONS=suppressions=/lsan-suppress.txt
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    command:
+      - /usr/local/nginx/sbin/nginx
+      - -g
+      - daemon off;
+
+
+  backend:
+    image: nginx-opentracing-test/backend
+    networks:
+      testnet:
+        aliases:
+          - backend
+    volumes:
+      - ./app.py:/app/app.py
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+
+networks:
+  testnet: {}
+

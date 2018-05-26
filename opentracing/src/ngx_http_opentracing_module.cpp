@@ -109,6 +109,8 @@ static void opentracing_exit_worker(ngx_cycle_t *cycle) noexcept {
   // handle is closed.
   auto tracer = opentracing::Tracer::InitGlobal(nullptr);
   if (tracer != nullptr) {
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, cycle->log, 0,
+                   "closing opentracing tracer");
     tracer->Close();
     tracer.reset();
   }
