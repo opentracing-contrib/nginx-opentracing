@@ -13,6 +13,10 @@ jobs:
             pip3.5 install setuptools
             pip3.5 install docker
             pip3.5 install docker-compose
-            python3 -c "import docker"
+            sudo mkdir /test-log
+            sudo chmod a+rwx /test-log
+            export LOG_DIR=$HOME/test-log
             ./ci/do_ci.sh system.testing
+      - store_artifacts:
+          path: /test-log
 
