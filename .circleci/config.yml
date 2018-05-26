@@ -2,7 +2,9 @@ version: 2
 jobs:
   build:
     machine:
-      post: pyenv global 3.5.2
+      python:
+        version: 3.5.2
+      pre: pyenv global 3.5.2
     steps:
       - checkout
       - run:
