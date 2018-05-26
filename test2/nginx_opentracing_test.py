@@ -65,6 +65,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.conn.close()
 
     def _stopEnvironment(self):
+        print("**** bringing docker down ***")
         subprocess.check_call(["docker-compose", "down"])
         stdout, stderr = self.environment_handle.communicate()
         self.environment_stdout = stdout
@@ -80,6 +81,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         print("**** getting response ***")
         response = self.conn.getresponse()
         self.assertEqual(response.status, 200)
+        print("**** stopping environment ***")
         self._stopEnvironment()
 
         self.assertEqual(len(self.nginx_traces), 2)
