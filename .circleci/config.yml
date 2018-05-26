@@ -1,15 +1,13 @@
 version: 2
 jobs:
   build:
-    machine:
-      python:
-        version: 3.5.2
-      pre: pyenv global 3.5.2
+    machine: true
     steps:
       - checkout
       - run:
           name: system.testing
           command: |
+            pyenv global 3.5.2
             python3 --version
             pip --version
             sudo pip install setuptools
