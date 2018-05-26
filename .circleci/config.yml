@@ -9,6 +9,7 @@ jobs:
           command: |
             pyenv global 3.5.2
             python3 --version
+            sudo python3 -m ensurepip
             pip3 --version
             sudo pip3 install setuptools
             sudo pip3 install docker
