@@ -33,6 +33,7 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         print("****** connecting to nginx *****")
         self.conn = http.client.HTTPConnection('localhost', 8080, timeout=5)
+        self.running = True
 
     def _logEnvironment(self):
         logdir = os.environ["LOG_DIR"]
@@ -55,6 +56,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                         os.path.join(test_log, "nginx-error.log"))
 
     def tearDown(self):
+        self._stopEnvironment()
         logdir = None
 
         if "LOG_DIR" in os.environ:
@@ -65,6 +67,9 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.conn.close()
 
     def _stopEnvironment(self):
+        if not self.running:
+            return
+        self.running = False
         print("**** bringing docker down ***")
         subprocess.check_call(["docker-compose", "down"])
         stdout, stderr = self.environment_handle.communicate()
