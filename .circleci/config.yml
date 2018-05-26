@@ -10,10 +10,9 @@ jobs:
             pyenv global 3.5.2
             python3 --version
             pip3.5 --version
-            sudo python3 -m pip
-            pip3 --version
-            sudo pip3 install setuptools
-            sudo pip3 install docker
-            sudo pip3 install docker-compose
+            sudo pip3.5 install setuptools
+            sudo pip3.5 install docker
+            sudo pip3.5 install docker-compose
+            python3 -c "import docker"
             ./ci/do_ci.sh system.testing
 
