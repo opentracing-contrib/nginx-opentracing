@@ -75,7 +75,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         stdout, stderr = self.environment_handle.communicate()
         self.environment_stdout = stdout
         self.environment_stderr = stderr
-        self.assertEqual(self.environment_handle.returncode, 0)
+        self.environment_returncode = self.environment_handle.returncode
 
         with open(os.path.join(self.workdir, "traces", "nginx.json")) as f:
             self.nginx_traces = json.load(f)
@@ -88,6 +88,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.assertEqual(response.status, 200)
         print("**** stopping environment ***")
         self._stopEnvironment()
+        self.assertEqual(self.environment_returncode, 0)
 
         self.assertEqual(len(self.nginx_traces), 2)
 
