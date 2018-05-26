@@ -28,12 +28,12 @@ class NginxOpenTracingTest(unittest.TestCase):
                 raise TimeoutError()
             time.sleep(0.001)
 
-        print("****** connecting to nginx *****")
-        self.conn = http.client.HTTPConnection('localhost', 8080)
-
         # Wait so that backend can come up.
         # TODO: replace with something better
-        time.sleep(2)
+        time.sleep(3)
+
+        print("****** connecting to nginx *****")
+        self.conn = http.client.HTTPConnection('localhost', 8080, timeout=5)
 
     def _logEnvironment(self):
         logdir = os.environ["LOG_DIR"]
