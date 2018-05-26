@@ -9,7 +9,7 @@ jobs:
           command: |
             pyenv global 3.5.2
             python3 --version
-            pip3.4 --version
+            pip3.5 --version
             sudo python3 -m pip
             pip3 --version
             sudo pip3 install setuptools
