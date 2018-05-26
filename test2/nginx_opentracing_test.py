@@ -1,6 +1,7 @@
 import unittest
 import shutil
 import os
+import stat
 import tempfile
 import subprocess
 import time
@@ -16,6 +17,11 @@ class NginxOpenTracingTest(unittest.TestCase):
         shutil.copytree(os.path.join(os.getcwd(), "environment"),
                         self.workdir)
         os.chdir(self.workdir)
+
+        # Make sure trace output is writable
+        os.chmod(os.path.join(self.workdir, "traces", "nginx.json"), 
+                stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
         self.environment_handle = subprocess.Popen(["docker-compose", "up"], 
                                                    stdout=subprocess.PIPE, 
                                                    stderr=subprocess.PIPE)
