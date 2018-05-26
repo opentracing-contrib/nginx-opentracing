@@ -16,10 +16,9 @@ class NginxOpenTracingTest(unittest.TestCase):
         shutil.copytree(os.path.join(os.getcwd(), "environment"),
                         self.workdir)
         os.chdir(self.workdir)
-        # self.environment_handle = subprocess.Popen(["docker-compose", "up"], 
-        #                                            stdout=subprocess.PIPE, 
-        #                                            stderr=subprocess.PIPE)
-        self.environment_handle = subprocess.Popen(["docker-compose", "up"]) 
+        self.environment_handle = subprocess.Popen(["docker-compose", "up"], 
+                                                   stdout=subprocess.PIPE, 
+                                                   stderr=subprocess.PIPE)
         self.client = docker.from_env()
         timeout = time.time() + 5
         print("********* waiting for containers to come up ****")
