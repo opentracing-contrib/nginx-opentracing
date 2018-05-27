@@ -33,7 +33,7 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         # Wait so that backend can come up.
         # TODO: replace with something better
-        time.sleep(3)
+        time.sleep(2)
 
         self.conn = http.client.HTTPConnection('localhost', 8080, timeout=5)
         self.running = True
@@ -110,6 +110,17 @@ class NginxOpenTracingTest(unittest.TestCase):
         self._stopEnvironment()
 
         self.assertEqual(len(self.nginx_traces), 3)
+
+    def testCustomTag(self):
+        self.conn.request("GET", "/custom-tag")
+        response = self.conn.getresponse()
+        self.assertEqual(response.status, 200)
+        self._stopEnvironment()
+
+        self.assertEqual(len(self.nginx_traces), 2)
+
+        location_span = self.nginx_traces[0]
+        self.assertEqual(location_span["tags"]["abc"], "123")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
