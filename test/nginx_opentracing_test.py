@@ -95,5 +95,13 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         self.assertEqual(len(self.nginx_traces), 2)
 
+    def testNoTraceLocations(self):
+        self.conn.request("GET", "/no-trace-locations")
+        response = self.conn.getresponse()
+        self.assertEqual(response.status, 200)
+        self._stopEnvironment()
+
+        self.assertEqual(len(self.nginx_traces), 1)
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
