@@ -11,7 +11,6 @@ import http.client
 
 class NginxOpenTracingTest(unittest.TestCase):
     def setUp(self):
-        print("********* setting up environment ****")
         self.testdir = os.getcwd()
         self.workdir = os.path.join(tempfile.mkdtemp(), "environment")
         shutil.copytree(os.path.join(os.getcwd(), "environment"),
@@ -27,7 +26,6 @@ class NginxOpenTracingTest(unittest.TestCase):
                                                    stderr=subprocess.PIPE)
         self.client = docker.from_env()
         timeout = time.time() + 5
-        print("********* waiting for containers to come up ****")
         while len(self.client.containers.list()) != 2:
             if time.time() > timeout:
                 raise TimeoutError()
@@ -37,7 +35,6 @@ class NginxOpenTracingTest(unittest.TestCase):
         # TODO: replace with something better
         time.sleep(3)
 
-        print("****** connecting to nginx *****")
         self.conn = http.client.HTTPConnection('localhost', 8080, timeout=5)
         self.running = True
 
@@ -91,15 +88,12 @@ class NginxOpenTracingTest(unittest.TestCase):
             self.nginx_traces = json.load(f)
 
     def testTrivialRequest(self):
-        print("**** sending request ***")
         self.conn.request("GET", "/")
-        print("**** getting response ***")
         response = self.conn.getresponse()
         self.assertEqual(response.status, 200)
-        print("**** stopping environment ***")
         self._stopEnvironment()
 
         self.assertEqual(len(self.nginx_traces), 2)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
