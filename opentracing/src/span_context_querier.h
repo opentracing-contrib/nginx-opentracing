@@ -4,6 +4,9 @@
 
 #include <opentracing/span.h>
 
+#include <utility>
+#include <vector>
+
 extern "C" {
 #include <nginx.h>
 #include <ngx_config.h>
@@ -14,17 +17,16 @@ extern "C" {
 namespace ngx_opentracing {
 class SpanContextQuerier {
  public:
-  explicit SpanContextQuerier(const opentracing_main_conf_t& conf) noexcept;
+  SpanContextQuerier() noexcept = default;
 
   ngx_str_t lookup_value(ngx_http_request_t* request,
-                         const opentracing::Span& span, int value_index);
+                         const opentracing::Span& span,
+                         opentracing::string_view key);
 
  private:
-  int num_keys_;
-  opentracing::string_view* keys_;
-
   const opentracing::Span* values_span_ = nullptr;
-  opentracing::string_view* values_ = nullptr;
+
+  std::vector<std::pair<std::string, std::string>> span_context_expansion_;
 
   void expand_span_context_values(ngx_http_request_t* request,
                                   const opentracing::Span& span);

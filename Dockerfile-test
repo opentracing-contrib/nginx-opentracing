@@ -21,14 +21,11 @@ RUN set -x \
               wget \
               libpcre3 libpcre3-dev \
               zlib1g-dev \
-### Install clang (gcc has this problem when using with address sanitizer:
+              gcc-8 \
+              g++-8 \
+### Use gcc-8 (the default gcc has this problem when using with address sanitizer:
 ### https://gcc.gnu.org/bugzilla/show_bug.cgi?id=84428)
-  && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
-  && apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main" \
-  && apt-get update \
-  && apt-get install -y clang-6.0 \
-  && export CC=/usr/bin/clang-6.0 \
-  && export CXX=/usr/bin/clang++-6.0 \
+  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8 \
 ### Build opentracing-cpp
   && cd / \
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
@@ -47,6 +44,7 @@ RUN set -x \
   && cd /src/nginx-release-${NGINX_VERSION} \
   # Temporarily disable leak sanitizer to get around false positives in build
   && export ASAN_OPTIONS=detect_leaks=0 \
+  && export CFLAGS="-Wno-error" \
   && auto/configure \
       --with-compat \
       --with-debug \

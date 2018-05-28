@@ -18,58 +18,33 @@ extern ngx_module_t ngx_http_opentracing_module;
 
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------
-// extract_variable_index
+// opentracing_context_variable_name
 //------------------------------------------------------------------------------
-static uint32_t extract_variable_index(opentracing::string_view variable_name) {
-  static const auto prefix_length =
-      std::strlen(OPENTRACING_SPAN_CONTEXT_HEADER_VALUE);
-  if (variable_name.size() <= prefix_length) {
-    throw std::runtime_error{"invalid variable name length " +
-                             std::to_string(variable_name.size())};
-  }
-
-  // copy the digit part of the variable so as to ensure it's null-terminated.
-  constexpr int max_digits = std::numeric_limits<uint32_t>::digits10;
-  char s[max_digits + 1];
-  auto num_digits = variable_name.size() - prefix_length;
-  if (num_digits > max_digits) {
-    throw std::runtime_error{"invalid variable name length " +
-                             std::to_string(variable_name.size())};
-  }
-  std::copy_n(variable_name.data() + prefix_length, num_digits, s);
-  s[num_digits] = '\0';
-
-  char* endptr = nullptr;
-  errno = 0;
-  auto result = std::strtoul(s, &endptr, 10);
-  if (errno != 0) {
-    throw std::runtime_error{"variable index " + std::string{s} +
-                             " is out of range"};
-  }
-
-  return static_cast<uint32_t>(result);
-}
+const opentracing::string_view opentracing_context_variable_name{
+    "opentracing_context_"};
 
 //------------------------------------------------------------------------------
-// expand_span_context_value_variable
+// expand_opentracing_context
 //------------------------------------------------------------------------------
-// Expands to the ith value of the active span context where i is determined
-// from the variable's suffix.
+// Extracts the key specified by the variable's suffix and expands to the
+// corresponding value of the active span context.
 //
 // See propagate_opentracing_context
-static ngx_int_t expand_span_context_value_variable(
+static ngx_int_t expand_opentracing_context_variable(
     ngx_http_request_t* request, ngx_http_variable_value_t* variable_value,
     uintptr_t data) noexcept try {
-  auto& variable_name = *reinterpret_cast<ngx_str_t*>(data);
-  auto variable_index = extract_variable_index(to_string_view(variable_name));
+  auto variable_name = to_string_view(*reinterpret_cast<ngx_str_t*>(data));
+  auto prefix_length = opentracing_context_variable_name.size();
 
-  auto context = static_cast<OpenTracingContext*>(
-      ngx_http_get_module_ctx(request, ngx_http_opentracing_module));
+  opentracing::string_view key{variable_name.data() + prefix_length,
+                               variable_name.size() - prefix_length};
+
+  auto context = get_opentracing_context(request);
   if (context == nullptr) {
     throw std::runtime_error{"no OpenTracingContext attached to request"};
   }
 
-  auto span_context_value = context->lookup_span_context_value(variable_index);
+  auto span_context_value = context->lookup_span_context_value(key);
 
   variable_value->len = span_context_value.len;
   variable_value->valid = 1;
@@ -80,9 +55,9 @@ static ngx_int_t expand_span_context_value_variable(
   return NGX_OK;
 } catch (const std::exception& e) {
   ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                "failed to expand " OPENTRACING_SPAN_CONTEXT_HEADER_VALUE
+                "failed to expand %s"
                 " for request %p: %s",
-                request, e.what());
+                opentracing_context_variable_name.data(), request, e.what());
   return NGX_ERROR;
 }
 
@@ -90,13 +65,13 @@ static ngx_int_t expand_span_context_value_variable(
 // add_variables
 //------------------------------------------------------------------------------
 ngx_int_t add_variables(ngx_conf_t* cf) noexcept {
-  ngx_str_t span_context_value =
-      ngx_string(OPENTRACING_SPAN_CONTEXT_HEADER_VALUE);
-  auto var = ngx_http_add_variable(
-      cf, &span_context_value,
+  auto opentracing_context = to_ngx_str(opentracing_context_variable_name);
+  auto opentracing_context_var = ngx_http_add_variable(
+      cf, &opentracing_context,
       NGX_HTTP_VAR_NOCACHEABLE | NGX_HTTP_VAR_NOHASH | NGX_HTTP_VAR_PREFIX);
-  var->get_handler = expand_span_context_value_variable;
-  var->data = 0;
+  opentracing_context_var->get_handler = expand_opentracing_context_variable;
+  opentracing_context_var->data = 0;
+
   return NGX_OK;
 }
 }  // namespace ngx_opentracing

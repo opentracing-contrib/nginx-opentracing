@@ -7,30 +7,32 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <new>
 
 namespace ngx_opentracing {
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-SpanContextQuerier::SpanContextQuerier(
-    const opentracing_main_conf_t& conf) noexcept
-    : num_keys_{static_cast<int>(conf.span_context_keys->nelts)},
-      keys_{static_cast<opentracing::string_view*>(
-          conf.span_context_keys->elts)} {}
-
 //------------------------------------------------------------------------------
 // lookup_value
 //------------------------------------------------------------------------------
 ngx_str_t SpanContextQuerier::lookup_value(ngx_http_request_t* request,
                                            const opentracing::Span& span,
-                                           int value_index) {
-  assert(value_index < num_keys_);
+                                           opentracing::string_view key) {
   if (&span != values_span_) {
     expand_span_context_values(request, span);
   }
-  auto value = values_[value_index];
-  return to_ngx_str(value);
+
+  for (auto& key_value : span_context_expansion_) {
+    if (key_value.first == key) {
+      return to_ngx_str(key_value.second);
+    }
+  }
+
+  auto ngx_key = to_ngx_str(key);
+  ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
+                "no opentracing context value found for span context key %V "
+                "for request %p",
+                &ngx_key, request);
+  return {};
 }
 
 //------------------------------------------------------------------------------
@@ -39,42 +41,24 @@ ngx_str_t SpanContextQuerier::lookup_value(ngx_http_request_t* request,
 namespace {
 class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
  public:
-  SpanContextValueExpander(ngx_http_request_t* request, int num_keys,
-                           opentracing::string_view* keys,
-                           opentracing::string_view* values)
-      : request_{request}, num_keys_{num_keys}, keys_{keys}, values_{values} {}
+  explicit SpanContextValueExpander(
+      std::vector<std::pair<std::string, std::string>>& span_context_expansion)
+      : span_context_expansion_{span_context_expansion} {}
 
   opentracing::expected<void> Set(
       opentracing::string_view key,
       opentracing::string_view value) const override {
-    for (int index = 0; index < num_keys_; ++index) {
-      if (keys_[index] == key) {
-        auto data =
-            static_cast<char*>(ngx_pnalloc(request_->pool, value.size()));
-        if (data == nullptr) {
-          throw std::bad_alloc{};
-        }
-        std::copy_n(value.data(), value.size(), data);
-        values_[index] = opentracing::string_view{data, value.size()};
-        return {};
-      }
-    }
+    std::string key_copy;
+    key_copy.reserve(key.size());
+    std::transform(std::begin(key), std::end(key), std::back_inserter(key_copy),
+                   header_transform);
 
-    // If we got here, then the tracer is using a key for propagation that
-    // wasn't discovered at initialization. (See set_tracer). It won't be
-    // propagated so log an error.
-    ngx_log_error(NGX_LOG_ERR, request_->connection->log, 0,
-                  "dropping span context key %V for request %p",
-                  to_ngx_str(key), request_);
-
+    span_context_expansion_.emplace_back(std::move(key_copy), value);
     return {};
   }
 
  private:
-  ngx_http_request_t* request_;
-  int num_keys_;
-  opentracing::string_view* keys_;
-  opentracing::string_view* values_;
+  std::vector<std::pair<std::string, std::string>>& span_context_expansion_;
 };
 }  // namespace
 
@@ -84,12 +68,8 @@ class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
 void SpanContextQuerier::expand_span_context_values(
     ngx_http_request_t* request, const opentracing::Span& span) {
   values_span_ = &span;
-  values_ = static_cast<opentracing::string_view*>(
-      ngx_pcalloc(request->pool, sizeof(opentracing::string_view) * num_keys_));
-  if (values_ == nullptr) {
-    throw std::bad_alloc{};
-  }
-  SpanContextValueExpander carrier{request, num_keys_, keys_, values_};
+  span_context_expansion_.clear();
+  SpanContextValueExpander carrier{span_context_expansion_};
   auto was_successful = span.tracer().Inject(span.context(), carrier);
   if (!was_successful) {
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,

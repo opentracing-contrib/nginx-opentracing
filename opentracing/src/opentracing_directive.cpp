@@ -36,10 +36,24 @@ static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
 //------------------------------------------------------------------------------
 // make_span_context_value_variable
 //------------------------------------------------------------------------------
-static ngx_str_t make_span_context_value_variable(ngx_pool_t *pool, int index) {
-  std::string result =
-      "$" OPENTRACING_SPAN_CONTEXT_HEADER_VALUE + std::to_string(index);
-  return to_ngx_str(pool, result);
+static ngx_str_t make_span_context_value_variable(
+    ngx_pool_t *pool, opentracing::string_view key) {
+  auto size = 1 + opentracing_context_variable_name.size() + key.size();
+  auto data = static_cast<char *>(ngx_palloc(pool, size));
+  if (data == nullptr) throw std::bad_alloc{};
+
+  int index = 0;
+  data[index] = '$';
+  index += 1;
+
+  std::copy_n(opentracing_context_variable_name.data(),
+              opentracing_context_variable_name.size(), data + index);
+  index += opentracing_context_variable_name.size();
+
+  std::transform(std::begin(key), std::end(key), data + index,
+                 header_transform);
+
+  return {size, reinterpret_cast<unsigned char *>(data)};
 }
 
 //------------------------------------------------------------------------------
@@ -69,15 +83,13 @@ char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,
 //
 // The directive gets translated to the directives
 //
-//      proxy_set_header span_context_key0
-//      $opentracing_internal_span_context_value0 proxy_set_header
-//      span_context_key1 $opentracing_internal_span_context_value1
+//      proxy_set_header span_context_key0 $opentracing_context_key0
+//      proxy_set_header span_context_key1 $opentracing_context_key1
 //      ...
-//      proxy_set_header span_context_keyN
-//      $opentracing_internal_span_context_valueN
+//      proxy_set_header span_context_keyN $opentracing_context_keyN
 //
-// where opentracing_internal_span_context_value is a prefix variable that
-// expands to the corresponding value of the active span context.
+// where opentracing_context is a prefix variable that expands to the
+// corresponding value of the active span context.
 //
 // The key value of proxy_set_header isn't allowed to be a variable, so the keys
 // used for propagation need to be discovered before this directive is called.
@@ -108,7 +120,7 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
     args[1] = ngx_str_t{keys[key_index].size(),
                         reinterpret_cast<unsigned char *>(
                             const_cast<char *>(keys[key_index].data()))};
-    args[2] = make_span_context_value_variable(cf->pool, key_index);
+    args[2] = make_span_context_value_variable(cf->pool, keys[key_index]);
     auto rcode = opentracing_conf_handler(cf, 0);
     if (rcode != NGX_OK) {
       cf->args = old_args;

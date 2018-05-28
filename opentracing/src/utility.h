@@ -82,4 +82,14 @@ void for_each(const ngx_array_t &array, F f) {
   auto n = array.nelts;
   for (size_t i = 0; i < n; ++i) f(elements[i]);
 }
+
+//------------------------------------------------------------------------------
+// header_transform
+//------------------------------------------------------------------------------
+// Performs the transformations on header characters described by
+// http://nginx.org/en/docs/http/ngx_http_core_module.html#var_http_
+inline char header_transform(char c) {
+  if (c == '-') return '_';
+  return static_cast<char>(std::tolower(c));
+}
 }  // namespace ngx_opentracing

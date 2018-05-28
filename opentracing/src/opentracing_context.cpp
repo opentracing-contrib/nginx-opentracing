@@ -77,8 +77,7 @@ OpenTracingContext::OpenTracingContext(ngx_http_request_t *request,
       main_conf_{
           static_cast<opentracing_main_conf_t *>(ngx_http_get_module_main_conf(
               request_, ngx_http_opentracing_module))},
-      loc_conf_{loc_conf},
-      span_context_querier_{*main_conf_} {
+      loc_conf_{loc_conf} {
   auto tracer = opentracing::Tracer::Global();
   if (!tracer) throw std::runtime_error{"no global tracer set"};
 
@@ -189,15 +188,15 @@ void OpenTracingContext::on_log_request() {
 // lookup_span_context_value
 //------------------------------------------------------------------------------
 // Expands the active span context into a list of key-value pairs and returns
-// the `value_index`-th value.
+// the value for `key` if it exists.
 //
 // Note: there's caching so that if lookup_span_context_value is repeatedly
 // called for the same active span context, it will only be expanded once.
 //
 // See propagate_opentracing_context
-ngx_str_t OpenTracingContext::lookup_span_context_value(int value_index) {
-  return span_context_querier_.lookup_value(request_, active_span(),
-                                            value_index);
+ngx_str_t OpenTracingContext::lookup_span_context_value(
+    opentracing::string_view key) {
+  return span_context_querier_.lookup_value(request_, active_span(), key);
 }
 
 //------------------------------------------------------------------------------

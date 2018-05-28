@@ -1,5 +1,7 @@
 #pragma once
 
+#include <opentracing/string_view.h>
+
 extern "C" {
 #include <nginx.h>
 #include <ngx_config.h>
@@ -11,10 +13,12 @@ extern "C" {
 #include <utility>
 #include <vector>
 
-#define OPENTRACING_SPAN_CONTEXT_HEADER_VALUE \
-  "opentracing_internal_span_context_value"
-
 namespace ngx_opentracing {
+//------------------------------------------------------------------------------
+// opentracing_context_variable_name
+//------------------------------------------------------------------------------
+extern const opentracing::string_view opentracing_context_variable_name;
+
 //------------------------------------------------------------------------------
 // add_variables
 //------------------------------------------------------------------------------

@@ -29,7 +29,7 @@ class OpenTracingContext {
 
   void on_log_request();
 
-  ngx_str_t lookup_span_context_value(int value_index);
+  ngx_str_t lookup_span_context_value(opentracing::string_view key);
 
  private:
   ngx_http_request_t *request_;
