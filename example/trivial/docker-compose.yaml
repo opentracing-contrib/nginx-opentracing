@@ -2,9 +2,7 @@ version: '2'
 services:
 
   nginx:
-    build:
-      context: ../../
-      dockerfile: ./Dockerfile
+    image: opentracing/nginx-opentracing
     networks:
       trivial_example:
         aliases:
