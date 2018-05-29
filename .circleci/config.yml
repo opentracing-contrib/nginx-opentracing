@@ -19,9 +19,16 @@ jobs:
             ./ci/do_ci.sh system.testing
       - store_artifacts:
           path: /test-log
+  docker_image:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          command: docker build -t opentracing/nginx-opentracing .
 
 workflows:
   version: 2
   build_test_and_deploy:
     jobs:
       - system_testing
+      - docker_image
