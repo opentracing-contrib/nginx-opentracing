@@ -1,3 +1,6 @@
+Directives
+----------
+
 ### `opentracing`
 
 - **syntax** `opentracing on|off`
@@ -62,3 +65,12 @@ Enables or disables using OpenTracing spans from incoming requests as parent for
 
 Sets a [tag](https://github.com/opentracing/specification/blob/master/specification.md#set-a-span-tag)
 with the given `key` and `value` for an NGINX span.
+
+Variables
+---------
+
+### `opentracing_context_`*name*
+
+Expands to the a value of the active span context; the last part of the variable
+name is the span context's header converted to lower case with dashes replaced by
+underscores.

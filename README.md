@@ -112,5 +112,5 @@ http {
 ```
 
 See [Tutorial](doc/Tutorial.md) for a more complete example,
-[Reference](doc/Directives.md) for a list of available OpenTracing-related
+[Reference](doc/Reference.md) for a list of available OpenTracing-related
 directives.
