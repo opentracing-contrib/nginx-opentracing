@@ -21,3 +21,11 @@ Specifies the host to use when uploading traces.
 - **context**: `http`
 
 Specifies the port to use when uploading traces.
+
+### `zipkin_sample_rate`
+
+- **syntax** `zipkin_sample_rate <rate>`
+- **default**: `1.0`
+- **context**: `http`
+
+Specifies the probability of a span being sampled and reported.
