@@ -42,11 +42,17 @@ http {
       # The backend returns a table of thumbnail profile pictures for every
       # animal in the zoo.
       proxy_pass http://backend;
+
+      # Propagate the context of the active span.
+      #
+      # See http://opentracing.io/documentation/pages/api/cross-process-tracing.html
+      opentracing_propagate_context;
     }
 
     # Display the profile for a specific animal in the zoo.
     location = /animal {
       proxy_pass http://backend;
+      opentracing_propagate_context;
     }
 
     # Admit a new animal.
@@ -57,6 +63,8 @@ http {
       # thumbnail sized profile picture, and transform the full-sized profile
       # picture, if necessary, to be in the jpeg format.
       proxy_pass http://backend;
+
+      opentracing_propagate_context;
       
       # Redirect to the spash page if the animal was successfully admitted.
       proxy_intercept_errors on;
@@ -83,7 +91,7 @@ We can tell NGINX to trace every request by adding these two lines to
 `nginx.conf`:
 ```
 http {
-  lightstep_access_token `your-access-token`;
+  opentracing_load_tracer /path/to/tracer/plugin /path/to/tracer/config;
   opentracing on;
 ...
 ```
@@ -95,13 +103,10 @@ By default NGINX creates spans for both the request and the location blocks. It
 uses the name of the first location as the name for the top-level span. We can
 change this behavior by using the directives `opentracing_operation_name` and
 `opentracing_location_operation_name` to set the names of the request and
-location block spans respectively. We can also use the directive
-`lightstep_component_name` to set a group name for related traces. For
+location block spans respectively. For
 example, by adding 
 ```
 http {
-...
-  lightstep_component_name zoo;
 ...
     location = /upload/animal {
       opentracing_location_operation_name upload;
