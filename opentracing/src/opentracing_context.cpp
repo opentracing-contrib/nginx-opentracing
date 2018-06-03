@@ -77,6 +77,7 @@ OpenTracingContext::OpenTracingContext(ngx_http_request_t *request,
       main_conf_{
           static_cast<opentracing_main_conf_t *>(ngx_http_get_module_main_conf(
               request_, ngx_http_opentracing_module))},
+      core_loc_conf_{core_loc_conf},
       loc_conf_{loc_conf} {
   auto tracer = opentracing::Tracer::Global();
   if (!tracer) throw std::runtime_error{"no global tracer set"};
@@ -89,7 +90,7 @@ OpenTracingContext::OpenTracingContext(ngx_http_request_t *request,
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
                  "starting opentracing request span for %p", request_);
   request_span_ = tracer->StartSpan(
-      get_request_operation_name(request_, core_loc_conf, loc_conf_),
+      get_request_operation_name(request_, core_loc_conf_, loc_conf_),
       {opentracing::ChildOf(parent_span_context.get()),
        opentracing::StartTimestamp{
            to_system_timestamp(request->start_sec, request->start_msec)}});
@@ -101,7 +102,7 @@ OpenTracingContext::OpenTracingContext(ngx_http_request_t *request,
         "starting opentracing location span for \"%V\"(%p) in request %p",
         &core_loc_conf->name, loc_conf_, request_);
     span_ = tracer->StartSpan(
-        get_loc_operation_name(request_, core_loc_conf, loc_conf_),
+        get_loc_operation_name(request_, core_loc_conf_, loc_conf_),
         {opentracing::ChildOf(&request_span_->context())});
     if (!span_) throw std::runtime_error{"tracer->StartSpan failed"};
   }
@@ -113,6 +114,7 @@ OpenTracingContext::OpenTracingContext(ngx_http_request_t *request,
 void OpenTracingContext::on_change_block(
     ngx_http_core_loc_conf_t *core_loc_conf, opentracing_loc_conf_t *loc_conf) {
   on_exit_block();
+  core_loc_conf_ = core_loc_conf;
   loc_conf_ = loc_conf;
 
   if (loc_conf->enable_locations) {
@@ -153,6 +155,15 @@ void OpenTracingContext::on_exit_block(
     add_script_tags(main_conf_->tags, request_, *span_);
     add_script_tags(loc_conf_->tags, request_, *span_);
     add_status_tags(request_, *span_);
+
+    // If the location operation name is dependent upon a variable, it may not
+    // have been available when the span was first created, so set the operation
+    // name again.
+    //
+    // See on_log_request below
+    span_->SetOperationName(
+        get_loc_operation_name(request_, core_loc_conf_, loc_conf_));
+
     span_->Finish({opentracing::FinishTimestamp{finish_timestamp}});
   } else {
     add_script_tags(loc_conf_->tags, request_, *request_span_);
