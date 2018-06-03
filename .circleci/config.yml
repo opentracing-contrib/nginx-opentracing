@@ -25,10 +25,22 @@ jobs:
       - checkout
       - run:
           command: docker build -t opentracing/nginx-opentracing .
+  release:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          command: ./ci/do_ci.sh release
 
 workflows:
   version: 2
   build_test_and_deploy:
     jobs:
+      - release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+)*$/
       - system_testing
       - docker_image
