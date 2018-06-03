@@ -1,0 +1,53 @@
+version: '2'
+services:
+
+  nginx:
+    image: opentracing/nginx-opentracing
+    networks:
+      zoonet:
+        aliases:
+          - nginx
+    volumes:
+      - ./start-nginx.sh:/start-nginx.sh
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./lightstep-config.json.in:/tmp/lightstep-config.json.in
+      - ./www:/app/www
+      - image-volume:/app/data/images
+      - tmp-volume:/tmp
+    environment:
+      - LIGHTSTEP_ACCESS_TOKEN=${LIGHTSTEP_ACCESS_TOKEN}
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    entrypoint: ./start-nginx.sh
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - LIGHTSTEP_ACCESS_TOKEN=${LIGHTSTEP_ACCESS_TOKEN}
+    networks:
+      zoonet:
+        aliases:
+          - backend
+    volumes:
+      - image-volume:/app/data/images
+      - tmp-volume:/tmp
+    expose:
+      - "3001"
+      - "3002"
+      - "3003"
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+      - "3003:3003"
+    entrypoint: ./start-backend.sh
+
+volumes:
+  image-volume: 
+  tmp-volume:
+
+networks:
+  zoonet: {}

@@ -1,22 +1,26 @@
 #pragma once
 
+#include <opentracing/string_view.h>
+
 extern "C" {
 #include <nginx.h>
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-
-extern ngx_module_t ngx_http_opentracing_module;
 }
+
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ngx_opentracing {
 //------------------------------------------------------------------------------
-// on_enter_block
+// opentracing_context_variable_name
 //------------------------------------------------------------------------------
-ngx_int_t on_enter_block(ngx_http_request_t *request) noexcept;
+extern const opentracing::string_view opentracing_context_variable_name;
 
 //------------------------------------------------------------------------------
-// on_log_request
+// add_variables
 //------------------------------------------------------------------------------
-ngx_int_t on_log_request(ngx_http_request_t *request) noexcept;
+ngx_int_t add_variables(ngx_conf_t* cf) noexcept;
 }  // namespace ngx_opentracing

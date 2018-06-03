@@ -1,14 +1,16 @@
+#include "load_tracer.h"
+#include "opentracing_conf.h"
+#include "opentracing_directive.h"
+#include "opentracing_handler.h"
+#include "opentracing_variable.h"
+#include "utility.h"
+
 #include <opentracing/dynamic_load.h>
-#include <cerrno>
+
 #include <cstdlib>
 #include <exception>
-#include <fstream>
 #include <iterator>
-#include <unordered_map>
 #include <utility>
-#include "opentracing_conf.h"
-#include "opentracing_handler.h"
-#include "utility.h"
 
 extern "C" {
 #include <nginx.h>
@@ -19,13 +21,7 @@ extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
 }
 
-using ngx_opentracing::opentracing_main_conf_t;
-using ngx_opentracing::opentracing_loc_conf_t;
-using ngx_opentracing::opentracing_tag_t;
-using ngx_opentracing::on_enter_block;
-using ngx_opentracing::on_log_request;
-using ngx_opentracing::NgxScript;
-using ngx_opentracing::to_string;
+using namespace ngx_opentracing;
 
 static std::unique_ptr<const opentracing::DynamicTracingLibraryHandle>
     opentracing_library_handle;
@@ -33,7 +29,7 @@ static std::unique_ptr<const opentracing::DynamicTracingLibraryHandle>
 //------------------------------------------------------------------------------
 // kDefaultOpentracingTags
 //------------------------------------------------------------------------------
-const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
+const std::pair<ngx_str_t, ngx_str_t> default_opentracing_tags[] = {
     {ngx_string("component"), ngx_string("nginx")},
     {ngx_string("nginx.worker_pid"), ngx_string("$pid")},
     {ngx_string("peer.address"), ngx_string("$remote_addr:$remote_port")},
@@ -42,52 +38,9 @@ const std::pair<ngx_str_t, ngx_str_t> kDefaultOpenTracingTags[] = {
     {ngx_string("http.host"), ngx_string("$http_host")}};
 
 //------------------------------------------------------------------------------
-// add_opentracing_tag
-//------------------------------------------------------------------------------
-static char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags,
-                                 ngx_str_t key, ngx_str_t value) {
-  if (!tags) return static_cast<char *>(NGX_CONF_ERROR);
-
-  auto tag = static_cast<opentracing_tag_t *>(ngx_array_push(tags));
-  if (!tag) return static_cast<char *>(NGX_CONF_ERROR);
-
-  ngx_memzero(tag, sizeof(opentracing_tag_t));
-  if (tag->key_script.compile(cf, key) != NGX_OK)
-    return static_cast<char *>(NGX_CONF_ERROR);
-  if (tag->value_script.compile(cf, value) != NGX_OK)
-    return static_cast<char *>(NGX_CONF_ERROR);
-
-  return static_cast<char *>(NGX_CONF_OK);
-}
-
-//------------------------------------------------------------------------------
-// set_opentracing_tag
-//------------------------------------------------------------------------------
-static char *set_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
-                                 void *conf) {
-  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
-  if (!loc_conf->tags)
-    loc_conf->tags = ngx_array_create(cf->pool, 1, sizeof(opentracing_tag_t));
-  auto values = static_cast<ngx_str_t *>(cf->args->elts);
-  return add_opentracing_tag(cf, loc_conf->tags, values[1], values[2]);
-}
-
-//------------------------------------------------------------------------------
-// set_tracer
-//------------------------------------------------------------------------------
-static char *set_tracer(ngx_conf_t *cf, ngx_command_t *command, void *conf) {
-  auto main_conf = static_cast<opentracing_main_conf_t *>(
-      ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
-  auto values = static_cast<ngx_str_t *>(cf->args->elts);
-  main_conf->tracer_library = values[1];
-  main_conf->tracer_conf_file = values[2];
-  return static_cast<char *>(NGX_CONF_OK);
-}
-
-//------------------------------------------------------------------------------
 // opentracing_module_init
 //------------------------------------------------------------------------------
-static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
+static ngx_int_t opentracing_module_init(ngx_conf_t *cf) noexcept {
   auto core_main_config = static_cast<ngx_http_core_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module));
   auto main_conf = static_cast<opentracing_main_conf_t *>(
@@ -106,12 +59,12 @@ static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
 
   // Add default span tags.
   const auto num_default_tags =
-      sizeof(kDefaultOpenTracingTags) / sizeof(kDefaultOpenTracingTags[0]);
+      sizeof(default_opentracing_tags) / sizeof(default_opentracing_tags[0]);
   if (num_default_tags == 0) return NGX_OK;
   main_conf->tags =
       ngx_array_create(cf->pool, num_default_tags, sizeof(opentracing_tag_t));
   if (!main_conf->tags) return NGX_ERROR;
-  for (const auto &tag : kDefaultOpenTracingTags)
+  for (const auto &tag : default_opentracing_tags)
     if (add_opentracing_tag(cf, main_conf->tags, tag.first, tag.second) !=
         NGX_CONF_OK)
       return NGX_ERROR;
@@ -121,79 +74,43 @@ static ngx_int_t opentracing_module_init(ngx_conf_t *cf) {
 //------------------------------------------------------------------------------
 // opentracing_init_worker
 //------------------------------------------------------------------------------
-static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) {
+static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_cycle_get_module_main_conf(cycle, ngx_http_opentracing_module));
   if (!main_conf->tracer_library.data) {
     return NGX_OK;
   }
 
-  // Load a tracer factory from the provided library.
-  std::string error_message;
-  auto library_handle_maybe = opentracing::DynamicallyLoadTracingLibrary(
-      to_string(main_conf->tracer_library).data(), error_message);
-  if (!library_handle_maybe) {
-    if (!error_message.empty()) {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to load tracing library %V: %s",
-                    &main_conf->tracer_library, error_message.c_str());
-    } else {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to load tracing library %V: %s",
-                    &main_conf->tracer_library,
-                    library_handle_maybe.error().message().c_str());
-    }
-    return NGX_ERROR;
-  }
-  opentracing_library_handle.reset(new opentracing::DynamicTracingLibraryHandle{
-      std::move(*library_handle_maybe)});
-  auto &tracer_factory = opentracing_library_handle->tracer_factory();
-
-  // Construct a tracer and initiqlize the global tracer.
-  std::ifstream in{to_string(main_conf->tracer_conf_file)};
-  if (!in.good()) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, errno,
-                  "Failed to open tracer configuration file %V",
-                  &main_conf->tracer_conf_file);
-    return NGX_ERROR;
-  }
-  std::string tracer_configuration{std::istreambuf_iterator<char>{in},
-                                   std::istreambuf_iterator<char>{}};
-  if (!in.good()) {
-    ngx_log_error(NGX_LOG_ERR, cycle->log, errno,
-                  "Failed to read tracer configuration file %V",
-                  &main_conf->tracer_conf_file);
-    return NGX_ERROR;
+  std::unique_ptr<opentracing::DynamicTracingLibraryHandle> handle{
+      new opentracing::DynamicTracingLibraryHandle{}};
+  std::shared_ptr<opentracing::Tracer> tracer;
+  auto result = ngx_opentracing::load_tracer(
+      cycle->log, to_string(main_conf->tracer_library).data(),
+      to_string(main_conf->tracer_conf_file).data(), *handle, tracer);
+  if (result != NGX_OK) {
+    return result;
   }
 
-  error_message.clear();
-  auto tracer_maybe =
-      tracer_factory.MakeTracer(tracer_configuration.c_str(), error_message);
-  if (!tracer_maybe) {
-    if (!error_message.empty()) {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to construct tracer: %s", error_message.c_str());
-    } else {
-      ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
-                    "Failed to construct tracer: %s",
-                    tracer_maybe.error().message().c_str());
-    }
-    return NGX_ERROR;
-  }
-
-  opentracing::Tracer::InitGlobal(std::move(*tracer_maybe));
+  opentracing_library_handle = std::move(handle);
+  opentracing::Tracer::InitGlobal(std::move(tracer));
   return NGX_OK;
+} catch (const std::exception &e) {
+  ngx_log_error(NGX_LOG_ERR, cycle->log, 0, "failed to initialize tracer: %s",
+                e.what());
+  return NGX_ERROR;
 }
 
 //------------------------------------------------------------------------------
 // opentracing_exit_worker
 //------------------------------------------------------------------------------
-static void opentracing_exit_worker(ngx_cycle_t *cycle) {
+static void opentracing_exit_worker(ngx_cycle_t *cycle) noexcept {
   // Close the global tracer if it's set and release the reference so as to
   // ensure that any dynamically loaded tracer is destructed before the library
   // handle is closed.
   auto tracer = opentracing::Tracer::InitGlobal(nullptr);
   if (tracer != nullptr) {
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, cycle->log, 0,
+                   "closing opentracing tracer");
     tracer->Close();
     tracer.reset();
   }
@@ -205,7 +122,7 @@ static void opentracing_exit_worker(ngx_cycle_t *cycle) {
 //------------------------------------------------------------------------------
 // create_opentracing_main_conf
 //------------------------------------------------------------------------------
-static void *create_opentracing_main_conf(ngx_conf_t *conf) {
+static void *create_opentracing_main_conf(ngx_conf_t *conf) noexcept {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_main_conf_t)));
   // Default initialize members.
@@ -215,45 +132,9 @@ static void *create_opentracing_main_conf(ngx_conf_t *conf) {
 }
 
 //------------------------------------------------------------------------------
-// set_script
-//------------------------------------------------------------------------------
-static char *set_script(ngx_conf_t *cf, ngx_command_t *command,
-                        NgxScript &script) {
-  if (script.is_valid()) return const_cast<char *>("is duplicate");
-
-  auto value = static_cast<ngx_str_t *>(cf->args->elts);
-  auto pattern = &value[1];
-
-  if (script.compile(cf, *pattern) != NGX_OK)
-    return static_cast<char *>(NGX_CONF_ERROR);
-
-  return static_cast<char *>(NGX_CONF_OK);
-}
-
-//------------------------------------------------------------------------------
-// set_opentracing_operation_name
-//------------------------------------------------------------------------------
-static char *set_opentracing_operation_name(ngx_conf_t *cf,
-                                            ngx_command_t *command,
-                                            void *conf) {
-  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
-  return set_script(cf, command, loc_conf->operation_name_script);
-}
-
-//------------------------------------------------------------------------------
-// set_opentracing_location_operation_name
-//------------------------------------------------------------------------------
-static char *set_opentracing_location_operation_name(ngx_conf_t *cf,
-                                                     ngx_command_t *command,
-                                                     void *conf) {
-  auto loc_conf = static_cast<opentracing_loc_conf_t *>(conf);
-  return set_script(cf, command, loc_conf->loc_operation_name_script);
-}
-
-//------------------------------------------------------------------------------
 // create_opentracing_loc_conf
 //------------------------------------------------------------------------------
-static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
+static void *create_opentracing_loc_conf(ngx_conf_t *conf) noexcept {
   auto loc_conf = static_cast<opentracing_loc_conf_t *>(
       ngx_pcalloc(conf->pool, sizeof(opentracing_loc_conf_t)));
   if (!loc_conf) return nullptr;
@@ -269,7 +150,7 @@ static void *create_opentracing_loc_conf(ngx_conf_t *conf) {
 // merge_opentracing_loc_conf
 //------------------------------------------------------------------------------
 static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
-                                        void *child) {
+                                        void *child) noexcept {
   auto prev = static_cast<opentracing_loc_conf_t *>(parent);
   auto conf = static_cast<opentracing_loc_conf_t *>(child);
 
@@ -309,7 +190,7 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
 // opentracing_module_ctx
 //------------------------------------------------------------------------------
 static ngx_http_module_t opentracing_module_ctx = {
-    nullptr,                      /* preconfiguration */
+    add_variables,                /* preconfiguration */
     opentracing_module_init,      /* postconfiguration */
     create_opentracing_main_conf, /* create main configuration */
     nullptr,                      /* init main configuration */
@@ -333,6 +214,9 @@ static ngx_command_t opentracing_commands[] = {
          NGX_CONF_TAKE1,
      ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
      offsetof(opentracing_loc_conf_t, enable_locations), nullptr},
+    {ngx_string("opentracing_propagate_context"),
+     NGX_HTTP_LOC_CONF | NGX_CONF_NOARGS, propagate_opentracing_context,
+     NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     {ngx_string("opentracing_operation_name"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
          NGX_CONF_TAKE1,

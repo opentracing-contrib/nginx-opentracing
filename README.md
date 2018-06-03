@@ -23,42 +23,68 @@ Building
 ```
 $ tar zxvf nginx-1.9.x.tar.gz
 $ cd nginx-1.9.x
-$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing \
-              # To enable tracing with Jaeger
-              --add-dynamic-module=/absolute/path/to/nginx-opentracing/jaeger \
-              # To enable tracing with Zipkin
-              --add-dynamic-module=/absolute/path/to/nginx-opentracing/zipkin \  
-              # To enable tracing with LightStep
-              --add-dynamic-module=/absolute/path/to/nginx-opentracing/lightstep
+$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing
 $ make && sudo make install
 ```
 
+You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
+https://github.com/lightstep/lightstep-tracer-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
+```
+# Jaeger
+wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.0/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
+
+# LightStep
+wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.7.0/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so
+
+# Zipkin
+wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.3.1/linux-amd64-libzipkin_opentracing_plugin.so.gz  gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
+
+```
 
 Getting Started
 ---------------
+First, write a configuration for the tracer used. Below's an example of what
+a Jaeger configuration might look like:
+
+/etc/jaeger-nginx-config.json
+```
+{
+  "service_name": "nginx",
+  "sampler": {
+    "type": "const",
+    "param": 1
+  },
+  "reporter": {
+    "localAgentHostPort": "jaeger:6831"
+  },
+  "headers": {
+    "jaegerDebugHeader": "jaeger-debug-id",
+    "jaegerBaggageHeader": "jaeger-baggage",
+    "traceBaggageHeaderPrefix": "uberctx-",
+  },
+  "baggage_restrictions": {
+    "denyBaggageOnInitializationFailure": false,
+    "hostPort": ""
+  }
+}
+```
+
+See the vendor documentation for details on what options are available.
+
+You can then set up NGINX for distributed tracing by adding the following to
+nginx.conf:
 ```
 # Load the OpenTracing dynamic module.
 load_module modules/ngx_http_opentracing_module.so;
 
-# Load a vendor OpenTracing dynamic module.
-# For example,
-#   load_module modules/ngx_http_jaeger_module.so;
-# or
-#   load_module modules/ngx_http_zipkin_module.so;
-# or
-#   load_module modules/ngx_http_lightstep_module.so;
-
 http {
-  # Configure your vendor's tracer.
-  # For example,
-  #     jaeger_service_name my-nginx-server;
-  #     ...
-  # or
-  #     zipkin_collector_host localhost;
-  #     ...
-  # or
-  #     lightstep_access_token ACCESSTOKEN;
-  #     ....
+  # Load a vendor tracer
+  opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/jaeger-nginx-config.json;
+
+  # or 
+  #   opentracing_load_tracer /usr/local/lib/liblightstep_tracer_plugin.so /path/to/config;
+  # or 
+  #   opentracing_load_tracer /usr/local/lib/libzipkin_opentracing_plugin.so /path/to/config;
 
   # Enable tracing for all requests.
   opentracing on;
@@ -66,20 +92,25 @@ http {
   # Optionally, set additional tags.
   opentracing_tag http_user_agent $http_user_agent;
 
-  location ~ \.php$ {
+  upstream backend {
+    server app-service:9001;
+  }
+
+  location ~ {
     # The operation name used for spans defaults to the name of the location
     # block, but you can use this directive to customize it.
     opentracing_operation_name $uri;
 
-    fastcgi_pass 127.0.0.1:1025;
+    # Propagate the active span context upstream, so that the trace can be
+    # continued by the backend.
+    # See http://opentracing.io/documentation/pages/api/cross-process-tracing.html
+    opentracing_propagate_context;
+
+    proxy_pass http://backend;
   }
 }
 ```
 
 See [Tutorial](doc/Tutorial.md) for a more complete example,
-[Reference](doc/Directives.md) for a list of available OpenTracing-related
-directives, and [Jaeger](jaeger/doc/Directives.md),
-[Zipkin](zipkin/doc/Directives.md), and
-[LightStep](lightstep/doc/Directives.md) for a list of vendor tracing
+[Reference](doc/Reference.md) for a list of available OpenTracing-related
 directives.
-

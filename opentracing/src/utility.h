@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <opentracing/string_view.h>
+
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -21,10 +23,24 @@ inline std::string to_string(const ngx_str_t &ngx_str) {
 }
 
 //------------------------------------------------------------------------------
+// to_string_view
+//------------------------------------------------------------------------------
+inline opentracing::string_view to_string_view(ngx_str_t s) {
+  return {reinterpret_cast<char *>(s.data), s.len};
+}
+
+//------------------------------------------------------------------------------
 // to_ngx_str
 //------------------------------------------------------------------------------
 // Convert a std::string to an ngx_str_t
 ngx_str_t to_ngx_str(ngx_pool_t *pool, const std::string &s);
+
+inline ngx_str_t to_ngx_str(opentracing::string_view s) {
+  ngx_str_t result;
+  result.len = s.size();
+  result.data = reinterpret_cast<unsigned char *>(const_cast<char *>(s.data()));
+  return result;
+}
 
 //------------------------------------------------------------------------------
 // to_lower_ngx_str
@@ -65,5 +81,15 @@ void for_each(const ngx_array_t &array, F f) {
   auto elements = static_cast<T *>(array.elts);
   auto n = array.nelts;
   for (size_t i = 0; i < n; ++i) f(elements[i]);
+}
+
+//------------------------------------------------------------------------------
+// header_transform
+//------------------------------------------------------------------------------
+// Performs the transformations on header characters described by
+// http://nginx.org/en/docs/http/ngx_http_core_module.html#var_http_
+inline char header_transform(char c) {
+  if (c == '-') return '_';
+  return static_cast<char>(std::tolower(c));
 }
 }  // namespace ngx_opentracing

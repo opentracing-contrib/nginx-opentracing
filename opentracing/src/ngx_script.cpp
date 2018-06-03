@@ -5,13 +5,14 @@ namespace ngx_opentracing {
 //------------------------------------------------------------------------------
 // NgxScript
 //------------------------------------------------------------------------------
-NgxScript::NgxScript()
+NgxScript::NgxScript() noexcept
     : pattern_{0, nullptr}, lengths_{nullptr}, values_{nullptr} {}
 
 //------------------------------------------------------------------------------
 // compile
 //------------------------------------------------------------------------------
-ngx_int_t NgxScript::compile(ngx_conf_t *cf, const ngx_str_t &pattern) {
+ngx_int_t NgxScript::compile(ngx_conf_t *cf,
+                             const ngx_str_t &pattern) noexcept {
   pattern_ = pattern;
   lengths_ = nullptr;
   values_ = nullptr;
@@ -36,7 +37,7 @@ ngx_int_t NgxScript::compile(ngx_conf_t *cf, const ngx_str_t &pattern) {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-ngx_str_t NgxScript::run(ngx_http_request_t *request) const {
+ngx_str_t NgxScript::run(ngx_http_request_t *request) const noexcept {
   if (!is_valid()) {
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                   "Executing invalid opentracing script");

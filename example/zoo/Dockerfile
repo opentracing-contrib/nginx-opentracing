@@ -1,4 +1,4 @@
-FROM rnburn/nginx-opentracing
+FROM ubuntu:17.10
 
 WORKDIR /app
 ADD . /app
@@ -8,10 +8,12 @@ RUN set -x \
   && apt-get install --no-install-recommends --no-install-suggests -y \
               python \
               curl \
+              ca-certificates \
               gnupg2 \
+              build-essential \
   && mkdir /node-latest-install \
   && cd /node-latest-install \
-  && curl -sL https://deb.nodesource.com/setup_7.x -o nodesource_setup.sh \
+  && curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh \
   && bash nodesource_setup.sh \
   && apt-get install --no-install-recommends --no-install-suggests -y \
               nodejs \
@@ -25,4 +27,4 @@ RUN set -x \
 
 
 EXPOSE 80
-CMD ["/app/start.sh"]
+CMD ["/app/start-backend.sh"]
