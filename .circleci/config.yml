@@ -25,6 +25,16 @@ jobs:
       - checkout
       - run:
           command: docker build -t opentracing/nginx-opentracing .
+  module_binaries:
+    docker:
+      - image: ubuntu:17.10
+    steps:
+      - checkout
+      - run: ./ci/setup_build_environment.sh
+      - run: ./ci/do_ci.sh module.binaries
+      - store_artifacts:
+          path: /modules
+
   release:
     machine: true
     steps:
@@ -44,3 +54,4 @@ workflows:
               only: /^v[0-9]+(\.[0-9]+)*$/
       - system_testing
       - docker_image
+      - module_binaries
