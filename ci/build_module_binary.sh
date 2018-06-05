@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 pushd "${BUILD_DIR}"
 NGINX_VERSION=$1
 wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz
@@ -18,7 +20,7 @@ EOF
 
 ./auto/configure \
       --with-compat \
-      --add-dynamic-module=/src/opentracing
+      --add-dynamic-module="${SOURCE_DIR}"/opentracing
 make modules
 
 # Statically linking won't work correctly unless g++ is used instead of gcc, and

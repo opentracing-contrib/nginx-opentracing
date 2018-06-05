@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 export OPENTRACING_VERSION=1.4.2
 NGINX_VERSIONS=(1.15.0 1.14.0 1.13.12 1.12.2)
 
