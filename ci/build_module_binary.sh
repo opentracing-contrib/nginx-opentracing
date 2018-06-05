@@ -13,7 +13,7 @@ cd nginx-release-$NGINX_VERSION
 cat <<EOF > export.map
 {
   global:
-    ngx_http_opentracing_module;
+    ngx_*;
   local: *;
 };
 EOF
