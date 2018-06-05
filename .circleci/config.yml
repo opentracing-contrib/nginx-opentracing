@@ -33,7 +33,7 @@ jobs:
       - run: ./ci/setup_build_environment.sh
       - run: ./ci/do_ci.sh module.binaries
       - store_artifacts:
-          path: /modules
+          path: /modules/*.tgz
 
   release:
     machine: true
