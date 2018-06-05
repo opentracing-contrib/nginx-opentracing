@@ -20,7 +20,7 @@ EOF
 
 ./auto/configure \
       --with-compat \
-      --add-dynamic-module="${SOURCE_DIR}"/opentracing
+      --add-dynamic-module="${SRC_DIR}"/opentracing
 make modules
 
 # Statically linking won't work correctly unless g++ is used instead of gcc, and
