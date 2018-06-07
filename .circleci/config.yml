@@ -27,7 +27,7 @@ jobs:
           command: docker build -t opentracing/nginx-opentracing .
   module_binaries:
     docker:
-      - image: ubuntu:17.10
+      - image: ubuntu:18.04
     steps:
       - checkout
       - run: ./ci/setup_build_environment.sh
