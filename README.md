@@ -19,7 +19,7 @@ These can be dropped into existing NGINX installations provided that NGINX was c
 the `--with-compat` option. See [example/trivial/ubuntu-x86_64](example/trivial/ubuntu-x86_64) for an
 example of how to set it up.
 
-Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker) or [build from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
+Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker) or [built from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
 
 Getting Started
 ---------------
@@ -101,7 +101,7 @@ A docker image `opentracing/nginx-opentracing` is provided to support using ngin
 in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
 See [here](example/) for examples of how to use it.
 
-Additionally, custom images can be build by running
+Additionally, custom images can be built by running
 
 ```bash
 docker build \
