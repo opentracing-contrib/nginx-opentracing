@@ -6,7 +6,7 @@ NGINX-1.14.0 is installed for Ubuntu following the instructions [here](https://w
 nginx-opentracing is installed into NGINX's module directory with
 ```bash
 cd /usr/lib/nginx/modules
-wget -O - https://119-106615169-gh.circle-artifacts.com/0/modules/linux-amd64-nginx-1.14.0-ngx_http_module.so.tgz \
+wget -O - https://github.com/opentracing-contrib/nginx-opentracing/releases/download/v0.4.0/linux-amd64-nginx-1.14.0-ngx_http_module.so.tgz \
       | tar zxf -
 ```
 

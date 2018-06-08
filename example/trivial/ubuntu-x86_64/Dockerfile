@@ -11,6 +11,7 @@ RUN set -x \
               git \
               curl \
   && export PATH=$PATH:$GOPATH/bin \
+  && mkdir -p $GOPATH/bin \
   && curl https://glide.sh/get | sh \
   && cd go/src/hello-backend \
   && glide up \
