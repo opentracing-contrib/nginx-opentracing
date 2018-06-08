@@ -2,7 +2,7 @@
 
 set -e
 
-export OPENTRACING_VERSION=1.4.2
+export OPENTRACING_VERSION=1.4.0
 NGINX_VERSIONS=(1.15.0 1.14.0 1.13.12 1.12.2)
 
 # Compile for a portable cpu architecture
