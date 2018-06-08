@@ -1,4 +1,4 @@
-Demonstates how to set up nginx-opentracing and Jaeger for linux-x86_64 using
+Demonstates how to set up nginx-opentracing and Jaeger for `linux-x86_64` using
 prebuilt binary images.
 
 NGINX-1.14.0 is installed for Ubuntu following the instructions [here](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/#official-debian-ubuntu-packages).

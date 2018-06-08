@@ -14,7 +14,7 @@ Dependencies
 
 Installation
 ------------
-For linux-x86_64, pre-compiled binaries are provided for the supported versions of NGINX.
+For `linux-x86_64`, pre-compiled binaries are provided for the supported versions of NGINX.
 These can be dropped into existing NGINX installations provided that NGINX was compiled with
 the `--with-compat` option. See [example/trivial/ubuntu-x86_64](example/trivial/ubuntu-x86_64) for an
 example of how to set it up.
@@ -147,7 +147,7 @@ wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.0
 wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.7.0/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so
 
 # Zipkin
-wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.3.1/linux-amd64-libzipkin_opentracing_plugin.so.gz  gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
+wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.3.1/linux-amd64-libzipkin_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
 
 ```
 
