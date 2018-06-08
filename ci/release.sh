@@ -19,8 +19,8 @@ echo "/ghr -t <hidden> \
      -u $CIRCLE_PROJECT_USERNAME \
      -r $CIRCLE_PROJECT_REPONAME \
      -replace \
-     "${VERSION_TAG}" \
-     "${MODULE_DIR}"
+     ${VERSION_TAG} \
+     ${MODULE_DIR}"
 /ghr -t $GITHUB_TOKEN \
      -u $CIRCLE_PROJECT_USERNAME \
      -r $CIRCLE_PROJECT_REPONAME \
