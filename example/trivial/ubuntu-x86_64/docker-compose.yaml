@@ -1,0 +1,53 @@
+version: '2'
+services:
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-nginx
+    networks:
+      trivial_example:
+        aliases:
+          - nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./jaeger-config.json:/etc/jaeger-config.json
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+
+  app-service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    networks:
+      trivial_example:
+        aliases:
+          - app-service
+    expose:
+      - "9001"
+    ports:
+      - "9001:9001"
+    command: 
+      - /app/server
+      - -collector_host
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    networks:
+      trivial_example:
+        aliases:
+          - jaeger
+    expose:
+      - "9411"
+      - "16686"
+    ports:
+      - "9411:9411"
+      - "16686:16686"
+
+networks:
+  trivial_example: {}

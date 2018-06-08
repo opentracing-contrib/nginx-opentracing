@@ -12,34 +12,14 @@ Dependencies
 [LightStep](https://github.com/lightstep/lightstep-tracer-cpp).
 - Source for [Nginx 1.9.13 or later](http://nginx.org/).
 
-Docker
+Installation
 ------------
-A docker image `rnburn/nginx-opentracing` is provided to support using nginx with OpenTracing
-in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
-See [here](example/) for examples of how to use it.
+For `linux-x86_64`, pre-compiled binaries are provided for the supported versions of NGINX.
+These can be dropped into existing NGINX installations provided that NGINX was compiled with
+the `--with-compat` option. See [example/trivial/ubuntu-x86_64](example/trivial/ubuntu-x86_64) for an
+example of how to set it up.
 
-Building
---------
-```
-$ tar zxvf nginx-1.9.x.tar.gz
-$ cd nginx-1.9.x
-$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing
-$ make && sudo make install
-```
-
-You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
-https://github.com/lightstep/lightstep-tracer-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
-```
-# Jaeger
-wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.0/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
-
-# LightStep
-wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.7.0/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so
-
-# Zipkin
-wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.3.1/linux-amd64-libzipkin_opentracing_plugin.so.gz  gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
-
-```
+Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker) or [build from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
 
 Getting Started
 ---------------
@@ -114,3 +94,60 @@ http {
 See [Tutorial](doc/Tutorial.md) for a more complete example,
 [Reference](doc/Reference.md) for a list of available OpenTracing-related
 directives.
+
+Docker
+------
+A docker image `opentracing/nginx-opentracing` is provided to support using nginx with OpenTracing
+in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
+See [here](example/) for examples of how to use it.
+
+Additionally, custom images can be build by running
+
+```bash
+docker build \
+       -t opentracing-contrib/nginx-opentracing:latest \
+       .
+```
+
+and arguments to weak the versions used can be provied with
+
+```bash
+docker build \
+       -t opentracing-contrib/nginx-opentracing:latest \
+       --build-arg OPENTRACING_CPP_VERSION=master \
+       .
+```
+
+Other build arguments
+
+* `OPENTRACING_CPP_VERSION`
+* `ZIPKIN_CPP_VERSION`
+* `LIGHTSTEP_VERSION`
+* `JAEGER_CPP_VERSION`
+* `GRPC_VERSION`
+* `NGINX_OPENTRACING_VERSION`
+
+
+Building From Source
+--------------------
+```
+$ tar zxvf nginx-1.9.x.tar.gz
+$ cd nginx-1.9.x
+$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing
+$ make && sudo make install
+```
+
+You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
+https://github.com/lightstep/lightstep-tracer-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
+```
+# Jaeger
+wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.1/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
+
+# LightStep
+wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.7.1/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so
+
+# Zipkin
+wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.4.0/linux-amd64-libzipkin_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
+
+```
+

@@ -21,8 +21,7 @@ ngx_int_t load_tracer(ngx_log_t* log, const char* tracer_library,
                     error_message.c_str());
     } else {
       ngx_log_error(NGX_LOG_ERR, log, 0,
-                    "Failed to load tracing library %s: %s", tracer_library,
-                    handle_maybe.error().message().c_str());
+                    "Failed to load tracing library %s: %s", tracer_library);
     }
     return NGX_ERROR;
   }

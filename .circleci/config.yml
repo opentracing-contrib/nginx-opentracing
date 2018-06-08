@@ -25,17 +25,39 @@ jobs:
       - checkout
       - run:
           command: docker build -t opentracing/nginx-opentracing .
-  release:
+  module_binaries:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: ./ci/setup_build_environment.sh
+      - run: ./ci/do_ci.sh module.binaries
+      - store_artifacts:
+          path: /modules
+  push_docker_image:
     machine: true
     steps:
       - checkout
       - run:
-          command: ./ci/do_ci.sh release
+          command: ./ci/do_ci.sh push_docker_image
+  release:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: ./ci/setup_build_environment.sh
+      - run: ./ci/do_ci.sh release
 
 workflows:
   version: 2
   build_test_and_deploy:
     jobs:
+      - push_docker_image:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+)*$/
       - release:
           filters:
             branches:
@@ -44,3 +66,4 @@ workflows:
               only: /^v[0-9]+(\.[0-9]+)*$/
       - system_testing
       - docker_image
+      - module_binaries
