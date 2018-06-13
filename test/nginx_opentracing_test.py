@@ -12,9 +12,10 @@ import http.client
 class NginxOpenTracingTest(unittest.TestCase):
     def setUp(self):
         self.testdir = os.getcwd()
-        self.workdir = os.path.join(tempfile.mkdtemp(), "environment")
-        shutil.copytree(os.path.join(os.getcwd(), "environment"),
-                        self.workdir)
+        tempdir = tempfile.mkdtemp()
+        self.workdir = os.path.join(tempdir, "environment")
+        environment_dir = os.path.join(os.getcwd(), "environment")
+        subprocess.call( ["cp", "-r", environment_dir, self.workdir])
         os.chdir(self.workdir)
 
         # Make sure trace output is writable
