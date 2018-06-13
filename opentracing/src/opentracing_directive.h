@@ -15,6 +15,13 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t *command,
                                     void *conf) noexcept;
 
 //------------------------------------------------------------------------------
+// propagate_fastcgi_opentracing_context
+//------------------------------------------------------------------------------
+char *propagate_fastcgi_opentracing_context(ngx_conf_t *cf,
+                                            ngx_command_t *command,
+                                            void *conf) noexcept;
+
+//------------------------------------------------------------------------------
 // add_opentracing_tag
 //------------------------------------------------------------------------------
 char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,

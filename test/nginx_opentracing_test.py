@@ -26,7 +26,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                                                    stderr=subprocess.PIPE)
         self.client = docker.from_env()
         timeout = time.time() + 5
-        while len(self.client.containers.list()) != 2:
+        while len(self.client.containers.list()) != 3:
             if time.time() > timeout:
                 raise TimeoutError()
             time.sleep(0.001)
@@ -129,6 +129,14 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         location_span = self.nginx_traces[0]
         self.assertEqual(location_span["tags"]["abc"], "123")
+
+    def testFastcgiPropagation(self):
+        self.conn.request("GET", "/php-fpm")
+        response = self.conn.getresponse()
+        self.assertEqual(response.status, 200)
+        self._stopEnvironment()
+
+        self.assertEqual(len(self.nginx_traces), 2)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
