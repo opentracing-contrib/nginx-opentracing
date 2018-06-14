@@ -48,8 +48,6 @@ services:
       testnet:
         aliases:
           - php_fpm
-    volumes:
-      - ./app.php:/var/www/app.php
     expose:
       - "9000"
     ports:
