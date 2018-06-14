@@ -31,6 +31,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                 raise TimeoutError()
             time.sleep(0.001)
 
+
         # Wait so that backend can come up.
         # TODO: replace with something better
         time.sleep(2)
