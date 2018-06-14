@@ -13,10 +13,11 @@ import sys
 class NginxOpenTracingTest(unittest.TestCase):
     def setUp(self):
         self.testdir = os.getcwd()
-        if len(sys.argv) > 2:
-            tempdir = tempfile.mkdtemp(prefix=sys.argv[1])
+        if 'TEST_WORK_DIR' in os.environ:
+            tempdir = tempfile.mkdtemp(prefix=os.environ['TEST_WORK_DIR'])
         else:
             tempdir = tempfile.mkdtemp()
+        print(tempdir)
         self.workdir = os.path.join(tempdir, "environment")
         environment_dir = os.path.join(os.getcwd(), "environment")
         subprocess.call( ["cp", "-r", environment_dir, self.workdir])
