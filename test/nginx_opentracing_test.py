@@ -15,6 +15,8 @@ class NginxOpenTracingTest(unittest.TestCase):
         tempdir = tempfile.mkdtemp()
         self.workdir = os.path.join(tempdir, "environment")
         environment_dir = os.path.join(os.getcwd(), "environment")
+        if not os.path.exists(tempdir):
+            os.makedirs(tempdir)
         subprocess.call( ["cp", "-r", environment_dir, self.workdir])
         os.chdir(self.workdir)
 
