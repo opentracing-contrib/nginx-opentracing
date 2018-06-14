@@ -42,12 +42,12 @@ services:
     ports:
       - "5000:5000"
 
-  php_fpm:
+  phpfpm:
     image: php:7-fpm
     networks:
       testnet:
         aliases:
-          - php_fpm
+          - phpfpm
 
 networks:
   testnet: {}
