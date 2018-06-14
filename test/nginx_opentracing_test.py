@@ -20,7 +20,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         print(tempdir)
         self.workdir = os.path.join(tempdir, "environment")
         environment_dir = os.path.join(os.getcwd(), "environment")
-        subprocess.call( ["cp", "-r", environment_dir, self.workdir])
+        subprocess.call(["cp", "-r", environment_dir, tempdir])
         os.chdir(self.workdir)
 
         # Make sure trace output is writable
