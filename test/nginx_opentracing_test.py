@@ -8,15 +8,17 @@ import time
 import docker
 import json
 import http.client
+import sys
 
 class NginxOpenTracingTest(unittest.TestCase):
     def setUp(self):
         self.testdir = os.getcwd()
-        tempdir = tempfile.mkdtemp()
+        if len(sys.argv) > 2:
+            tempdir = tempfile.mkdtemp(prefix=sys.argv[1])
+        else:
+            tempdir = tempfile.mkdtemp()
         self.workdir = os.path.join(tempdir, "environment")
         environment_dir = os.path.join(os.getcwd(), "environment")
-        if not os.path.exists(tempdir):
-            os.makedirs(tempdir)
         subprocess.call( ["cp", "-r", environment_dir, self.workdir])
         os.chdir(self.workdir)
 

@@ -11,7 +11,7 @@ if [[ "$1" == "system.testing" ]]; then
   docker build -t nginx-opentracing-test/nginx -f Dockerfile-test .
   cd test
   docker build -t nginx-opentracing-test/backend -f Dockerfile-backend .
-  python3 nginx_opentracing_test.py
+  python3 nginx_opentracing_test.py $PWD
   exit 0
 elif [[ "$1" == "module.binaries" ]]; then
   mkdir -p "${BUILD_DIR}"
