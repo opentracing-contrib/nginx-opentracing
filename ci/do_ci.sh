@@ -12,7 +12,7 @@ if [[ "$1" == "system.testing" ]]; then
   cd test
   docker build -t nginx-opentracing-test/backend -f Dockerfile-backend .
   cd environment
-  docker-compose build
+  docker-compose pull
   cd ..
   python3 nginx_opentracing_test.py
   exit 0
