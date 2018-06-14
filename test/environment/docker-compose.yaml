@@ -48,10 +48,6 @@ services:
       testnet:
         aliases:
           - php_fpm
-    expose:
-      - "9000"
-    ports:
-      - "9000:9000"
 
 networks:
   testnet: {}
