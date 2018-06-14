@@ -25,7 +25,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                                                    stdout=subprocess.PIPE, 
                                                    stderr=subprocess.PIPE)
         self.client = docker.from_env()
-        timeout = time.time() + 5
+        timeout = time.time() + 60
         while len(self.client.containers.list()) != 3:
             if time.time() > timeout:
                 raise TimeoutError()
