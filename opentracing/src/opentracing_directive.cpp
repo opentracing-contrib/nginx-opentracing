@@ -10,6 +10,7 @@
 #include <opentracing/string_view.h>
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 
 extern "C" {
@@ -59,6 +60,7 @@ static ngx_str_t make_span_context_value_variable(
 //------------------------------------------------------------------------------
 // make_fastcgi_span_context_key
 //------------------------------------------------------------------------------
+// Converts keys to match the naming convention used by CGI parameters.
 static ngx_str_t make_fastcgi_span_context_key(ngx_pool_t *pool,
                                                opentracing::string_view key) {
   static const opentracing::string_view http_prefix = "HTTP_";
@@ -67,7 +69,12 @@ static ngx_str_t make_fastcgi_span_context_key(ngx_pool_t *pool,
   if (data == nullptr) throw std::bad_alloc{};
 
   std::copy_n(http_prefix.data(), http_prefix.size(), data);
-  std::copy_n(key.data(), key.size(), data + http_prefix.size());
+
+  std::transform(key.data(), key.data() + key.size(), data + http_prefix.size(),
+                 [](char c) {
+                   if (c == '-') return '_';
+                   return static_cast<char>(std::toupper(c));
+                 });
 
   return {size, reinterpret_cast<unsigned char *>(data)};
 }
