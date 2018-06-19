@@ -1,0 +1,7 @@
+{
+  "minimum-stability": "dev",
+  "require":           {
+    "jonahgeorge/jaeger-client-php": "0.3.0",
+    "opentracing/opentracing":"1.0.0-beta5"
+  }
+}
