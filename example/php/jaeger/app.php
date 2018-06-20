@@ -18,10 +18,6 @@ if (!function_exists('getallheaders')) {
     }
 }
 
-foreach (getallheaders() as $name => $value) {
-    echo "$name: $value\n";
-}
-
 $config = new Config(
     [
         'sampler' => [
