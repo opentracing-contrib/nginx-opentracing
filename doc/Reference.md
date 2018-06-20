@@ -24,6 +24,14 @@ Dynamicaly loads in a tracer implementing the OpenTracing dynamic loading interf
 Propagates the active span context for upstream requests. (See
 [cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
 
+### `opentracing_fastcgi_propagate_context`
+
+- **syntax** `opentracing_fastcgi_propagate_context`
+- **context**: `location`
+
+Propagates the active span context for FastCGI requests. (See
+[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
+
 ### `opentracing_trace_locations`
 
 - **syntax** `opentracing_trace_locations on|off`
