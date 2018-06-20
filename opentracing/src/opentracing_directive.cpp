@@ -10,6 +10,7 @@
 #include <opentracing/string_view.h>
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 
 extern "C" {
@@ -52,6 +53,28 @@ static ngx_str_t make_span_context_value_variable(
 
   std::transform(std::begin(key), std::end(key), data + index,
                  header_transform);
+
+  return {size, reinterpret_cast<unsigned char *>(data)};
+}
+
+//------------------------------------------------------------------------------
+// make_fastcgi_span_context_key
+//------------------------------------------------------------------------------
+// Converts keys to match the naming convention used by CGI parameters.
+static ngx_str_t make_fastcgi_span_context_key(ngx_pool_t *pool,
+                                               opentracing::string_view key) {
+  static const opentracing::string_view http_prefix = "HTTP_";
+  auto size = http_prefix.size() + key.size();
+  auto data = static_cast<char *>(ngx_palloc(pool, size));
+  if (data == nullptr) throw std::bad_alloc{};
+
+  std::copy_n(http_prefix.data(), http_prefix.size(), data);
+
+  std::transform(key.data(), key.data() + key.size(), data + http_prefix.size(),
+                 [](char c) {
+                   if (c == '-') return '_';
+                   return static_cast<char>(std::toupper(c));
+                 });
 
   return {size, reinterpret_cast<unsigned char *>(data)};
 }
@@ -132,6 +155,46 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
 } catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0,
                 "opentracing_propatate_context failed: %s", e.what());
+  return static_cast<char *>(NGX_CONF_ERROR);
+}
+
+//------------------------------------------------------------------------------
+// propagate_fastcgi_opentracing_context
+//------------------------------------------------------------------------------
+char *propagate_fastcgi_opentracing_context(ngx_conf_t *cf,
+                                            ngx_command_t *command,
+                                            void *conf) noexcept try {
+  auto main_conf = static_cast<opentracing_main_conf_t *>(
+      ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
+  if (main_conf->span_context_keys == nullptr) {
+    return static_cast<char *>(NGX_CONF_OK);
+  }
+  auto keys = static_cast<opentracing::string_view *>(
+      main_conf->span_context_keys->elts);
+  auto num_keys = static_cast<int>(main_conf->span_context_keys->nelts);
+
+  auto old_args = cf->args;
+
+  ngx_str_t args[] = {ngx_string("fastcgi_param"), {}, {}};
+  ngx_array_t args_array;
+  args_array.elts = static_cast<void *>(&args);
+  args_array.nelts = 3;
+
+  cf->args = &args_array;
+  for (int key_index = 0; key_index < num_keys; ++key_index) {
+    args[1] = make_fastcgi_span_context_key(cf->pool, keys[key_index]);
+    args[2] = make_span_context_value_variable(cf->pool, keys[key_index]);
+    auto rcode = opentracing_conf_handler(cf, 0);
+    if (rcode != NGX_OK) {
+      cf->args = old_args;
+      return static_cast<char *>(NGX_CONF_ERROR);
+    }
+  }
+  cf->args = old_args;
+  return static_cast<char *>(NGX_CONF_OK);
+} catch (const std::exception &e) {
+  ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+                "opentracing_fastcgi_propatate_context failed: %s", e.what());
   return static_cast<char *>(NGX_CONF_ERROR);
 }
 

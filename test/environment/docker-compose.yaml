@@ -42,6 +42,19 @@ services:
     ports:
       - "5000:5000"
 
+  php_fpm:
+    image: php:7-fpm
+    networks:
+      testnet:
+        aliases:
+          - php_fpm
+    volumes:
+      - ./app.php:/var/www/app.php
+    expose:
+      - "9000"
+    ports:
+      - "9000:9000"
+
 networks:
   testnet: {}
 
