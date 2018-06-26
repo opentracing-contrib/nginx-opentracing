@@ -15,6 +15,9 @@ Enables or disables OpenTracing for NGINX requests.
 - **context**: `http`, `server`
 
 Dynamicaly loads in a tracer implementing the OpenTracing dynamic loading interface.
+`tracer_library` provides the path to the tracer's OpenTracing plugin, and `tracer_config_file`
+provides a path to a JSON configuration for the tracer. See the vendor's documentation for
+details on the format of the JSON configuration.
 
 ### `opentracing_propagate_context`
 
