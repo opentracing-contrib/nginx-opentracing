@@ -3,7 +3,7 @@
 set -e
 
 export OPENTRACING_VERSION=1.4.0
-NGINX_VERSIONS=(1.15.0 1.14.0 1.13.12 1.12.2)
+NGINX_VERSIONS=(1.15.0 1.14.0 1.13.12 1.12.2 1.10.3)
 
 # Compile for a portable cpu architecture
 export CFLAGS="-march=x86-64 -fPIC"
