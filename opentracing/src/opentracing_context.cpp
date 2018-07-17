@@ -2,6 +2,7 @@
 #include "utility.h"
 
 #include <stdexcept>
+#include <sstream>
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -132,7 +133,7 @@ void OpenTracingContext::on_change_block(
 //------------------------------------------------------------------------------
 // active_span
 //------------------------------------------------------------------------------
-opentracing::Span &OpenTracingContext::active_span() {
+const opentracing::Span &OpenTracingContext::active_span() const {
   if (loc_conf_->enable_locations) {
     return *span_;
   } else {
@@ -208,6 +209,19 @@ void OpenTracingContext::on_log_request() {
 ngx_str_t OpenTracingContext::lookup_span_context_value(
     opentracing::string_view key) {
   return span_context_querier_.lookup_value(request_, active_span(), key);
+}
+
+//------------------------------------------------------------------------------
+// get_binary_context
+//------------------------------------------------------------------------------
+ngx_str_t OpenTracingContext::get_binary_context() const {
+  const auto& span = active_span();
+  std::ostringstream oss;
+  auto was_successful = span.tracer().Inject(span.context(), oss);
+  if (!was_successful) {
+    throw std::runtime_error{was_successful.error().message()};
+  }
+  return to_ngx_str(request_->pool, oss.str());
 }
 
 //------------------------------------------------------------------------------
