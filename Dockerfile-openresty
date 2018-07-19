@@ -1,0 +1,56 @@
+FROM ubuntu:18.04
+
+ARG OPENTRACING_CPP_VERSION=v1.4.0
+ARG OPENRESTY_VERSION=1.13.6.2
+
+COPY . /src
+
+RUN set -x \
+  && apt-get update \
+  && apt-get install --no-install-recommends --no-install-suggests -y \
+              build-essential \
+              gettext \
+              cmake \
+              git \
+              gnupg2 \
+              software-properties-common \
+              curl \
+              jq \
+              ca-certificates \
+              wget \
+              libpcre3 libpcre3-dev \
+              zlib1g-dev \
+              gcc-8 \
+              g++-8 \
+              libssl-dev \
+              lua5.1-dev \
+### Build opentracing-cpp
+  && cd / \
+  && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
+  && cd opentracing-cpp \
+  && mkdir .build && cd .build \
+  && cmake -DCMAKE_BUILD_TYPE=Debug \
+           -DBUILD_TESTING=OFF .. \
+  && make && make install \
+### Build bridge tracer
+  && cd / \
+  && git clone https://github.com/rnburn/lua-bridge-tracer.git \
+  && cd lua-bridge-tracer \
+  && mkdir .build && cd .build \
+  && cmake .. \
+  && make && make install \
+### Install tracers
+  && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.1/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so \
+  && wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.7.1/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so \
+  && wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.4.0/linux-amd64-libzipkin_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so \
+### Build OpenResty
+  && cd /src \
+  && wget -O openresty-${OPENRESTY_VERSION}.tar.gz https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
+  && tar zxf openresty-${OPENRESTY_VERSION}.tar.gz \
+  && cd /src/openresty-${OPENRESTY_VERSION} \
+  && ./configure \
+      --with-compat \
+      --add-dynamic-module=/src/opentracing \
+  && make && make install \
+  && ldconfig
+CMD ["/usr/local/openresty/nginx/sbin/nginx", "-g", "daemon off;"]
