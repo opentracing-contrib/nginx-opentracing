@@ -2,7 +2,7 @@ version: '2'
 services:
 
   nginx:
-    image: openresty
+    image: opentracing/openresty
     networks:
       openresty_example:
         aliases:
