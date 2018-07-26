@@ -7,6 +7,7 @@ import (
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -21,9 +22,6 @@ var collectorHost = flag.String("collector_host", "localhost", "Host for Zipkin 
 var collectorPort = flag.String("collector_port", "9411", "Port for Zipkin Collector")
 
 func handler(w http.ResponseWriter, r *http.Request) {
-  for k, v := range r.Header {
-    fmt.Fprintf(w, "Header field %q, Value %q\n", k, v)
-  }
 	wireContext, _ := opentracing.GlobalTracer().Extract(
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(r.Header))
@@ -31,12 +29,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		"/",
 		opentracing.ChildOf(wireContext))
 	defer span.Finish()
-	fmt.Fprintf(w, "Hello, World!")
+	tm := time.Now().Format(time.RFC1123)
+	w.Write([]byte("The time is " + tm))
 }
 
 func main() {
 	flag.Parse()
-  zipkinHTTPEndpoint := "http://" + *collectorHost + ":" + *collectorPort + "/api/v1/spans"
+	zipkinHTTPEndpoint := "http://" + *collectorHost + ":" + *collectorPort + "/api/v1/spans"
 	collector, err := zipkin.NewHTTPCollector(zipkinHTTPEndpoint)
 	if err != nil {
 		fmt.Printf("unable to create Zipkin HTTP collector: %+v\n", err)
