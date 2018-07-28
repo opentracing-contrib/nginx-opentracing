@@ -45,7 +45,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     "
 ARG RESTY_CONFIG_OPTIONS_MORE=""
 ARG OPENTRACING_CPP_VERSION="v1.4.0"
-ARG LUA_BRIDGE_TRACER_VERSION="5360d34d56a4e83b14684d8c59ff84b59d1c77da"
+ARG LUA_BRIDGE_TRACER_VERSION="9213e1b0c23a0d028093895d290c705680fbf4c5"
 ARG JAEGER_VERSION="v0.4.1"
 ARG LIGHTSTEP_VERSION="v0.7.1"
 ARG ZIPKIN_VERSION="v0.4.0"
@@ -102,7 +102,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
   && rm -rf opentracing-cpp \
 ### Build bridge tracer
   && cd /tmp \
-  && git clone https://github.com/rnburn/lua-bridge-tracer.git \
+  && git clone https://github.com/opentracing/lua-bridge-tracer.git \
   && cd lua-bridge-tracer \
   && git checkout ${LUA_BRIDGE_TRACER_VERSION} \
   && mkdir .build && cd .build \
