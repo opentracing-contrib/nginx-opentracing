@@ -85,3 +85,7 @@ Variables
 Expands to the a value of the active span context; the last part of the variable
 name is the span context's header converted to lower case with dashes replaced by
 underscores.
+
+### `opentracing_binary_context`
+
+Expands to a binary string representation of the active span.

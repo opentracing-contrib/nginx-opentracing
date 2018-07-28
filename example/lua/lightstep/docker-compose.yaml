@@ -1,0 +1,23 @@
+version: '2'
+services:
+
+  nginx:
+    image: opentracing/openresty
+    networks:
+      openresty_example:
+        aliases:
+          - nginx
+    volumes:
+      - ./start-nginx.sh:/start-nginx.sh
+      - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./lightstep-config.json.in:/lightstep-config.json.in
+    environment:
+      - LIGHTSTEP_ACCESS_TOKEN=${LIGHTSTEP_ACCESS_TOKEN}
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    entrypoint: ./start-nginx.sh
+
+networks:
+  openresty_example: {}

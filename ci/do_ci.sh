@@ -22,11 +22,19 @@ elif [[ "$1" == "push_docker_image" ]]; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   VERSION_TAG="`git describe --abbrev=0 --tags`"
   VERSION="${VERSION_TAG/v/}" 
+  # nginx
   docker build -t opentracing/nginx-opentracing .
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:${VERSION}
   docker push opentracing/nginx-opentracing:${VERSION}
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:latest
   docker push opentracing/nginx-opentracing:latest
+
+  # openresty
+  docker build -t opentracing/openresty -f Dockerfile-openresty .
+  docker tag opentracing/openresty opentracing/openresty:${VERSION}
+  docker push opentracing/openresty:${VERSION}
+  docker tag opentracing/openresty opentracing/openresty:latest
+  docker push opentracing/openresty:latest
   exit 0
 elif [[ "$1" == "release" ]]; then
   mkdir -p "${BUILD_DIR}"

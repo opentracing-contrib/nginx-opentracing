@@ -25,6 +25,12 @@ jobs:
       - checkout
       - run:
           command: docker build -t opentracing/nginx-opentracing .
+  openresty_docker_image:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          command: docker build -t opentracing/openresty -f Dockerfile-openresty .
   module_binaries:
     docker:
       - image: ubuntu:18.04
@@ -67,4 +73,5 @@ workflows:
               only: /^v[0-9]+(\.[0-9]+)*$/
       - system_testing
       - docker_image
+      - openresty_docker_image
       - module_binaries

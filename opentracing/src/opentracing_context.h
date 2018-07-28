@@ -31,6 +31,8 @@ class OpenTracingContext {
 
   ngx_str_t lookup_span_context_value(opentracing::string_view key);
 
+  ngx_str_t get_binary_context() const;
+
  private:
   ngx_http_request_t *request_;
   opentracing_main_conf_t *main_conf_;
@@ -40,7 +42,7 @@ class OpenTracingContext {
   std::unique_ptr<opentracing::Span> request_span_;
   std::unique_ptr<opentracing::Span> span_;
 
-  opentracing::Span &active_span();
+  const opentracing::Span &active_span() const;
 
   void on_exit_block(std::chrono::steady_clock::time_point finish_timestamp =
                          std::chrono::steady_clock::now());
