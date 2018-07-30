@@ -1,8 +1,8 @@
 #include "opentracing_context.h"
 #include "utility.h"
 
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
@@ -215,7 +215,7 @@ ngx_str_t OpenTracingContext::lookup_span_context_value(
 // get_binary_context
 //------------------------------------------------------------------------------
 ngx_str_t OpenTracingContext::get_binary_context() const {
-  const auto& span = active_span();
+  const auto &span = active_span();
   std::ostringstream oss;
   auto was_successful = span.tracer().Inject(span.context(), oss);
   if (!was_successful) {
