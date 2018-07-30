@@ -73,7 +73,6 @@ static ngx_int_t expand_opentracing_context_variable(
 static ngx_int_t expand_opentracing_binary_context_variable(
     ngx_http_request_t* request, ngx_http_variable_value_t* variable_value,
     uintptr_t data) noexcept try {
-
   auto context = get_opentracing_context(request);
   if (context == nullptr) {
     throw std::runtime_error{"no OpenTracingContext attached to request"};
@@ -94,7 +93,6 @@ static ngx_int_t expand_opentracing_binary_context_variable(
   return NGX_ERROR;
 }
 
-
 //------------------------------------------------------------------------------
 // add_variables
 //------------------------------------------------------------------------------
@@ -106,7 +104,8 @@ ngx_int_t add_variables(ngx_conf_t* cf) noexcept {
   opentracing_context_var->get_handler = expand_opentracing_context_variable;
   opentracing_context_var->data = 0;
 
-  auto opentracing_binary_context = to_ngx_str(opentracing_binary_context_variable_name);
+  auto opentracing_binary_context =
+      to_ngx_str(opentracing_binary_context_variable_name);
   auto opentracing_binary_context_var = ngx_http_add_variable(
       cf, &opentracing_binary_context, NGX_HTTP_VAR_NOCACHEABLE);
   opentracing_binary_context_var->get_handler =
