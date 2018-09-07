@@ -7,6 +7,7 @@ ARG ZIPKIN_CPP_VERSION=v0.4.0
 ARG LIGHTSTEP_VERSION=v0.7.1
 ARG JAEGER_CPP_VERSION=v0.4.1
 ARG GRPC_VERSION=v1.4.x
+ARG DATADOG_VERSION=v0.2.4
 
 COPY . /src
 
@@ -72,6 +73,15 @@ RUN set -x \
   && export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
   && cd "$tempDir" \
   && ln -s /usr/local/lib/libjaegertracing.so /usr/local/lib/libjaegertracing_plugin.so \
+### Build dd-opentracing-cpp
+  && git clone -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
+  && cd dd-opentracing-cpp \
+  && scripts/install_dependencies.sh not-opentracing not-curl \
+  && mkdir .build && cd .build \
+  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+  && make && make install \
+  && cd "$tempDir" \
+  && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
 ### Build gRPC
   && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \

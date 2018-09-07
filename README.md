@@ -8,8 +8,9 @@ Dependencies
 - The [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp)
 - A C++ OpenTracing Tracer. It currently works with
 [Jaeger](https://github.com/jaegertracing/cpp-client),
-[Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing), or
-[LightStep](https://github.com/lightstep/lightstep-tracer-cpp).
+[Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing),
+[LightStep](https://github.com/lightstep/lightstep-tracer-cpp), or
+[Datadog](https://github.com/DataDog/dd-opentracing-cpp/).
 - Source for [Nginx 1.9.13 or later](http://nginx.org/).
 
 Installation
@@ -65,6 +66,8 @@ http {
   #   opentracing_load_tracer /usr/local/lib/liblightstep_tracer_plugin.so /path/to/config;
   # or 
   #   opentracing_load_tracer /usr/local/lib/libzipkin_opentracing_plugin.so /path/to/config;
+  # or
+  #   opentracing_load_tracer /usr/local/lib/libdd_opentracing_plugin.so /path/to/config;
 
   # Enable tracing for all requests.
   opentracing on;
@@ -109,7 +112,7 @@ docker build \
        .
 ```
 
-and arguments to weak the versions used can be provied with
+and arguments to weak the versions used can be provided with
 
 ```bash
 docker build \
@@ -148,6 +151,9 @@ wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0
 
 # Zipkin
 wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.4.0/linux-amd64-libzipkin_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so
+
+# Datadog
+wget -O - https://github.com/DataDog/dd-opentracing-cpp/releases/download/v0.2.4/linux-amd64-libdd_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libdd_opentracing_plugin.so
 
 ```
 
