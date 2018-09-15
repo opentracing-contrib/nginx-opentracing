@@ -154,7 +154,7 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
   return static_cast<char *>(NGX_CONF_OK);
 } catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0,
-                "opentracing_propatate_context failed: %s", e.what());
+                "opentracing_propagate_context failed: %s", e.what());
   return static_cast<char *>(NGX_CONF_ERROR);
 }
 
@@ -194,7 +194,7 @@ char *propagate_fastcgi_opentracing_context(ngx_conf_t *cf,
   return static_cast<char *>(NGX_CONF_OK);
 } catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0,
-                "opentracing_fastcgi_propatate_context failed: %s", e.what());
+                "opentracing_fastcgi_propagate_context failed: %s", e.what());
   return static_cast<char *>(NGX_CONF_ERROR);
 }
 
