@@ -22,7 +22,7 @@ details on the format of the JSON configuration.
 ### `opentracing_propagate_context`
 
 - **syntax** `opentracing_propagate_context`
-- **context**: `location`
+- **context**: `http`, `server`, `location`
 
 Propagates the active span context for upstream requests. (See
 [cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
@@ -30,7 +30,7 @@ Propagates the active span context for upstream requests. (See
 ### `opentracing_fastcgi_propagate_context`
 
 - **syntax** `opentracing_fastcgi_propagate_context`
-- **context**: `location`
+- **context**: `http`, `server`, `location`
 
 Propagates the active span context for FastCGI requests. (See
 [cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
