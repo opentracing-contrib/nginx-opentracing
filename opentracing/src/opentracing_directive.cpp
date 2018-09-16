@@ -124,6 +124,11 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
                                     void * /*conf*/) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
+  if (!main_conf->tracer_library.data) {
+    ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+                  "opentracing_propagate_context before tracer loaded");
+    return static_cast<char *>(NGX_CONF_ERROR);
+  }
   if (main_conf->span_context_keys == nullptr) {
     return static_cast<char *>(NGX_CONF_OK);
   }
@@ -154,7 +159,7 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
   return static_cast<char *>(NGX_CONF_OK);
 } catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0,
-                "opentracing_propatate_context failed: %s", e.what());
+                "opentracing_propagate_context failed: %s", e.what());
   return static_cast<char *>(NGX_CONF_ERROR);
 }
 
@@ -194,7 +199,7 @@ char *propagate_fastcgi_opentracing_context(ngx_conf_t *cf,
   return static_cast<char *>(NGX_CONF_OK);
 } catch (const std::exception &e) {
   ngx_log_error(NGX_LOG_ERR, cf->log, 0,
-                "opentracing_fastcgi_propatate_context failed: %s", e.what());
+                "opentracing_fastcgi_propagate_context failed: %s", e.what());
   return static_cast<char *>(NGX_CONF_ERROR);
 }
 
