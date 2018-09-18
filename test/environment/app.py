@@ -1,5 +1,4 @@
 from flask import Flask, request
-from flask.ext.api import status
 app = Flask(__name__)
 
 @app.route('/has-span-context')
@@ -10,7 +9,7 @@ def has_span_context():
 @app.route('/has-span-context-redirect')
 def has_span_context_redirect():
     assert 'x-ot-span-context' in request.headers
-    return '', status.HTTP_301_MOVED_PERMANENTLY
+    return '', 301
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
