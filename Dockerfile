@@ -7,7 +7,7 @@ ARG ZIPKIN_CPP_VERSION=v0.5.2
 ARG LIGHTSTEP_VERSION=v0.8.0
 ARG JAEGER_CPP_VERSION=v0.4.2
 ARG GRPC_VERSION=v1.4.x
-ARG DATADOG_VERSION=v0.2.4
+ARG DATADOG_VERSION=v0.3.0
 
 COPY . /src
 
@@ -76,7 +76,7 @@ RUN set -x \
 ### Build dd-opentracing-cpp
   && git clone -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
   && cd dd-opentracing-cpp \
-  && scripts/install_dependencies.sh not-opentracing not-curl \
+  && scripts/install_dependencies.sh not-opentracing not-curl not-zlib \
   && mkdir .build && cd .build \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
   && make && make install \
