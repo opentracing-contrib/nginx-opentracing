@@ -77,7 +77,7 @@ static ngx_int_t opentracing_module_init(ngx_conf_t *cf) noexcept {
 static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) noexcept try {
   auto main_conf = static_cast<opentracing_main_conf_t *>(
       ngx_http_cycle_get_module_main_conf(cycle, ngx_http_opentracing_module));
-  if (!main_conf->tracer_library.data) {
+  if (!main_conf || !main_conf->tracer_library.data) {
     return NGX_OK;
   }
 
