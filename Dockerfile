@@ -88,6 +88,8 @@ RUN set -x \
   && git submodule update --init \
   && make HAS_SYSTEM_PROTOBUF=false && make install \
   && make && make install \
+  && cd third_party/protobuf \
+  && make install \
   && cd "$tempDir" \
 ### Build lightstep-tracer-cpp
   && git clone -b $LIGHTSTEP_VERSION https://github.com/lightstep/lightstep-tracer-cpp.git \
