@@ -20,7 +20,7 @@ var collectorHost = flag.String("collector_host", "dd-agent", "Host for Datadog 
 var collectorPort = flag.String("collector_port", "8126", "Port for Datadog agent")
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	wireContext, err := opentracing.GlobalTracer().Extract(
+	wireContext, _ := opentracing.GlobalTracer().Extract(
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(r.Header))
 	span := opentracing.StartSpan("GET /", opentracing.ChildOf(wireContext))
