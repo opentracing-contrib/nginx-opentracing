@@ -223,6 +223,10 @@ static ngx_command_t opentracing_commands[] = {
          NGX_CONF_NOARGS,
      propagate_fastcgi_opentracing_context, NGX_HTTP_LOC_CONF_OFFSET, 0,
      nullptr},
+    {ngx_string("opentracing_grpc_propagate_context"),
+     NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
+         NGX_CONF_NOARGS,
+     propagate_grpc_opentracing_context, NGX_HTTP_LOC_CONF_OFFSET, 0, nullptr},
     {ngx_string("opentracing_operation_name"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF |
          NGX_CONF_TAKE1,

@@ -209,6 +209,52 @@ char *propagate_fastcgi_opentracing_context(ngx_conf_t *cf,
 }
 
 //------------------------------------------------------------------------------
+// propagate_grpc_opentracing_context
+//------------------------------------------------------------------------------
+char *propagate_grpc_opentracing_context(ngx_conf_t *cf, ngx_command_t *command,
+                                         void *conf) noexcept try {
+  auto main_conf = static_cast<opentracing_main_conf_t *>(
+      ngx_http_conf_get_module_main_conf(cf, ngx_http_opentracing_module));
+  if (!main_conf->tracer_library.data) {
+    ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+                  "opentracing_grpc_propagate_context before tracer loaded");
+    return static_cast<char *>(NGX_CONF_ERROR);
+  }
+  if (main_conf->span_context_keys == nullptr) {
+    return static_cast<char *>(NGX_CONF_OK);
+  }
+  auto keys = static_cast<opentracing::string_view *>(
+      main_conf->span_context_keys->elts);
+  auto num_keys = static_cast<int>(main_conf->span_context_keys->nelts);
+
+  auto old_args = cf->args;
+
+  ngx_str_t args[] = {ngx_string("grpc_set_header"), {}, {}};
+  ngx_array_t args_array;
+  args_array.elts = static_cast<void *>(&args);
+  args_array.nelts = 3;
+
+  cf->args = &args_array;
+  for (int key_index = 0; key_index < num_keys; ++key_index) {
+    args[1] = ngx_str_t{keys[key_index].size(),
+                        reinterpret_cast<unsigned char *>(
+                            const_cast<char *>(keys[key_index].data()))};
+    args[2] = make_span_context_value_variable(cf->pool, keys[key_index]);
+    auto rcode = opentracing_conf_handler(cf, 0);
+    if (rcode != NGX_OK) {
+      cf->args = old_args;
+      return static_cast<char *>(NGX_CONF_ERROR);
+    }
+  }
+  cf->args = old_args;
+  return static_cast<char *>(NGX_CONF_OK);
+} catch (const std::exception &e) {
+  ngx_log_error(NGX_LOG_ERR, cf->log, 0,
+                "opentracing_grpc_propagate_context failed: %s", e.what());
+  return static_cast<char *>(NGX_CONF_ERROR);
+}
+
+//------------------------------------------------------------------------------
 // set_opentracing_tag
 //------------------------------------------------------------------------------
 char *set_opentracing_tag(ngx_conf_t *cf, ngx_command_t *command,
