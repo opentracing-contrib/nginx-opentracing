@@ -1,0 +1,12 @@
+// install grpcio-tools
+//
+// python3 -m grpc_tools.protoc --proto_path=. --python_out=. --grpc_python_out=. app.proto
+
+syntax = "proto3"; 
+
+service App { 
+  rpc CheckTraceHeader(Empty) returns (Empty); 
+}
+
+message Empty {
+}

@@ -21,8 +21,10 @@ services:
       - LSAN_OPTIONS=suppressions=/lsan-suppress.txt
     expose:
       - "8080"
+      - "8081"
     ports:
       - "8080:8080"
+      - "8081:8081"
     command:
       - /usr/local/nginx/sbin/nginx
       - -g
@@ -54,6 +56,17 @@ services:
       - "9000"
     ports:
       - "9000:9000"
+
+  grpc_backend:
+    image: nginx-opentracing-test/grpc-backend
+    networks:
+      testnet:
+        aliases:
+          - grpc-backend
+    expose:
+      - "50051"
+    ports:
+      - "50051:50051"
 
 networks:
   testnet: {}

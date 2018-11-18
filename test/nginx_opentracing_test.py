@@ -8,6 +8,9 @@ import time
 import docker
 import json
 import http.client
+import grpc
+import app_pb2 as app_messages
+import app_pb2_grpc as app_service
 
 class NginxOpenTracingTest(unittest.TestCase):
     def setUp(self):
@@ -26,7 +29,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                                                    stderr=subprocess.PIPE)
         self.client = docker.from_env()
         timeout = time.time() + 60
-        while len(self.client.containers.list()) != 3:
+        while len(self.client.containers.list()) != 4:
             if time.time() > timeout:
                 raise TimeoutError()
             time.sleep(0.001)
@@ -36,6 +39,11 @@ class NginxOpenTracingTest(unittest.TestCase):
         time.sleep(2)
 
         self.conn = http.client.HTTPConnection('localhost', 8080, timeout=5)
+        self.grpcConn = grpc.insecure_channel('localhost:8081')
+        try:
+            grpc.channel_ready_future(self.grpcConn).result(timeout=10)
+        except grpc.FutureTimeoutError:
+            sys.exit('Error connecting to server')
         self.running = True
 
     def _logEnvironment(self):
@@ -68,6 +76,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         os.chdir(self.testdir)
         self.client.close()
         self.conn.close()
+        self.grpcConn.close()
 
     def _stopDocker(self):
         if not self.running:
@@ -134,6 +143,14 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.conn.request("GET", "/php-fpm")
         response = self.conn.getresponse()
         self.assertEqual(response.status, 200)
+        self._stopEnvironment()
+
+        self.assertEqual(len(self.nginx_traces), 2)
+
+    def testGrpcPropagation(self):
+        app = app_service.AppStub(self.grpcConn)
+        app.CheckTraceHeader(app_messages.Empty())
+
         self._stopEnvironment()
 
         self.assertEqual(len(self.nginx_traces), 2)

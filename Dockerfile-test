@@ -3,8 +3,6 @@ FROM ubuntu:18.04
 ARG OPENTRACING_CPP_VERSION=v1.5.0
 ARG NGINX_VERSION=1.13.12
 
-COPY . /src
-
 RUN set -x \
   && apt-get update \
   && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -25,9 +23,10 @@ RUN set -x \
               g++-8 \
 ### Use gcc-8 (the default gcc has this problem when using with address sanitizer:
 ### https://gcc.gnu.org/bugzilla/show_bug.cgi?id=84428)
-  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8 \
+  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
+
 ### Build opentracing-cpp
-  && cd / \
+RUN cd / \
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
@@ -36,12 +35,16 @@ RUN set -x \
            -DCMAKE_SHARED_LINKER_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
            -DCMAKE_EXE_LINKER_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
            -DBUILD_TESTING=OFF .. \
-  && make && make install \
+  && make && make install
+
+COPY ./opentracing /opentracing
+
 ### Build nginx
-  && cd /src \
+RUN apt-get install -y libssl-dev
+RUN cd / \
   && wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
   && tar zxf nginx-release-${NGINX_VERSION}.tar.gz \
-  && cd /src/nginx-release-${NGINX_VERSION} \
+  && cd /nginx-release-${NGINX_VERSION} \
   # Temporarily disable leak sanitizer to get around false positives in build
   && export ASAN_OPTIONS=detect_leaks=0 \
   && export CFLAGS="-Wno-error" \
@@ -50,6 +53,9 @@ RUN set -x \
       --with-debug \
       --with-cc-opt="-O1 -g -fno-omit-frame-pointer -fsanitize=address" \
       --with-ld-opt="-g -fno-omit-frame-pointer -fsanitize=address" \
-      --add-dynamic-module=/src/opentracing \
+      # enables grpc
+      --with-http_v2_module \
+      --add-dynamic-module=/opentracing \
   && make && make install
+
 CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]
