@@ -35,6 +35,14 @@ Propagates the active span context for upstream requests. (See
 Propagates the active span context for FastCGI requests. (See
 [cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
 
+### `opentracing_grpc_propagate_context`
+
+- **syntax** `opentracing_grpc_propagate_context`
+- **context**: `http`, `server`, `location`
+
+Propagates the active span context for gRPC requests. (See
+[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
+
 ### `opentracing_trace_locations`
 
 - **syntax** `opentracing_trace_locations on|off`

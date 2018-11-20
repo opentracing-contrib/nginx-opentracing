@@ -13,6 +13,8 @@ jobs:
             pip3.5 install setuptools
             pip3.5 install docker
             pip3.5 install docker-compose
+            pip3.5 install protobuf
+            pip3.5 install grpcio
             sudo mkdir /test-log
             sudo chmod a+rwx /test-log
             export LOG_DIR=/test-log
