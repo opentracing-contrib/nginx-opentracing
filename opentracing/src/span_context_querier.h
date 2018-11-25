@@ -17,7 +17,7 @@ extern "C" {
 namespace ngx_opentracing {
 class SpanContextQuerier {
  public:
-  SpanContextQuerier() noexcept = default;
+  SpanContextQuerier() noexcept {}
 
   ngx_str_t lookup_value(ngx_http_request_t* request,
                          const opentracing::Span& span,
