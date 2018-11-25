@@ -15,4 +15,4 @@ apt-get install --no-install-recommends --no-install-suggests -y \
                 ssh \
                 wget \
                 libpcre3 libpcre3-dev \
-                zlib1g-dev \
+                zlib1g-dev

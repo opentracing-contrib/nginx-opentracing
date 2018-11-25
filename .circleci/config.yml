@@ -21,6 +21,15 @@ jobs:
             ./ci/do_ci.sh system.testing
       - store_artifacts:
           path: /test-log
+  build_gcc48:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: ./ci/setup_build_environment.sh
+      - run: ./ci/install_gcc4.8.sh
+      - run: ./ci/install_opentracing.sh
+      - run: ./ci/do_ci.sh build
   docker_image:
     machine: true
     steps:
@@ -74,6 +83,7 @@ workflows:
             tags:
               only: /^v[0-9]+(\.[0-9]+)*$/
       - system_testing
+      - build_gcc48
       - docker_image
       - openresty_docker_image
       - module_binaries

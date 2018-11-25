@@ -5,7 +5,7 @@ set -e
 [ -z "${SRC_DIR}" ] && export SRC_DIR="`pwd`"
 [ -z "${BUILD_DIR}" ] && export BUILD_DIR=/build
 [ -z "${MODULE_DIR}" ] && export MODULE_DIR=/modules
-
+mkdir -p "${BUILD_DIR}"
 
 if [[ "$1" == "system.testing" ]]; then
   docker build -t nginx-opentracing-test/nginx -f Dockerfile-test .
@@ -15,6 +15,9 @@ if [[ "$1" == "system.testing" ]]; then
   docker build -t nginx-opentracing-test/grpc-backend .
   cd -
   PYTHONPATH=environment/grpc python3 nginx_opentracing_test.py
+  exit 0
+elif [[ "$1" == "build" ]]; then
+  ./ci/build_nginx_opentracing_module.sh
   exit 0
 elif [[ "$1" == "module.binaries" ]]; then
   mkdir -p "${BUILD_DIR}"

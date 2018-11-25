@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 pushd "${BUILD_DIR}"
 git clone -b v$OPENTRACING_VERSION https://github.com/opentracing/opentracing-cpp.git
 cd opentracing-cpp
