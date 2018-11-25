@@ -138,7 +138,7 @@ char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
 
   auto old_args = cf->args;
 
-  ngx_str_t args[] = {ngx_string("proxy_set_header"), {}, {}};
+  ngx_str_t args[] = {ngx_string("proxy_set_header"), ngx_str_t(), ngx_str_t()};
   ngx_array_t args_array;
   args_array.elts = static_cast<void *>(&args);
   args_array.nelts = 3;
@@ -185,7 +185,7 @@ char *propagate_fastcgi_opentracing_context(ngx_conf_t *cf,
 
   auto old_args = cf->args;
 
-  ngx_str_t args[] = {ngx_string("fastcgi_param"), {}, {}};
+  ngx_str_t args[] = {ngx_string("fastcgi_param"), ngx_str_t(), ngx_str_t()};
   ngx_array_t args_array;
   args_array.elts = static_cast<void *>(&args);
   args_array.nelts = 3;
@@ -229,7 +229,7 @@ char *propagate_grpc_opentracing_context(ngx_conf_t *cf, ngx_command_t *command,
 
   auto old_args = cf->args;
 
-  ngx_str_t args[] = {ngx_string("grpc_set_header"), {}, {}};
+  ngx_str_t args[] = {ngx_string("grpc_set_header"), ngx_str_t(), ngx_str_t()};
   ngx_array_t args_array;
   args_array.elts = static_cast<void *>(&args);
   args_array.nelts = 3;

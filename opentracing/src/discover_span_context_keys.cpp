@@ -15,7 +15,7 @@ namespace {
 class HeaderKeyWriter : public opentracing::HTTPHeadersWriter {
  public:
   HeaderKeyWriter(ngx_pool_t* pool, std::vector<opentracing::string_view>& keys)
-      : pool_{pool}, keys_{keys} {}
+      : pool_{pool}, keys_(keys) {}
 
   opentracing::expected<void> Set(
       opentracing::string_view key,

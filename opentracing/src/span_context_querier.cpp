@@ -32,7 +32,7 @@ ngx_str_t SpanContextQuerier::lookup_value(ngx_http_request_t* request,
                 "no opentracing context value found for span context key %V "
                 "for request %p",
                 &ngx_key, request);
-  return {};
+  return ngx_str_t();
 }
 
 //------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ class SpanContextValueExpander : public opentracing::HTTPHeadersWriter {
  public:
   explicit SpanContextValueExpander(
       std::vector<std::pair<std::string, std::string>>& span_context_expansion)
-      : span_context_expansion_{span_context_expansion} {}
+      : span_context_expansion_(span_context_expansion) {}
 
   opentracing::expected<void> Set(
       opentracing::string_view key,
