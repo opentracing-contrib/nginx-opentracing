@@ -21,12 +21,14 @@ extern "C" {
 extern ngx_module_t ngx_http_opentracing_module;
 }
 
+// clang-format off
 static ngx_int_t opentracing_module_init(ngx_conf_t *cf) noexcept;
 static ngx_int_t opentracing_init_worker(ngx_cycle_t *cycle) noexcept;
 static void opentracing_exit_worker(ngx_cycle_t *cycle) noexcept;
 static void *create_opentracing_main_conf(ngx_conf_t *conf) noexcept;
 static void *create_opentracing_loc_conf(ngx_conf_t *conf) noexcept;
 static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent, void *child) noexcept;
+// clang-format on
 
 using namespace ngx_opentracing;
 
@@ -44,6 +46,7 @@ const std::pair<ngx_str_t, ngx_str_t> default_opentracing_tags[] = {
     {ngx_string("http.url"), ngx_string("$scheme://$http_host$request_uri")},
     {ngx_string("http.host"), ngx_string("$http_host")}};
 
+// clang-format off
 //------------------------------------------------------------------------------
 // opentracing_commands
 //------------------------------------------------------------------------------
@@ -153,6 +156,7 @@ ngx_module_t ngx_http_opentracing_module = {
     nullptr,                 /* exit master */
     NGX_MODULE_V1_PADDING
 };
+// clang-format on
 
 //------------------------------------------------------------------------------
 // opentracing_module_init
