@@ -19,6 +19,6 @@ wget -O libjaegertracing_plugin.so https://github.com/jaegertracing/jaeger-clien
 Use these commands to run:
 ```bash
 docker-compose up
-curl localhost:8080
+curl localhost:9001
 ```
 Visit http://localhost:16686 to view the traces in Jaeger.
