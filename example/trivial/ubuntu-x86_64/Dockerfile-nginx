@@ -13,7 +13,7 @@ RUN set -x \
   && wget -O - http://nginx.org/keys/nginx_signing.key | apt-key add -  \
   && apt-add-repository "deb http://nginx.org/packages/ubuntu/ bionic nginx" \
   && apt-get update \
-  && apt-get install nginx \
+  && apt-get install nginx=1.14.0-1~bionic \
 # Install nginx-opentracing into NGINX's module directory
   && cd /usr/lib/nginx/modules \
   && wget -O - https://github.com/opentracing-contrib/nginx-opentracing/releases/download/v0.4.0/linux-amd64-nginx-1.14.0-ngx_http_module.so.tgz \
