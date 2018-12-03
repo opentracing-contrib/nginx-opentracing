@@ -43,7 +43,7 @@ void OpenTracingContext::on_log_request(ngx_http_request_t *request) {
   auto trace = find_trace(request);
   if (trace == nullptr) {
     throw std::runtime_error{
-        "on_log_request failed: could not find request traces"};
+        "on_log_request failed: could not find request trace"};
   }
   trace->on_log_request();
 }
@@ -56,7 +56,7 @@ ngx_str_t OpenTracingContext::lookup_span_context_value(
   auto trace = find_trace(request);
   if (trace == nullptr) {
     throw std::runtime_error{
-        "lookup_span_context_value failed: could not find request traces"};
+        "lookup_span_context_value failed: could not find request trace"};
   }
   return trace->lookup_span_context_value(key);
 }
@@ -69,7 +69,7 @@ ngx_str_t OpenTracingContext::get_binary_context(
   auto trace = find_trace(request);
   if (trace == nullptr) {
     throw std::runtime_error{
-        "get_binary_context failed: could not find request traces"};
+        "get_binary_context failed: could not find request trace"};
   }
   return trace->get_binary_context();
 }
