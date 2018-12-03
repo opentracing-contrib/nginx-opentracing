@@ -50,7 +50,7 @@ static ngx_int_t expand_opentracing_context_variable(
     throw std::runtime_error{"no OpenTracingContext attached to request"};
   }
 
-  auto span_context_value = context->lookup_span_context_value(key);
+  auto span_context_value = context->lookup_span_context_value(request, key);
 
   variable_value->len = span_context_value.len;
   variable_value->valid = 1;
@@ -77,7 +77,7 @@ static ngx_int_t expand_opentracing_binary_context_variable(
   if (context == nullptr) {
     throw std::runtime_error{"no OpenTracingContext attached to request"};
   }
-  auto binary_context = context->get_binary_context();
+  auto binary_context = context->get_binary_context(request);
   variable_value->len = binary_context.len;
   variable_value->valid = 1;
   variable_value->no_cacheable = 1;

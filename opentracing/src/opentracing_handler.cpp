@@ -40,7 +40,7 @@ ngx_int_t on_enter_block(ngx_http_request_t *request) noexcept try {
     set_opentracing_context(request, context);
   } else {
     try {
-      context->on_change_block(core_loc_conf, loc_conf);
+      context->on_change_block(request, core_loc_conf, loc_conf);
     } catch (...) {
       // The OpenTracingContext may be broken, destroy it so that we don't
       // attempt to continue tracing.
@@ -64,7 +64,7 @@ ngx_int_t on_log_request(ngx_http_request_t *request) noexcept {
   auto context = get_opentracing_context(request);
   if (context == nullptr) return NGX_DECLINED;
   try {
-    context->on_log_request();
+    context->on_log_request(request);
   } catch (const std::exception &e) {
     ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
                   "OpenTracing instrumentation failed for request %p: %s",
