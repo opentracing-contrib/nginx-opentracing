@@ -120,6 +120,20 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         self.assertEqual(len(self.nginx_traces), 1)
 
+    def testSubrequestTracing(self):
+        self.conn.request("GET", "/subrequest")
+        response = self.conn.getresponse()
+        self.assertEqual(response.status, 200)
+        self._stopEnvironment()
+
+        self.assertEqual(len(self.nginx_traces), 4)
+        subrequest_span = self.nginx_traces[1]
+        request_span = self.nginx_traces[3]
+        self.assertEqual(subrequest_span["operation_name"], "/auth")
+        self.assertEqual(subrequest_span["tags"]["http.status_code"], 200)
+        self.assertEqual(request_span["operation_name"], "/subrequest")
+        self.assertEqual(request_span["tags"]["http.status_code"], 200)
+
     def testInternalRediect(self):
         self.conn.request("GET", "/internal-redirect")
         response = self.conn.getresponse()

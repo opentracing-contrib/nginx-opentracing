@@ -31,9 +31,6 @@ RUN cd / \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Debug \
-           -DCMAKE_CXX_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
-           -DCMAKE_SHARED_LINKER_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
-           -DCMAKE_EXE_LINKER_FLAGS="-fno-omit-frame-pointer -fsanitize=address" \
            -DBUILD_TESTING=OFF .. \
   && make && make install
 
@@ -49,10 +46,9 @@ RUN cd / \
   && export ASAN_OPTIONS=detect_leaks=0 \
   && export CFLAGS="-Wno-error" \
   && auto/configure \
+      --with-http_auth_request_module \
       --with-compat \
       --with-debug \
-      --with-cc-opt="-O1 -g -fno-omit-frame-pointer -fsanitize=address" \
-      --with-ld-opt="-g -fno-omit-frame-pointer -fsanitize=address" \
       # enables grpc
       --with-http_v2_module \
       --add-dynamic-module=/opentracing \
