@@ -9,6 +9,7 @@ ngx_module_deps=" \
   $ngx_addon_dir/src/opentracing_handler.h \
   $ngx_addon_dir/src/load_tracer.h \
   $ngx_addon_dir/src/opentracing_context.h \
+  $ngx_addon_dir/src/request_tracing.h \
   $ngx_addon_dir/src/opentracing_conf_handler.h \
   $ngx_addon_dir/src/ngx_script.h \
   $ngx_addon_dir/src/span_context_querier.h \
@@ -25,6 +26,7 @@ ngx_module_srcs=" \
   $ngx_addon_dir/src/opentracing_handler.cpp \
   $ngx_addon_dir/src/opentracing_conf_handler.cpp \
   $ngx_addon_dir/src/opentracing_context.cpp \
+  $ngx_addon_dir/src/request_tracing.cpp \
   $ngx_addon_dir/src/span_context_querier.cpp \
   $ngx_addon_dir/src/utility.cpp \
 "
