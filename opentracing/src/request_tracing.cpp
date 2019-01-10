@@ -56,9 +56,6 @@ static void add_script_tags(ngx_array_t *tags, ngx_http_request_t *request,
 static void add_status_tags(const ngx_http_request_t *request,
                             opentracing::Span &span) {
   // Check for errors.
-  // TODO: Should we also look at request->err_status?
-  span.Log(
-      {{"request", (long)request}, {"status", request->headers_out.status}});
   auto status = request->headers_out.status;
   auto status_line = to_string(request->headers_out.status_line);
   if (status != 0) span.SetTag("http.status_code", status);
