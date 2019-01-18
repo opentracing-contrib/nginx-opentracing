@@ -2,7 +2,7 @@
 
 set -e
 
-[ -z "${OPENTRACING_VERSION}" ] && export OPENTRACING_VERSION="v1.5.0"
+[ -z "${OPENTRACING_VERSION}" ] && export OPENTRACING_VERSION="v1.5.1"
 
 # Build OpenTracing
 cd /
