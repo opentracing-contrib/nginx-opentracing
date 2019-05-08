@@ -27,7 +27,7 @@ make modules
 # there doesn't seem to be any way to have nginx build with g++
 # (-with-cc=/usr/bin/g++ will fail when compiling the c files), so manually
 # redo the linking.
-/usr/bin/g++-8 -o ngx_http_opentracing_module.so \
+/usr/bin/g++-7 -o ngx_http_opentracing_module.so \
   objs/addon/src/*.o \
   objs/ngx_http_opentracing_module_modules.o \
   -static-libstdc++ -static-libgcc \
