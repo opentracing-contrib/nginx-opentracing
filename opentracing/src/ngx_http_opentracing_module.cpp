@@ -38,7 +38,7 @@ using namespace ngx_opentracing;
 // https://github.com/opentracing/lua-bridge-tracer/issues/6
 //
 // As a solution, we use a plain pointer and never free and instead rely on the OS to clean up the
-// resources when the process exits. This is patterns proposed on 
+// resources when the process exits. This is a pattern proposed on 
 // https://google.github.io/styleguide/cppguide.html#Static_and_Global_Variables
 static const opentracing::DynamicTracingLibraryHandle*
     opentracing_library_handle;
