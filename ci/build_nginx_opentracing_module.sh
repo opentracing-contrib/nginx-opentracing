@@ -2,7 +2,7 @@
 
 set -e
 
-[ -z "${NGINX_VERSION}" ] && export NGINX_VERSION="1.13.12"
+[ -z "${NGINX_VERSION}" ] && export NGINX_VERSION="1.17.0"
 
 cd "${BUILD_DIR}"
 wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz

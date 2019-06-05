@@ -42,6 +42,8 @@ class RequestTracing {
   opentracing_main_conf_t *main_conf_;
   ngx_http_core_loc_conf_t *core_loc_conf_;
   opentracing_loc_conf_t *loc_conf_;
+  std::chrono::system_clock::time_point start_timestamp_;
+  ngx_msec_t start_msec_;
   SpanContextQuerier span_context_querier_;
   std::unique_ptr<opentracing::Span> request_span_;
   std::unique_ptr<opentracing::Span> span_;
@@ -50,5 +52,8 @@ class RequestTracing {
 
   void on_exit_block(std::chrono::steady_clock::time_point finish_timestamp =
                          std::chrono::steady_clock::now());
+
+  std::chrono::system_clock::time_point compute_upstream_time_point(
+      ngx_msec_t upstream_msec, ngx_msec_t duration) noexcept;
 };
 }  // namespace ngx_opentracing

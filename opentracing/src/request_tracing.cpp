@@ -67,6 +67,55 @@ static void add_status_tags(const ngx_http_request_t *request,
   }
 }
 
+//--------------------------------------------------------------------------------------------------
+// add_log_record
+//--------------------------------------------------------------------------------------------------
+static void add_log_record(std::chrono::system_clock::time_point timestamp, const char* event, 
+    ngx_str_t* peer, std::vector<opentracing::LogRecord>& logs) {
+  opentracing::LogRecord log_record;
+  log_record.timestamp = timestamp;
+  if (peer != nullptr) {
+    log_record.fields.reserve(2);
+  } else {
+    log_record.fields.reserve(1);
+  }
+  log_record.fields.emplace_back("event", event);
+  if (peer != nullptr) {
+    log_record.fields.emplace_back(
+        "peer", opentracing::string_view{
+                    reinterpret_cast<const char *>(peer->data), peer->len});
+  }
+  logs.emplace_back(std::move(log_record));
+}
+
+//--------------------------------------------------------------------------------------------------
+// add_event_logs
+//--------------------------------------------------------------------------------------------------
+static void add_event_logs(
+    const ngx_http_request_t *request,
+    std::chrono::system_clock::time_point start_timestamp,
+    std::vector<opentracing::LogRecord>& logs) {
+  if (request->upstream == nullptr || request->upstream->state == nullptr) {
+    return;
+  }
+  auto upstream_start_time = request->upstream->start_time;
+  auto upstream_state = request->upstream->state;
+
+  auto num_logs = 1 + static_cast<int>(upstream_state->connect_time > 0) +
+                  static_cast<int>(upstream_state->header_time > 0) +
+                  static_cast<int>(upstream_state->response_time > 0);
+  logs.reserve(logs.size() + static_cast<size_t>(num_logs));
+  /* if (start_time > 0) { */
+    /* add_log_record(start_time + std::chrono::duration_cast< */
+  /* } */
+
+  (void)request;
+  (void)logs;
+  (void)upstream_start_time;
+  (void)upstream_state;
+  (void)add_log_record;
+}
+
 //------------------------------------------------------------------------------
 // RequestTracing
 //------------------------------------------------------------------------------
@@ -89,13 +138,15 @@ RequestTracing::RequestTracing(
     parent_span_context = extracted_context.get();
   }
 
+  start_timestamp_ = to_system_timestamp(request->start_sec, request->start_msec);
+  start_msec_ = static_cast<ngx_msec_t>(request->start_sec)*1000 + request->start_msec;
+
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request_->connection->log, 0,
                  "starting opentracing request span for %p", request_);
   request_span_ = tracer->StartSpan(
       get_request_operation_name(request_, core_loc_conf_, loc_conf_),
       {opentracing::ChildOf(parent_span_context),
-       opentracing::StartTimestamp{
-           to_system_timestamp(request->start_sec, request->start_msec)}});
+       opentracing::StartTimestamp{start_timestamp_}});
   if (!request_span_) throw std::runtime_error{"tracer->StartSpan failed"};
 
   if (loc_conf_->enable_locations) {
@@ -176,6 +227,7 @@ void RequestTracing::on_exit_block(
 // on_log_request
 //------------------------------------------------------------------------------
 void RequestTracing::on_log_request() {
+  (void)add_event_logs;
   auto finish_timestamp = std::chrono::steady_clock::now();
 
   on_exit_block(finish_timestamp);
@@ -223,5 +275,21 @@ ngx_str_t RequestTracing::get_binary_context() const {
     throw std::runtime_error{was_successful.error().message()};
   }
   return to_ngx_str(request_->pool, oss.str());
+}
+
+//--------------------------------------------------------------------------------------------------
+// compute_upstream_time_point
+//--------------------------------------------------------------------------------------------------
+std::chrono::system_clock::time_point
+RequestTracing::compute_upstream_time_point(ngx_msec_t upstream_msec,
+                                            ngx_msec_t duration) noexcept {
+  // Reconstruct the timestamp for an nginx upstream event.
+  // Note that upstream_msec is a millisecond counter from the epoch, which can
+  // overflow since it's stored in a 32-bit integer, but we can use it to
+  // compute a time delta from the request start and from there get a timestamp.
+  auto delta_msec = (upstream_msec - start_msec_) + duration;
+  return start_timestamp_ +
+         std::chrono::duration_cast<std::chrono::system_clock::duration>(
+             std::chrono::milliseconds{delta_msec});
 }
 }  // namespace ngx_opentracing
