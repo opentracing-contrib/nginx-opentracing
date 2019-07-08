@@ -177,7 +177,7 @@ static ngx_int_t opentracing_module_init(ngx_conf_t *cf) noexcept {
 
   // Add handlers to create tracing data.
   auto handler = static_cast<ngx_http_handler_pt *>(ngx_array_push(
-      &core_main_config->phases[NGX_HTTP_REWRITE_PHASE].handlers));
+      &core_main_config->phases[NGX_HTTP_PREACCESS_PHASE].handlers));
   if (handler == nullptr) return NGX_ERROR;
   *handler = on_enter_block;
 
