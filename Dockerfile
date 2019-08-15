@@ -87,10 +87,7 @@ RUN set -x \
   && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
   && git submodule update --init \
-  && export CXX=/usr/bin/g++-7 \
-  && make HAS_SYSTEM_PROTOBUF=false && make install \
-  && make && make install \
-  && export CXX="" \
+  && make CXX=/usr/bin/g++-7 HAS_SYSTEM_PROTOBUF=false && make install \
   && cd third_party/protobuf \
   && make install \
   && cd "$tempDir" \
