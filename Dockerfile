@@ -55,7 +55,8 @@ RUN set -x \
   # && update-alternatives --set cc /usr/bin/gcc
   # && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30 \
   # && 
-  && update-alternatives --set g++ /usr/bin/g++-7 \
+  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7.0 5 \
+  && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 5 \
 ### Build opentracing-cpp
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
