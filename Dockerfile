@@ -39,6 +39,7 @@ RUN set -x \
               autogen \
               autoconf \
               libtool \
+              g++-7 \
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
@@ -86,8 +87,10 @@ RUN set -x \
   && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
   && git submodule update --init \
+  && export CXX=/usr/bin/g++-7 \
   && make HAS_SYSTEM_PROTOBUF=false && make install \
   && make && make install \
+  && export CXX="" \
   && cd third_party/protobuf \
   && make install \
   && cd "$tempDir" \
