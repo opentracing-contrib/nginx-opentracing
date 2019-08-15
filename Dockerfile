@@ -46,6 +46,16 @@ RUN set -x \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
 	\
   && cd "$tempDir" \
+### Use g++ 7
+  # && update-alternatives --remove-all cc \
+  # && update-alternatives --remove-all g++ \
+  # && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.3 10
+  # && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.3 10
+  # && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30 \
+  # && update-alternatives --set cc /usr/bin/gcc
+  # && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30 \
+  # && 
+  && update-alternatives --set g++ /usr/bin/g++-7 \
 ### Build opentracing-cpp
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
@@ -87,7 +97,7 @@ RUN set -x \
   && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
   && git submodule update --init \
-  && make CXX=/usr/bin/g++-7 HAS_SYSTEM_PROTOBUF=false && make install \
+  && make HAS_SYSTEM_PROTOBUF=false && make install \
   && cd third_party/protobuf \
   && make install \
   && cd "$tempDir" \
