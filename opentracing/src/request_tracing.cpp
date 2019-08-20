@@ -68,6 +68,19 @@ static void add_status_tags(const ngx_http_request_t *request,
 }
 
 //------------------------------------------------------------------------------
+// add_upstream_name
+//------------------------------------------------------------------------------
+static void add_upstream_name(const ngx_http_request_t *request,
+                              opentracing::Span &span) {
+  if (!request->upstream || !request->upstream->upstream ||
+      !request->upstream->upstream->host.data)
+    return;
+  auto host = request->upstream->upstream->host;
+  auto host_str = to_string(host);
+  span.SetTag("upstream.name", host_str);
+}
+
+//------------------------------------------------------------------------------
 // RequestTracing
 //------------------------------------------------------------------------------
 RequestTracing::RequestTracing(
@@ -157,6 +170,7 @@ void RequestTracing::on_exit_block(
     add_script_tags(main_conf_->tags, request_, *span_);
     add_script_tags(loc_conf_->tags, request_, *span_);
     add_status_tags(request_, *span_);
+    add_upstream_name(request_, *span_);
 
     // If the location operation name is dependent upon a variable, it may not
     // have been available when the span was first created, so set the operation
@@ -184,6 +198,7 @@ void RequestTracing::on_log_request() {
                  "finishing opentracing request span for %p", request_);
   add_status_tags(request_, *request_span_);
   add_script_tags(main_conf_->tags, request_, *request_span_);
+  add_upstream_name(request_, *request_span_);
 
   // When opentracing_operation_name points to a variable and it can be
   // initialized or modified at any phase of the request, so set the
