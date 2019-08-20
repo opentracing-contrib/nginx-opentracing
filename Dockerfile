@@ -6,7 +6,7 @@ ARG OPENTRACING_CPP_VERSION=v1.5.1
 ARG ZIPKIN_CPP_VERSION=v0.5.2
 ARG LIGHTSTEP_VERSION=v0.8.1
 ARG JAEGER_CPP_VERSION=v0.4.2
-ARG GRPC_VERSION=v1.10.x
+ARG GRPC_VERSION=v1.22.x
 ARG DATADOG_VERSION=v0.3.0
 
 COPY . /src
@@ -39,12 +39,24 @@ RUN set -x \
               autogen \
               autoconf \
               libtool \
+              g++-7 \
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
 	\
   && cd "$tempDir" \
+### Use g++ 7
+  # && update-alternatives --remove-all cc \
+  # && update-alternatives --remove-all g++ \
+  # && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.3 10
+  # && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.3 10
+  # && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30 \
+  # && update-alternatives --set cc /usr/bin/gcc
+  # && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30 \
+  # && 
+  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 5 \
+  && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 5 \
 ### Build opentracing-cpp
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
@@ -87,7 +99,6 @@ RUN set -x \
   && cd grpc \
   && git submodule update --init \
   && make HAS_SYSTEM_PROTOBUF=false && make install \
-  && make && make install \
   && cd third_party/protobuf \
   && make install \
   && cd "$tempDir" \
@@ -103,7 +114,7 @@ RUN set -x \
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
   && apt-get update \
-  && apt-get build-dep -y nginx=${NGINX_VERSION} \
+  && apt-get build-dep -y nginx \
   && wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
   && tar zxf nginx-release-${NGINX_VERSION}.tar.gz \
   && cd nginx-release-${NGINX_VERSION} \
