@@ -114,7 +114,7 @@ RUN set -x \
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
   && apt-get update \
-  && apt-get build-dep -y nginx=${NGINX_VERSION} \
+  && apt-get build-dep -y nginx \
   && wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
   && tar zxf nginx-release-${NGINX_VERSION}.tar.gz \
   && cd nginx-release-${NGINX_VERSION} \
