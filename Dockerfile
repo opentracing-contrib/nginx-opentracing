@@ -7,7 +7,7 @@ ARG ZIPKIN_CPP_VERSION=v0.5.2
 ARG LIGHTSTEP_VERSION=v0.8.1
 ARG JAEGER_CPP_VERSION=v0.4.2
 ARG GRPC_VERSION=v1.22.x
-ARG DATADOG_VERSION=v0.3.0
+ARG DATADOG_VERSION=v1.1.2
 
 COPY . /src
 
@@ -40,6 +40,8 @@ RUN set -x \
               autoconf \
               libtool \
               g++-7 \
+ && true
+RUN true \
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
