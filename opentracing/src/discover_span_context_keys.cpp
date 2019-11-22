@@ -59,10 +59,10 @@ ngx_array_t* discover_span_context_keys(ngx_pool_t* pool, ngx_log_t* log,
     return nullptr;
   }
   auto span = tracer->StartSpan("dummySpan");
+  span->SetTag(opentracing::ext::sampling_priority, 0);
   std::vector<opentracing::string_view> keys;
   HeaderKeyWriter carrier_writer{pool, keys};
   auto was_successful = tracer->Inject(span->context(), carrier_writer);
-  span->SetTag(opentracing::ext::sampling_priority, 0);
   if (!was_successful) {
     ngx_log_error(NGX_LOG_ERR, log, 0,
                   "failed to discover span context tags: %s",
