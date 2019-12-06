@@ -25,7 +25,7 @@ details on the format of the JSON configuration.
 - **context**: `http`, `server`, `location`
 
 Propagates the active span context for upstream requests. (See
-[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
+[inject-extract](https://opentracing.io/docs/overview/inject-extract))
 
 ### `opentracing_fastcgi_propagate_context`
 
@@ -33,7 +33,7 @@ Propagates the active span context for upstream requests. (See
 - **context**: `http`, `server`, `location`
 
 Propagates the active span context for FastCGI requests. (See
-[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
+[inject-extract](https://opentracing.io/docs/overview/inject-extract))
 
 ### `opentracing_grpc_propagate_context`
 
@@ -41,7 +41,7 @@ Propagates the active span context for FastCGI requests. (See
 - **context**: `http`, `server`, `location`
 
 Propagates the active span context for gRPC requests. (See
-[cross-process-tracing](http://opentracing.io/documentation/pages/api/cross-process-tracing.html))
+[inject-extract](https://opentracing.io/docs/overview/inject-extract))
 
 ### `opentracing_trace_locations`
 
