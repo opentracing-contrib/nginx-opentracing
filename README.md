@@ -41,7 +41,7 @@ a Jaeger configuration might look like:
   "headers": {
     "jaegerDebugHeader": "jaeger-debug-id",
     "jaegerBaggageHeader": "jaeger-baggage",
-    "traceBaggageHeaderPrefix": "uberctx-",
+    "traceBaggageHeaderPrefix": "uberctx-"
   },
   "baggage_restrictions": {
     "denyBaggageOnInitializationFailure": false,
