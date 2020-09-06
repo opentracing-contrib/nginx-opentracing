@@ -1,4 +1,4 @@
-FROM ubuntu:17.10
+FROM ubuntu:20.04
 
 WORKDIR /3rd_party
 
