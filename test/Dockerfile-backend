@@ -1,6 +1,7 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04
 RUN apt-get update -y
-RUN apt-get install -y python-pip python-dev build-essential
+RUN apt-get install -y curl python-dev build-essential
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py
 COPY . /app
 WORKDIR /app
 RUN pip install -r requirements.txt
