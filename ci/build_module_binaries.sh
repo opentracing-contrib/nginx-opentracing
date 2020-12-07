@@ -2,7 +2,9 @@
 
 set -e
 
-export OPENTRACING_VERSION=1.5.1
+[ -z "${OPENTRACING_VERSION}" ] && export OPENTRACING_VERSION="v1.6.0"
+NAME_SUFFIX=${NAME_SUFFIX:-""}
+
 NGINX_VERSIONS=(1.19.8 1.19.7 1.19.6 1.19.5 1.19.4 1.19.3 1.19.2 1.18.0 1.17.8 1.17.3 1.17.2 1.17.1 1.17.0 1.16.1 1.16.0 1.15.8 1.15.1 1.15.0 1.14.2 1.13.6)
 
 # Compile for a portable cpu architecture
@@ -14,5 +16,5 @@ export LDFLAGS="-fPIC"
 
 for NGINX_VERSION in ${NGINX_VERSIONS[*]}
 do
-  ./ci/build_module_binary.sh $NGINX_VERSION
+  ./ci/build_module_binary.sh "${NGINX_VERSION}" "${NAME_SUFFIX}"
 done
