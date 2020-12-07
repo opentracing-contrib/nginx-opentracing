@@ -1,0 +1,13 @@
+{
+  "service_name": "nginx",
+  "diabled": false,
+  "propagation_format": "w3c",
+  "reporter": {
+    "logSpans": true,
+    "localAgentHostPort": "otel:6831"
+  },
+  "sampler": {
+    "type": "const",
+    "param": "1"
+  }
+}

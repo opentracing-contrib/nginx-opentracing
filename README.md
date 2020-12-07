@@ -31,6 +31,7 @@ a Jaeger configuration might look like:
 ```
 {
   "service_name": "nginx",
+  "propagation_format": "w3c",
   "sampler": {
     "type": "const",
     "param": 1
@@ -112,7 +113,7 @@ docker build \
        .
 ```
 
-and arguments to weak the versions used can be provided with
+and arguments to tweak the versions used can be provided with
 
 ```bash
 docker build \
@@ -133,6 +134,7 @@ Other build arguments
 
 Building From Source
 --------------------
+
 ```
 $ tar zxvf nginx-1.9.x.tar.gz
 $ cd nginx-1.9.x
@@ -140,11 +142,16 @@ $ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentraci
 $ make && sudo make install
 ```
 
-You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
-https://github.com/lightstep/lightstep-tracer-cpp), [Datadog](https://github.com/DataDog/dd-opentracing-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
+You will also need to install a C++ tracer for either
+[Jaeger](https://github.com/jaegertracing/jaeger-client-cpp),
+[LightStep](https://github.com/lightstep/lightstep-tracer-cpp),
+[Datadog](https://github.com/DataDog/dd-opentracing-cpp),
+or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing).
+For linux x86-64, portable binary plugins are available:
+
 ```
 # Jaeger
-wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.2/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
+wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.6.1/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
 
 # LightStep
 wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/v0.8.1/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so

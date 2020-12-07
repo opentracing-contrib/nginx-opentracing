@@ -1,11 +1,11 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
-ARG OPENTRACING_CPP_VERSION=v1.5.1
-ARG NGINX_VERSION=1.13.12
+ARG OPENTRACING_CPP_VERSION=v1.6.0
+ARG NGINX_VERSION=1.19.5
 
 RUN set -x \
   && apt-get update \
-  && apt-get install --no-install-recommends --no-install-suggests -y \
+  && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends --no-install-suggests -y \
               build-essential \
               gettext \
               cmake \
