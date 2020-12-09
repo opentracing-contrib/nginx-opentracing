@@ -20,7 +20,8 @@ These can be dropped into existing NGINX installations provided that NGINX was c
 the `--with-compat` option. See [example/trivial/ubuntu-x86_64](example/trivial/ubuntu-x86_64) for an
 example of how to set it up.
 
-Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker) or [built from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
+Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker) or
+[built from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
 
 Getting Started
 ---------------
@@ -28,7 +29,7 @@ First, write a configuration for the tracer used. Below's an example of what
 a Jaeger configuration might look like:
 
 /etc/jaeger-nginx-config.json
-```
+```json
 {
   "service_name": "nginx",
   "sampler": {
@@ -157,3 +158,11 @@ wget -O - https://github.com/DataDog/dd-opentracing-cpp/releases/download/v0.3.0
 
 ```
 
+Testing
+--------
+
+Run tests on local machine requires `pyenv` and tested against version 3.8.5.
+
+```shell
+$ make test
+```

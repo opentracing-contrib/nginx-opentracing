@@ -1,27 +1,16 @@
 version: 2
 jobs:
   system_testing:
-    machine: true
+    machine:
+      image: ubuntu-2004:202010-01
     steps:
       - checkout
       - run:
           name: system.testing
           command: |
-            pyenv global 3.5.2
-            python3 --version
-            pip3.5 --version
-            pip3.5 install --upgrade pip
-            pip3.5 install --upgrade setuptools
-            pip3.5 install docker
-            pip3.5 install docker-compose
-            pip3.5 install protobuf
-            pip3.5 install grpcio
-            sudo mkdir /test-log
-            sudo chmod a+rwx /test-log
-            export LOG_DIR=/test-log
-            ./ci/do_ci.sh system.testing
+            ./ci/system_testing.sh
       - store_artifacts:
-          path: /test-log
+          path: ./test-log
   build_gcc48:
     docker:
       - image: ubuntu:18.04

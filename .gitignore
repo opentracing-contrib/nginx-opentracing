@@ -27,3 +27,9 @@
 *.exe
 *.out
 *.app
+
+# Python
+__pycache__
+
+# Test
+test-log/
