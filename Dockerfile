@@ -3,7 +3,7 @@ ARG NGINX_LABEL=latest
 FROM nginx:${NGINX_LABEL}
 
 ARG OPENTRACING_CPP_VERSION=v1.6.0
-ARG JAEGER_CPP_VERSION=v0.6.0
+ARG JAEGER_CPP_VERSION=w3c-traceparent
 ARG GRPC_VERSION=v1.22.x
 
 COPY . /src
@@ -67,7 +67,7 @@ RUN set -x \
   && make && make install \
   && cd "$tempDir" \
 ### Build Jaeger cpp-client
-  && git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
+  && git clone --depth 1 -b "$JAEGER_CPP_VERSION" https://github.com/tobiasstadler/jaeger-client-cpp.git jaeger-cpp-client \
   && cd jaeger-cpp-client \
   && mkdir .build \
   && cd .build \

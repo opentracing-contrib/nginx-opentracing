@@ -44,9 +44,11 @@ ARG RESTY_CONFIG_OPTIONS="\
     --add-dynamic-module=/src/opentracing \
     "
 ARG RESTY_CONFIG_OPTIONS_MORE=""
-ARG OPENTRACING_CPP_VERSION="v1.6.0"
+ARG OPENTRACING_CPP_VERSION="v1.5.1"
 ARG LUA_BRIDGE_TRACER_VERSION="937059912311da3b4f45f46cd7d9a2942a248b2d"
-ARG JAEGER_VERSION="v0.6.0"
+ARG JAEGER_VERSION="v0.4.2"
+ARG LIGHTSTEP_VERSION="v0.10.1"
+ARG ZIPKIN_VERSION="v0.5.2"
 
 LABEL resty_version="${RESTY_VERSION}"
 LABEL resty_luarocks_version="${RESTY_LUAROCKS_VERSION}"
@@ -111,6 +113,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
   && rm -rf lua-bridge-tracer \
 ### Install tracers
   && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so \
+  && wget -O - https://github.com/lightstep/lightstep-tracer-cpp/releases/download/${LIGHTSTEP_VERSION}/linux-amd64-liblightstep_tracer_plugin.so.gz | gunzip -c > /usr/local/lib/liblightstep_tracer_plugin.so \
+  && wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/${ZIPKIN_VERSION}/linux-amd64-libzipkin_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libzipkin_opentracing_plugin.so \
 ### Copied from https://github.com/openresty/docker-openresty/blob/master/xenial/Dockerfile
     && cd /tmp \
     && curl -fSL https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
