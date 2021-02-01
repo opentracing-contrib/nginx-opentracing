@@ -74,6 +74,10 @@ workflows:
               only: /^v[0-9]+(\.[0-9]+)*$/
       - system_testing
       - build_gcc48
-      - docker_image
-      - openresty_docker_image
+      - docker_image:
+          requires:
+            - system_testing
+      - openresty_docker_image:
+          requires:
+            - system_testing
       - module_binaries
