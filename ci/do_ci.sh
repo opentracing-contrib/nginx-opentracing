@@ -27,7 +27,7 @@ elif [[ "$1" == "module.binaries" ]]; then
 elif [[ "$1" == "push_docker_image" ]]; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   VERSION_TAG="`git describe --abbrev=0 --tags`"
-  VERSION="${VERSION_TAG/v/}" 
+  VERSION="${VERSION_TAG/v/}"
   # nginx
   docker build -t opentracing/nginx-opentracing .
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:${VERSION}
