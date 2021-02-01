@@ -1,9 +1,20 @@
 FROM ubuntu:20.04
-RUN apt-get update -y
-RUN apt-get install -y curl python-dev build-essential
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py
+
+RUN apt-get update \
+ && apt-get install -y \
+              curl \
+              python3 \
+              python3-dev \
+              build-essential \
+ && rm -rf /var/lib/apt/lists/* \
+ && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+ && python3 get-pip.py \
+ && rm get-pip.py
+
 COPY . /app
 WORKDIR /app
+
 RUN pip install -r requirements.txt
-ENTRYPOINT ["python"]
+
+ENTRYPOINT ["python3"]
 CMD ["environment/app.py"]
