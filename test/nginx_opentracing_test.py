@@ -21,11 +21,11 @@ class NginxOpenTracingTest(unittest.TestCase):
         os.chdir(self.workdir)
 
         # Make sure trace output is writable
-        os.chmod(os.path.join(self.workdir, "traces", "nginx.json"), 
+        os.chmod(os.path.join(self.workdir, "traces", "nginx.json"),
                 stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
-        self.environment_handle = subprocess.Popen(["docker-compose", "up"], 
-                                                   stdout=subprocess.PIPE, 
+        self.environment_handle = subprocess.Popen(["docker-compose", "up"],
+                                                   stdout=subprocess.PIPE,
                                                    stderr=subprocess.PIPE)
         self.client = docker.from_env()
         timeout = time.time() + 60
