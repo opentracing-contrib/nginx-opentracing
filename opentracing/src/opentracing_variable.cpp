@@ -46,8 +46,12 @@ static ngx_int_t expand_opentracing_context_variable(
                                variable_name.size() - prefix_length};
 
   auto context = get_opentracing_context(request);
+  // Context can be null if opentracing is set to off.
   if (context == nullptr) {
-    throw std::runtime_error{"no OpenTracingContext attached to request"};
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, request->connection->log, 0,
+		   "failed to expand %V: no OpenTracingContext attached to request %p",
+		   data, request);
+    return NGX_ERROR;
   }
 
   auto span_context_value = context->lookup_span_context_value(request, key);
@@ -61,9 +65,9 @@ static ngx_int_t expand_opentracing_context_variable(
   return NGX_OK;
 } catch (const std::exception& e) {
   ngx_log_error(NGX_LOG_ERR, request->connection->log, 0,
-                "failed to expand %s"
+                "failed to expand %V"
                 " for request %p: %s",
-                opentracing_context_variable_name.data(), request, e.what());
+                data, request, e.what());
   return NGX_ERROR;
 }
 
