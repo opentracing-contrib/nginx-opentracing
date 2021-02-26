@@ -49,18 +49,10 @@ RUN true \
 	\
   && cd "$tempDir" \
 ### Use g++ 7
-  # && update-alternatives --remove-all cc \
-  # && update-alternatives --remove-all g++ \
-  # && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.3 10
-  # && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.3 10
-  # && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30 \
-  # && update-alternatives --set cc /usr/bin/gcc
-  # && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30 \
-  # && 
   && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 5 \
   && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 5 \
 ### Build opentracing-cpp
-  && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
+  && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release \
@@ -69,7 +61,7 @@ RUN true \
   && cd "$tempDir" \
 ### Build zipkin-cpp-opentracing
   && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
-  && git clone -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
+  && git clone --depth 1 -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
   && cd zipkin-cpp-opentracing \
   && mkdir .build && cd .build \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
@@ -77,7 +69,7 @@ RUN true \
   && cd "$tempDir" \
   && ln -s /usr/local/lib/libzipkin_opentracing.so /usr/local/lib/libzipkin_opentracing_plugin.so \
 ### Build Jaeger cpp-client
-  && git clone -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
+  && git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
   && cd jaeger-cpp-client \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Release \
@@ -88,7 +80,7 @@ RUN true \
   && cd "$tempDir" \
   && ln -s /usr/local/lib/libjaegertracing.so /usr/local/lib/libjaegertracing_plugin.so \
 ### Build dd-opentracing-cpp
-  && git clone -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
+  && git clone --depth 1 -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
   && cd dd-opentracing-cpp \
   && scripts/install_dependencies.sh not-opentracing not-curl not-zlib \
   && mkdir .build && cd .build \
@@ -97,7 +89,7 @@ RUN true \
   && cd "$tempDir" \
   && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
 ### Build gRPC
-  && git clone -b $GRPC_VERSION https://github.com/grpc/grpc \
+  && git clone --depth 1 -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
   && git submodule update --init \
   && make HAS_SYSTEM_PROTOBUF=false && make install \
@@ -105,7 +97,7 @@ RUN true \
   && make install \
   && cd "$tempDir" \
 ### Build lightstep-tracer-cpp
-  && git clone -b $LIGHTSTEP_VERSION https://github.com/lightstep/lightstep-tracer-cpp.git \
+  && git clone --depth 1 -b $LIGHTSTEP_VERSION https://github.com/lightstep/lightstep-tracer-cpp.git \
   && cd lightstep-tracer-cpp \
   && mkdir .build && cd .build \
   && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
