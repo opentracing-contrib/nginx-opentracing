@@ -27,7 +27,7 @@ RUN set -x \
 
 ### Build opentracing-cpp
 RUN cd / \
-  && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
+  && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Debug \
