@@ -9,6 +9,8 @@ receivers:
       thrift_http:
       # 6831/UDP - not used but specified in jaeger-config.json
       thrift_compact:
+  # 9411 - default zipkin port
+  zipkin:
 processors:
   batch:
 exporters:
@@ -20,6 +22,6 @@ exporters:
 service:
   pipelines:
     traces:
-      receivers: [otlp, jaeger]
+      receivers: [otlp, jaeger, zipkin]
       processors: [batch]
       exporters: [logging, jaeger]
