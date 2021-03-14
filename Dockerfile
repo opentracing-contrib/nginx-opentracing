@@ -38,20 +38,14 @@ RUN set -x \
               autoconf \
               libtool \
               g++-7 \
- && true
-
-RUN true \
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
 # (which is done after we install the built packages so we don't have to redownload any overlapping dependencies)
 	&& apt-mark showmanual | xargs apt-mark auto > /dev/null \
 	&& { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark; } \
-	\
   && cd "$tempDir" \
 ### Use g++ 7
   && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 5 \
   && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 5 \
-  && true
-RUN true \
 ### Build gRPC
   && git clone --depth 1 -b $GRPC_VERSION https://github.com/grpc/grpc \
   && cd grpc \
@@ -83,8 +77,6 @@ RUN true \
   && cp $HUNTER_INSTALL_DIR/lib/libyaml*so /usr/local/lib/ \
   && cd "$tempDir" \
   && ln -s /usr/local/lib/libjaegertracing.so /usr/local/lib/libjaegertracing_plugin.so \
-  && true
-RUN true \
 ### Build dd-opentracing-cpp
   && git clone --depth 1 -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
   && cd dd-opentracing-cpp \
@@ -94,8 +86,6 @@ RUN true \
   && make && make install \
   && cd "$tempDir" \
   && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
-  && true
-RUN true \
 ### Build nginx-opentracing modules
   && NGINX_VERSION=`nginx -v 2>&1` && NGINX_VERSION=${NGINX_VERSION#*nginx/} \
   && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
