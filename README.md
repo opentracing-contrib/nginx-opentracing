@@ -161,8 +161,10 @@ wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.
 
 # Datadog
 wget -O - https://github.com/DataDog/dd-opentracing-cpp/releases/download/v0.3.0/linux-amd64-libdd_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libdd_opentracing_plugin.so
-
 ```
+
+Make sure the nginx module for opentracing and a tracer plugin were built against the same version of [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp).
+By default [Opentracing v1.6.0](https://github.com/opentracing/opentracing-cpp/releases/tag/v1.6.0) is used.
 
 Testing
 --------
