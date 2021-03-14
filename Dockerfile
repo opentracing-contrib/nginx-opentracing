@@ -3,9 +3,10 @@ ARG NGINX_LABEL=latest
 FROM nginx:${NGINX_LABEL}
 
 ARG OPENTRACING_CPP_VERSION=v1.6.0
+ARG ZIPKIN_CPP_VERSION=master
 ARG JAEGER_CPP_VERSION=v0.7.0
 ARG GRPC_VERSION=v1.27.x
-ARG DATADOG_VERSION="master"
+ARG DATADOG_VERSION=master
 
 COPY . /src
 
@@ -63,6 +64,15 @@ RUN set -x \
            -DBUILD_TESTING=OFF .. \
   && make && make install \
   && cd "$tempDir" \
+### Build zipkin-cpp-opentracing
+  && apt-get --no-install-recommends --no-install-suggests -y install libcurl4-gnutls-dev \
+  && git clone --depth 1 -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
+  && cd zipkin-cpp-opentracing \
+  && mkdir .build && cd .build \
+  && cmake -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+  && make && make install \
+  && cd "$tempDir" \
+  && ln -s /usr/local/lib/libzipkin_opentracing.so /usr/local/lib/libzipkin_opentracing_plugin.so \
 ### Build Jaeger cpp-client
   && git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/cpp-client.git jaeger-cpp-client \
   && cd jaeger-cpp-client \
