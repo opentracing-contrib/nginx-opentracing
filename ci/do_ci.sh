@@ -43,9 +43,6 @@ elif [[ "$1" == "push_docker_image" ]]; then
   docker push opentracing/openresty:latest
   exit 0
 elif [[ "$1" == "release" ]]; then
-  mkdir -p "${BUILD_DIR}"
-  mkdir -p "${MODULE_DIR}"
-  ./ci/build_module_binaries.sh
   ./ci/release.sh
   exit 0
 else

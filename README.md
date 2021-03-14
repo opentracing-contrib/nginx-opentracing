@@ -63,9 +63,9 @@ http {
   # Load a vendor tracer
   opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/jaeger-nginx-config.json;
 
-  # or 
+  # or
   #   opentracing_load_tracer /usr/local/lib/liblightstep_tracer_plugin.so /path/to/config;
-  # or 
+  # or
   #   opentracing_load_tracer /usr/local/lib/libzipkin_opentracing_plugin.so /path/to/config;
   # or
   #   opentracing_load_tracer /usr/local/lib/libdd_opentracing_plugin.so /path/to/config;
@@ -102,7 +102,7 @@ directives.
 Docker
 ------
 A docker image `opentracing/nginx-opentracing` is provided to support using nginx with OpenTracing
-in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/). 
+in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/).
 See [here](example/) for examples of how to use it.
 
 Additionally, custom images can be built by running
@@ -113,7 +113,7 @@ docker build \
        .
 ```
 
-and arguments to weak the versions used can be provided with
+and arguments to tweak the versions used can be provided with
 
 ```bash
 docker build \
@@ -134,6 +134,7 @@ Other build arguments
 
 Building From Source
 --------------------
+
 ```
 $ tar zxvf nginx-1.9.x.tar.gz
 $ cd nginx-1.9.x
@@ -141,8 +142,13 @@ $ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentraci
 $ make && sudo make install
 ```
 
-You will also need to install a C++ tracer for either [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [LightStep](
-https://github.com/lightstep/lightstep-tracer-cpp), [Datadog](https://github.com/DataDog/dd-opentracing-cpp), or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing). For linux x86-64, portable binary plugins are available:
+You will also need to install a C++ tracer for either
+[Jaeger](https://github.com/jaegertracing/jaeger-client-cpp),
+[LightStep](https://github.com/lightstep/lightstep-tracer-cpp),
+[Datadog](https://github.com/DataDog/dd-opentracing-cpp),
+or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing).
+For linux x86-64, portable binary plugins are available:
+
 ```
 # Jaeger
 wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.2/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
@@ -155,8 +161,10 @@ wget -O - https://github.com/rnburn/zipkin-cpp-opentracing/releases/download/v0.
 
 # Datadog
 wget -O - https://github.com/DataDog/dd-opentracing-cpp/releases/download/v0.3.0/linux-amd64-libdd_opentracing_plugin.so.gz | gunzip -c > /usr/local/lib/libdd_opentracing_plugin.so
-
 ```
+
+Make sure the nginx module for opentracing and a tracer plugin were built against the same version of [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp).
+By default [Opentracing v1.6.0](https://github.com/opentracing/opentracing-cpp/releases/tag/v1.6.0) is used.
 
 Testing
 --------

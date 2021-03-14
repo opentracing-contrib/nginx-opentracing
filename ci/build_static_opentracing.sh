@@ -3,7 +3,7 @@
 set -e
 
 pushd "${BUILD_DIR}"
-git clone -b v$OPENTRACING_VERSION https://github.com/opentracing/opentracing-cpp.git
+git clone -b "${OPENTRACING_VERSION}" https://github.com/opentracing/opentracing-cpp.git
 cd opentracing-cpp
 mkdir .build && cd .build
 cmake -DCMAKE_BUILD_TYPE=Release \

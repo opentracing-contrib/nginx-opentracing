@@ -1,0 +1,25 @@
+receivers:
+  otlp:
+    protocols:
+      # 55680    - used by web app
+      grpc:
+  jaeger:
+    protocols:
+      # 14268    - used by nginx via jaeger-config.json
+      thrift_http:
+      # 6831/UDP - not used but specified in jaeger-config.json
+      thrift_compact:
+processors:
+  batch:
+exporters:
+  jaeger:
+    endpoint: jaeger:14250
+    insecure: true
+  logging:
+    loglevel: info
+service:
+  pipelines:
+    traces:
+      receivers: [otlp, jaeger]
+      processors: [batch]
+      exporters: [logging, jaeger]

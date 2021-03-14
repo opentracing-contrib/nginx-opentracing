@@ -4,6 +4,8 @@ set -e
 
 pushd "${BUILD_DIR}"
 NGINX_VERSION=$1
+NAME_SUFFIX=${2:-""}
+
 wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz
 tar zxf nginx-release-$NGINX_VERSION.tar.gz
 cd nginx-release-$NGINX_VERSION
@@ -35,7 +37,7 @@ make modules
   -Wl,--version-script="${PWD}/export.map" \
   -shared
 
-TARGET_NAME=linux-amd64-nginx-${NGINX_VERSION}-ngx_http_module.so.tgz
+TARGET_NAME=linux-amd64-nginx-${NGINX_VERSION}${NAME_SUFFIX}-ngx_http_module.so.tgz
 tar czf ${TARGET_NAME} ngx_http_opentracing_module.so
 cp ${TARGET_NAME} "${MODULE_DIR}"/
 popd
