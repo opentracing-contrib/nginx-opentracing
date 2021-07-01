@@ -302,12 +302,40 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
   if (prev->tags && !conf->tags) {
     conf->tags = prev->tags;
   } else if (prev->tags && conf->tags) {
-    std::swap(prev->tags, conf->tags);
-    auto tags = static_cast<opentracing_tag_t *>(
-        ngx_array_push_n(conf->tags, prev->tags->nelts));
-    if (!tags) return static_cast<char *>(NGX_CONF_ERROR);
-    auto prev_tags = static_cast<opentracing_tag_t *>(prev->tags->elts);
-    for (size_t i = 0; i < prev->tags->nelts; ++i) tags[i] = prev_tags[i];
+    std::unordered_map<std::string, opentracing_tag_t> merged_tags;
+
+    for (ngx_uint_t i = 0; i < prev->tags->nelts; i++) {
+      opentracing_tag_t* tag = &((opentracing_tag_t*)prev->tags->elts)[i];
+      std::string key;
+      key.assign(reinterpret_cast<const char*>(tag->key_script.pattern_.data), tag->key_script.pattern_.len);
+      merged_tags[key] = *tag;
+    }
+
+    for (ngx_uint_t i = 0; i < conf->tags->nelts; i++) {
+      opentracing_tag_t* tag = &((opentracing_tag_t*)conf->tags->elts)[i];
+      std::string key;
+      key.assign(reinterpret_cast<const char*>(tag->key_script.pattern_.data), tag->key_script.pattern_.len);
+      merged_tags[key] = *tag;
+    }
+
+    ngx_uint_t index = 0;
+    for (const auto& kv : merged_tags) {
+      if (index == conf->tags->nelts) {
+        opentracing_tag_t* tag = (opentracing_tag_t*)ngx_array_push(conf->tags);
+
+        if (!tag) {
+          return (char*)NGX_CONF_ERROR;
+        }
+
+        *tag = kv.second;
+      } 
+      else {
+        opentracing_tag_t* tag = (opentracing_tag_t*)conf->tags->elts;
+        tag[index] = kv.second;
+      }
+
+      index++;
+    }
   }
 
   return NGX_CONF_OK;
