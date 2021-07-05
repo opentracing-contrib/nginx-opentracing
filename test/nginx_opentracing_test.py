@@ -151,7 +151,26 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.assertEqual(len(self.nginx_traces), 2)
 
         location_span = self.nginx_traces[0]
-        self.assertEqual(location_span["tags"]["abc"], "123")
+        self.assertEqual(location_span["tags"]["custom_tag_1"], "123")
+
+    def testMultipleTags(self):
+        self.conn.request("GET", "/test-multiple-custom-tags")
+        response = self.conn.getresponse()
+        self.assertEqual(response.status, 200)
+        self._stopEnvironment()
+
+        self.assertEqual(len(self.nginx_traces), 2)
+
+        location_span = self.nginx_traces[0]
+        # assert tags that should NOT be in this trace
+        self.assertEqual(list(location_span["tags"].values()).count("custom_tag_1"), 0)
+        self.assertEqual(list(location_span["tags"].values()).count("second_server_tag"), 0)
+        self.assertEqual(list(location_span["tags"].values()).count("second_server_location_tag"), 0)
+        # assert tags that should be in this trace
+        self.assertEqual(location_span["tags"]["first_server_tag"], "dummy1")
+        self.assertEqual(location_span["tags"]["custom_tag_2"], "quoted_string")
+        self.assertEqual(location_span["tags"]["custom_tag_3"], "another_quoted_string")
+        self.assertEqual(location_span["tags"]["custom_tag_4"], "number_123")
 
     def testFastcgiPropagation(self):
         self.conn.request("GET", "/php-fpm")
