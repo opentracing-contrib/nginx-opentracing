@@ -24,7 +24,7 @@ services:
       - "14268:14268"
 
   nginx:
-    image: opentracing-contrib/nginx-opentracing
+    image: opentracing/nginx-opentracing
     restart: on-failure
     depends_on:
       - otel
