@@ -2,7 +2,7 @@
 
 set -e
 
-[ -z "${SRC_DIR}" ] && export SRC_DIR="`pwd`"
+[ -z "${SRC_DIR}" ] && export SRC_DIR="$(pwd)"
 [ -z "${BUILD_DIR}" ] && export BUILD_DIR=/build
 [ -z "${MODULE_DIR}" ] && export MODULE_DIR=/modules
 
@@ -26,7 +26,7 @@ elif [[ "$1" == "module.binaries" ]]; then
   exit 0
 elif [[ "$1" == "push_docker_image" ]]; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  VERSION_TAG="`git describe --abbrev=0 --tags`"
+  VERSION_TAG="$(git describe --abbrev=0 --tags)"
   VERSION="${VERSION_TAG/v/}"
   # nginx
   docker build -t opentracing/nginx-opentracing .
@@ -34,6 +34,10 @@ elif [[ "$1" == "push_docker_image" ]]; then
   docker push opentracing/nginx-opentracing:${VERSION}
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:latest
   docker push opentracing/nginx-opentracing:latest
+
+  NGINX_VERSION="$(docker inspect --format '{{json .Config.Env }}' opentracing/nginx-opentracing | awk -F, '{ sub(/^.*NGINX_VERSION=/, ""); print substr($1, 1, length($1)-1)}')"
+  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
+  docker push opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
 
   # openresty
   docker build -t opentracing/openresty -f Dockerfile-openresty .
