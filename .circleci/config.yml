@@ -33,15 +33,6 @@ jobs:
       - run: ./ci/install_gcc4.8.sh
       - run: ./ci/install_opentracing.sh
       - run: ./ci/do_ci.sh build
-  docker_image:
-    machine:
-      image: ubuntu-2004:202107-02
-    environment:
-      DOCKER_BUILDKIT: 1
-    steps:
-      - checkout
-      - run:
-          command: docker build -t opentracing/nginx-opentracing --target final .
   openresty_docker_image:
     machine: true
     steps:
@@ -131,9 +122,6 @@ workflows:
       - build_gcc48_opentracing_16:
           requires:
             - build_gcc48_opentracing_15
-      - docker_image:
-          requires:
-            - system_testing
       - openresty_docker_image:
           requires:
             - system_testing
