@@ -29,15 +29,10 @@ elif [[ "$1" == "push_docker_image" ]]; then
   VERSION_TAG="$(git describe --abbrev=0 --tags)"
   VERSION="${VERSION_TAG/v/}"
   # nginx
-  docker build -t opentracing/nginx-opentracing .
-  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:${VERSION}
-  docker push opentracing/nginx-opentracing:${VERSION}
-  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:latest
-  docker push opentracing/nginx-opentracing:latest
+  docker pull nginx:latest
+  NGINX_VERSION="$(docker inspect --format '{{json .Config.Env }}' nginx:latest | awk -F, '{ sub(/^.*NGINX_VERSION=/, ""); print substr($1, 1, length($1)-1)}')"
 
-  NGINX_VERSION="$(docker inspect --format '{{json .Config.Env }}' opentracing/nginx-opentracing | awk -F, '{ sub(/^.*NGINX_VERSION=/, ""); print substr($1, 1, length($1)-1)}')"
-  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
-  docker push opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
+  docker buildx build --push --platform linux/arm64,linux/amd64,linux/ppc64le -t opentracing-contrib/nginx-opentracing:latest -t opentracing/nginx-opentracing:${VERSION} -t opentracing/nginx-opentracing:nginx-${NGINX_VERSION} .
 
   # openresty
   docker build -t opentracing/openresty -f Dockerfile-openresty .
