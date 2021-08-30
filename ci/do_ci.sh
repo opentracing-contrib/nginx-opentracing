@@ -25,21 +25,22 @@ elif [[ "$1" == "module.binaries" ]]; then
   ./ci/build_module_binaries.sh
   exit 0
 elif [[ "$1" == "push_docker_image" ]]; then
-  echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   VERSION_TAG="$(git describe --abbrev=0 --tags)"
   VERSION="${VERSION_TAG/v/}"
   # nginx
   docker pull nginx:latest
   NGINX_VERSION="$(docker inspect --format '{{json .Config.Env }}' nginx:latest | awk -F, '{ sub(/^.*NGINX_VERSION=/, ""); print substr($1, 1, length($1)-1)}')"
-
-  docker buildx build --push --platform linux/arm64,linux/amd64,linux/ppc64le -t opentracing-contrib/nginx-opentracing:latest -t opentracing/nginx-opentracing:${VERSION} -t opentracing/nginx-opentracing:nginx-${NGINX_VERSION} .
+  docker -v
+  docker buildx version
+  docker buildx build --platform linux/arm64,linux/amd64,linux/ppc64le -t opentracing-contrib/nginx-opentracing:latest -t opentracing/nginx-opentracing:${VERSION} -t opentracing/nginx-opentracing:nginx-${NGINX_VERSION} .
 
   # openresty
-  docker build -t opentracing/openresty -f Dockerfile-openresty .
-  docker tag opentracing/openresty opentracing/openresty:${VERSION}
-  docker push opentracing/openresty:${VERSION}
-  docker tag opentracing/openresty opentracing/openresty:latest
-  docker push opentracing/openresty:latest
+  # docker build -t opentracing/openresty -f Dockerfile-openresty .
+  # docker tag opentracing/openresty opentracing/openresty:${VERSION}
+  # docker push opentracing/openresty:${VERSION}
+  # docker tag opentracing/openresty opentracing/openresty:latest
+  # docker push opentracing/openresty:latest
   exit 0
 elif [[ "$1" == "release" ]]; then
   ./ci/release.sh

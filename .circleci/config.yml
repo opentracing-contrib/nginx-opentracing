@@ -109,37 +109,4 @@ workflows:
   version: 2
   build_test_and_deploy:
     jobs:
-      - push_docker_image:
-          filters:
-            branches:
-              ignore: /.*/
-            tags: &tags
-              only: /^v[0-9]+(\.[0-9]+)*$/
-      - release:
-          requires:
-            - module_binaries_opentracing_15
-            - module_binaries_opentracing_16
-          filters:
-            branches:
-              ignore: /.*/
-            tags: *tags
-      - system_testing
-      - build_gcc48_opentracing_15
-      - build_gcc48_opentracing_16:
-          requires:
-            - build_gcc48_opentracing_15
-      - docker_image:
-          requires:
-            - system_testing
-      - openresty_docker_image:
-          requires:
-            - system_testing
-      - module_binaries_opentracing_15:
-          filters:
-            tags: *tags
-
-      - module_binaries_opentracing_16:
-          requires:
-            - module_binaries_opentracing_15
-          filters:
-            tags: *tags
+      - push_docker_image
