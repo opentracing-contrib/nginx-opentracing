@@ -29,13 +29,13 @@ elif [[ "$1" == "push_docker_image" ]]; then
   VERSION_TAG="$(git describe --abbrev=0 --tags)"
   VERSION="${VERSION_TAG/v/}"
   # nginx
-  docker build -t opentracing/nginx-opentracing .
+  docker build -t opentracing/nginx-opentracing --target final .
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:${VERSION}
   docker push opentracing/nginx-opentracing:${VERSION}
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:latest
   docker push opentracing/nginx-opentracing:latest
 
-  NGINX_VERSION="$(docker inspect --format '{{json .Config.Env }}' opentracing/nginx-opentracing | awk -F, '{ sub(/^.*NGINX_VERSION=/, ""); print substr($1, 1, length($1)-1)}')"
+  NGINX_VERSION="$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')"
   docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
   docker push opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
 

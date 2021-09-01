@@ -34,11 +34,14 @@ jobs:
       - run: ./ci/install_opentracing.sh
       - run: ./ci/do_ci.sh build
   docker_image:
-    machine: true
+    machine:
+      image: ubuntu-2004:202107-02
+    environment:
+      DOCKER_BUILDKIT: 1
     steps:
       - checkout
       - run:
-          command: docker build -t opentracing/nginx-opentracing .
+          command: docker build -t opentracing/nginx-opentracing --target final .
   openresty_docker_image:
     machine: true
     steps:
