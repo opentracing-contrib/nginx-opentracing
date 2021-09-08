@@ -109,7 +109,7 @@ Additionally, custom images can be built by running
 
 ```bash
 docker build \
-       -t opentracing-contrib/nginx-opentracing:latest \
+       -t opentracing/nginx-opentracing:latest \
        .
 ```
 
@@ -117,7 +117,7 @@ and arguments to tweak the versions used can be provided with
 
 ```bash
 docker build \
-       -t opentracing-contrib/nginx-opentracing:latest \
+       -t opentracing/nginx-opentracing:latest \
        --build-arg OPENTRACING_CPP_VERSION=master \
        .
 ```
