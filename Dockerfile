@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.3
-FROM nginx:1.21.1 as build-base
+FROM nginx:1.21.3 as build-base
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -123,7 +123,7 @@ RUN wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx
 
 
 ### Build final image
-FROM nginx:1.21.1 as final
+FROM nginx:1.21.3 as final
 
 COPY --from=build-nginx /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
 COPY --from=dd-opentracing-cpp /usr/local/lib/ /usr/local/lib/
