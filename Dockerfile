@@ -65,7 +65,7 @@ RUN git clone --depth 1 -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-
 
 ### Build Jaeger cpp-client
 FROM build-base as jaeger-cpp-client
-ARG JAEGER_CPP_VERSION=v0.7.0
+ARG JAEGER_CPP_VERSION=v0.8.0
 
 RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/jaeger-client-cpp \
     && cd jaeger-client-cpp \
