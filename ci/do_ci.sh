@@ -28,16 +28,6 @@ elif [[ "$1" == "push_docker_image" ]]; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   VERSION_TAG="$(git describe --abbrev=0 --tags)"
   VERSION="${VERSION_TAG/v/}"
-  # nginx
-  docker build -t opentracing/nginx-opentracing --target final .
-  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:${VERSION}
-  docker push opentracing/nginx-opentracing:${VERSION}
-  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:latest
-  docker push opentracing/nginx-opentracing:latest
-
-  NGINX_VERSION="$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')"
-  docker tag opentracing/nginx-opentracing opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
-  docker push opentracing/nginx-opentracing:nginx-${NGINX_VERSION}
 
   # openresty
   docker build -t opentracing/openresty -f Dockerfile-openresty .
