@@ -197,4 +197,6 @@ COPY --from=opentracing-cpp /usr/local/lib/ /usr/local/lib/
 # gRPC doesn't seem to be used
 # COPY --from=grpc /usr/local/lib/ /usr/local/lib/
 
+RUN ldconfig
+
 STOPSIGNAL SIGTERM
