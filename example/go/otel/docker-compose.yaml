@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   otel:
-    image: otel/opentelemetry-collector-dev:latest
+    image: otel/opentelemetry-collector:latest
     pull_policy: always
     volumes:
       - ./otel.yml:/conf/otel-collector-config.yml
@@ -24,7 +24,7 @@ services:
       - "14268:14268"
 
   nginx:
-    image: opentracing/nginx-opentracing
+    image: opentracing/nginx-opentracing:edge
     restart: on-failure
     depends_on:
       - otel
