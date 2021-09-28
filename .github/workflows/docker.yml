@@ -17,6 +17,9 @@ jobs:
     build-docker:
       name: Build Docker Image
       runs-on: ubuntu-20.04
+      strategy:
+        matrix:
+          os: [debian, alpine]
       steps:
         - name: Checkout Repository
           uses: actions/checkout@v2
@@ -24,10 +27,10 @@ jobs:
         - name: Cache Docker layers
           uses: actions/cache@v2
           with:
-            path: /tmp/.buildx-cache
-            key: ${{ runner.os }}-buildx-${{ github.sha }}
+            path: /tmp/.buildx-${{ matrix.os }}-cache
+            key: ${{ runner.os }}-buildx-${{ matrix.os }}-${{ github.sha }}
             restore-keys: |
-              ${{ runner.os }}-buildx-
+              ${{ runner.os }}-buildx-${{ matrix.os }}-
 
         - name: Output Variables
           id: var
@@ -55,6 +58,7 @@ jobs:
           uses: docker/metadata-action@v3
           with:
             images: opentracing/nginx-opentracing
+            flavor: suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true
             tags: |
               type=edge
               type=ref,event=pr
@@ -70,6 +74,7 @@ jobs:
             platforms: ${{ github.event_name != 'pull_request' && env.PLATFORMS || '' }}
             tags: ${{ steps.meta.outputs.tags }}
             labels: ${{ steps.meta.outputs.labels }}
-            cache-from: type=local,src=/tmp/.buildx-cache
-            cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+            cache-from: type=local,src=/tmp/.buildx-${{ matrix.os }}-cache
+            cache-to: type=local,dest=/tmp/.buildx-${{ matrix.os }}-cache,mode=max
             target: final
+            build-args: BUILDS_OS={{ matrix.os }}
