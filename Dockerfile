@@ -211,7 +211,8 @@ RUN echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /
 
 
 ### Base build image for alpine
-FROM nginx:1.21.3-alpine as build-nginx-alpine
+# docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
+FROM docker.io/library/nginx:1.21.3-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre-dev \
