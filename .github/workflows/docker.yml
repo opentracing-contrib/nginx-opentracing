@@ -45,11 +45,21 @@ jobs:
             password: ${{ secrets.DOCKER_PASSWORD }}
           if: github.event_name != 'pull_request'
 
+        - name: Login to GitHub Container Registry
+          uses: docker/login-action@v1
+          with:
+            registry: ghcr.io
+            username: ${{ github.repository_owner }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+          if: github.event_name != 'pull_request'
+
         - name: Docker meta
           id: meta
           uses: docker/metadata-action@v3
           with:
-            images: opentracing/nginx-opentracing
+            images: |
+              opentracing/nginx-opentracing
+              ghcr.io/opentracing-contrib/nginx-opentracing
             flavor: suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true
             tags: |
               type=edge
