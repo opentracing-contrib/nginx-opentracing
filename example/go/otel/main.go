@@ -35,7 +35,7 @@ func main() {
 func run() error {
 	collector_addr := os.Getenv("OT_COLLECTOR_ADDR")
 	if collector_addr == "" {
-		collector_addr = "localhost:55680"
+		collector_addr = "localhost:4317"
 	}
 
 	shutdown, err := initProvider("checkout", collector_addr)
