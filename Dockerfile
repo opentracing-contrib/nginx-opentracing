@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-FROM --platform=$BUILDPLATFORM tonistiigi/xx@sha256:67890c41290f1639e1a2acca464192109ac4c7f599c884072cd046861ea44233 AS xx
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.0.0 AS xx
 
 ### Build base image for debian
 FROM --platform=$BUILDPLATFORM debian:buster as build-base-debian
@@ -58,10 +58,8 @@ RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/downloa
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
 
-RUN set -e; \
-    [ "$(xx-info arch)" = "ppc64le" ] && XX_CC_PREFER_LINKER=ld xx-clang --setup-target-triple; \
-    [ "$(xx-info arch)" = "386" ] && XX_CC_PREFER_LINKER=ld xx-clang --setup-target-triple; \
-    true
+# XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386.
+ENV XX_CC_PREFER_STATIC_LINKER=1
 
 
 ## Build gRPC
