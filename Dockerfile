@@ -3,7 +3,7 @@ ARG BUILD_OS=debian
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.0.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:buster as build-base-debian
+FROM --platform=$BUILDPLATFORM debian:bullseye as build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -203,7 +203,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 ### Base build image for debian
 FROM nginx:1.21.4 as build-nginx-debian
 
-RUN echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
+RUN echo "deb-src http://nginx.org/packages/mainline/debian/ bullseye nginx" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get build-dep -y nginx
 
@@ -237,7 +237,8 @@ RUN curl -sSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}
 
 
 ### Base image for alpine
-FROM nginx:1.21.4 as nginx-alpine
+# docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
+FROM docker.io/library/nginx:1.21.3-alpine as nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
