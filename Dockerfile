@@ -201,7 +201,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.21.3 as build-nginx-debian
+FROM nginx:1.21.4 as build-nginx-debian
 
 RUN echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
     && apt-get update \
@@ -237,12 +237,12 @@ RUN curl -sSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}
 
 
 ### Base image for alpine
-FROM nginx:1.21.3-alpine as nginx-alpine
+FROM nginx:1.21.4 as nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.21.3 as nginx-debian
+FROM nginx:1.21.4 as nginx-debian
 
 
 ### Build final image
