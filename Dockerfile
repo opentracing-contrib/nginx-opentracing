@@ -223,7 +223,7 @@ FROM build-nginx-${BUILD_OS} as build-nginx
 COPY --from=jaeger-cpp-client /hunter /hunter
 COPY . /src
 
-RUN curl -sSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
+RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
     && tar zxf release-${NGINX_VERSION}.tar.gz \
     && cd nginx-release-${NGINX_VERSION} \
     && auto/configure \
