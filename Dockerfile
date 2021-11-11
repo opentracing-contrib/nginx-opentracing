@@ -47,13 +47,13 @@ RUN apk add --no-cache \
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev libgcc curl-dev msgpack-c-dev
+RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-c-dev
 
 
 ### Build image
 FROM build-base-${BUILD_OS} as build-base
 
-ENV CMAKE_VERSION 3.21.3
+ENV CMAKE_VERSION 3.21.4
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
@@ -98,7 +98,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cd opentracing-cpp \
     && mkdir .build && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
-    -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)/usr/local\
+    -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)/usr/local \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
@@ -162,7 +162,7 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
-    -DCMAKE_PREFIX_PATH=$(xx-info sysroot)/usr/local \
+    -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
@@ -191,7 +191,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     && cd dd-opentracing-cpp \
     && mkdir .build && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
-    -DCMAKE_PREFIX_PATH=$(xx-info sysroot)/usr/local \
+    -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
