@@ -81,4 +81,4 @@ jobs:
             cache-from: type=gha,scope=${{ matrix.os }}
             cache-to: type=gha,scope=${{ matrix.os }},mode=max
             target: final
-            build-args: BUILDS_OS={{ matrix.os }}
+            build-args: BUILD_OS=${{ matrix.os }}
