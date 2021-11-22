@@ -1,6 +1,6 @@
 docker==4.3.1
 requests==2.26.0
-websocket-client==0.57.0
+websocket-client==1.2.1
 urllib3==1.26.7
 docker-compose==1.27.4
 grpcio==1.42.0
