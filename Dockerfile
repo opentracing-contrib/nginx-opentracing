@@ -98,7 +98,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cd opentracing-cpp \
     && mkdir .build && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
-    -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)/usr/local \
+    -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)usr/local \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
@@ -106,7 +106,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
-    && if [[ "$(xx-info sysroot)" != "/" ]]; then cp -a $(xx-info sysroot)/usr/local/lib/libopentracing.so* /usr/local/lib/; fi \
+    && if [ "$(xx-info sysroot)" != "/" ]; then cp -a $(xx-info sysroot)usr/local/lib/libopentracing.so* /usr/local/lib/; fi \
     && xx-verify /usr/local/lib/libopentracing.so
 
 
@@ -120,7 +120,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
     && cd zipkin-cpp-opentracing \
     && mkdir .build && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
-    -DCMAKE_PREFIX_PATH=$(xx-info sysroot)/usr/local \
+    -DCMAKE_PREFIX_PATH=$(xx-info sysroot)usr/local \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_STATIC_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
@@ -158,7 +158,7 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
     "set(CMAKE_C_COMPILER_TARGET $(xx-clang --print-target-triple))" "set(CMAKE_CXX_COMPILER_TARGET $(xx-clang++ --print-target-triple))" \
     "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" \
-    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)/usr/local)" >>  cmake/toolchain.cmake \
+    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" >>  cmake/toolchain.cmake \
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
