@@ -213,7 +213,7 @@ RUN echo "deb-src http://nginx.org/packages/mainline/debian/ bullseye nginx" >> 
 FROM docker.io/library/nginx:1.21.5-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
-    pcre-dev \
+    pcre2-dev \
     zlib-dev
 
 
