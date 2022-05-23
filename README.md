@@ -125,12 +125,8 @@ docker build \
 Other build arguments
 
 * `OPENTRACING_CPP_VERSION`
-* `ZIPKIN_CPP_VERSION`
-* `LIGHTSTEP_VERSION`
 * `JAEGER_CPP_VERSION`
 * `GRPC_VERSION`
-* `NGINX_OPENTRACING_VERSION`
-
 
 Building From Source
 --------------------
@@ -144,7 +140,7 @@ $ make && sudo make install
 
 You will also need to install a C++ tracer for either
 [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp),
-[LightStep](https://github.com/lightstep/lightstep-tracer-cpp),
+[LightStep](https://github.com/lightstep/lightstep-tracer-cpp) ([Available for OpenTracing 1.5.x](https://github.com/lightstep/lightstep-tracer-cpp#building)),
 [Datadog](https://github.com/DataDog/dd-opentracing-cpp),
 or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing).
 For linux x86-64, portable binary plugins are available:
