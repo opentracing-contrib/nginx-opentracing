@@ -29,7 +29,7 @@ RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-are
 
 
 ### Build base image for alpine
-FROM --platform=$BUILDPLATFORM alpine:3.15 as build-base-alpine
+FROM --platform=$BUILDPLATFORM alpine:3.16.0 as build-base-alpine
 
 RUN apk add --no-cache \
     alpine-sdk \
