@@ -29,7 +29,7 @@ RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-are
 
 
 ### Build base image for alpine
-FROM --platform=$BUILDPLATFORM alpine:3.15 as build-base-alpine
+FROM --platform=$BUILDPLATFORM alpine:3.16 as build-base-alpine
 
 RUN apk add --no-cache \
     alpine-sdk \
@@ -47,7 +47,7 @@ RUN apk add --no-cache \
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-c-dev
+RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-cxx-dev
 
 
 ### Build image
