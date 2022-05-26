@@ -47,7 +47,7 @@ RUN apk add --no-cache \
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-c-dev
+RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-cxx-dev
 
 
 ### Build image
