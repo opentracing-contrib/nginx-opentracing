@@ -4,5 +4,5 @@ websocket-client==0.57.0
 urllib3==1.26.9
 docker-compose==1.27.4
 grpcio==1.46.3
-protobuf==3.20.1
+protobuf==4.21.0
 
