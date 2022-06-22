@@ -201,7 +201,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.21.6 as build-nginx-debian
+FROM nginx:1.23.0 as build-nginx-debian
 
 RUN echo "deb-src http://nginx.org/packages/mainline/debian/ bullseye nginx" >> /etc/apt/sources.list \
     && apt-get update \
@@ -243,7 +243,7 @@ RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.21.6 as nginx-debian
+FROM nginx:1.23.0 as nginx-debian
 
 
 ### Build final image
