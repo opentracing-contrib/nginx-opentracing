@@ -11,8 +11,22 @@ import http.client
 import grpc
 import app_pb2 as app_messages
 import app_pb2_grpc as app_service
+import warnings
+
+def get_docker_client():
+    with warnings.catch_warnings():
+        # Silence warnings due to use of deprecated methods within dockerpy
+        # See https://github.com/docker/docker-py/pull/2931
+        warnings.filterwarnings(
+            "ignore",
+            message="distutils Version classes are deprecated.*",
+            category=DeprecationWarning,
+        )
+
+        return docker.from_env()
 
 class NginxOpenTracingTest(unittest.TestCase):
+
     def setUp(self):
         self.testdir = os.getcwd()
         self.workdir = os.path.join(tempfile.mkdtemp(), "environment")
@@ -27,7 +41,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.environment_handle = subprocess.Popen(["docker-compose", "up"],
                                                    stdout=subprocess.PIPE,
                                                    stderr=subprocess.PIPE)
-        self.client = docker.from_env()
+        self.client = get_docker_client()
         timeout = time.time() + 60
         while len(self.client.containers.list()) != 4:
             if time.time() > timeout:
