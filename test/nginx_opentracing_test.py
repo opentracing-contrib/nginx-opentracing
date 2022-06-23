@@ -42,7 +42,9 @@ class NginxOpenTracingTest(unittest.TestCase):
         )
 
         self.environment_handle = subprocess.Popen(
-            ["docker-compose", "up"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["docker-compose", "up", "--no-color"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         self.client = get_docker_client()
         timeout = time.time() + 60

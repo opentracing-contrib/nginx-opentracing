@@ -3,6 +3,9 @@
 set -x
 set -e
 
+docker version
+docker-compose version
+
 pyenv versions
 pyenv local 3.10.3
 python --version
