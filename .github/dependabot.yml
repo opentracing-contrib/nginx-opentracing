@@ -12,3 +12,7 @@ updates:
     directory: "/test"
     schedule:
       interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/test/environment/grpc"
+    schedule:
+      interval: "daily"
