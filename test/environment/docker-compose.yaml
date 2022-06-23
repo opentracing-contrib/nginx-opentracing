@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
 
   nginx:
@@ -30,7 +30,6 @@ services:
       - -g
       - daemon off;
 
-
   backend:
     image: nginx-opentracing-test/backend
     networks:
@@ -40,9 +39,9 @@ services:
     volumes:
       - ./app.py:/app/app.py
     expose:
-      - "5000"
+      - "5001"
     ports:
-      - "5000:5000"
+      - "5001:5001"
 
   php_fpm:
     image: php:7-fpm
@@ -70,4 +69,3 @@ services:
 
 networks:
   testnet: {}
-
