@@ -19,11 +19,6 @@ RUN set -x \
   wget \
   libpcre3 libpcre3-dev \
   zlib1g-dev
-# gcc-8 \
-# g++-8 \
-# ### Use gcc-8 (the default gcc has this problem when using with address sanitizer:
-# ### https://gcc.gnu.org/bugzilla/show_bug.cgi?id=84428)
-# && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 
 ### Build opentracing-cpp
 RUN cd / \

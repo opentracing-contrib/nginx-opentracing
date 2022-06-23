@@ -42,7 +42,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         )
 
         self.environment_handle = subprocess.Popen(
-            ["docker-compose", "up", "--no-color"],
+            ["docker-compose", "up"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -55,7 +55,7 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         # Wait so that backend can come up.
         # TODO: replace with something better
-        time.sleep(2)
+        time.sleep(5)
 
         self.conn = http.client.HTTPConnection("localhost", 8080, timeout=5)
         self.grpcConn = grpc.insecure_channel("localhost:8081")
