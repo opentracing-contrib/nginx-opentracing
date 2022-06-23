@@ -1,29 +1,29 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG OPENTRACING_CPP_VERSION=v1.6.0
-ARG NGINX_VERSION=1.19.7
+ARG NGINX_VERSION=1.23.0
 
 RUN set -x \
   && apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends --no-install-suggests -y \
-              build-essential \
-              gettext \
-              cmake \
-              git \
-              gnupg2 \
-              software-properties-common \
-              curl \
-              python3 \
-              jq \
-              ca-certificates \
-              wget \
-              libpcre3 libpcre3-dev \
-              zlib1g-dev \
-              gcc-8 \
-              g++-8 \
-### Use gcc-8 (the default gcc has this problem when using with address sanitizer:
-### https://gcc.gnu.org/bugzilla/show_bug.cgi?id=84428)
-  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
+  build-essential \
+  gettext \
+  cmake \
+  git \
+  gnupg2 \
+  software-properties-common \
+  curl \
+  python3 \
+  jq \
+  ca-certificates \
+  wget \
+  libpcre3 libpcre3-dev \
+  zlib1g-dev
+# gcc-8 \
+# g++-8 \
+# ### Use gcc-8 (the default gcc has this problem when using with address sanitizer:
+# ### https://gcc.gnu.org/bugzilla/show_bug.cgi?id=84428)
+# && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 
 ### Build opentracing-cpp
 RUN cd / \
@@ -31,7 +31,7 @@ RUN cd / \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Debug \
-           -DBUILD_TESTING=OFF .. \
+  -DBUILD_TESTING=OFF .. \
   && make && make install
 
 COPY ./opentracing /opentracing
@@ -46,12 +46,12 @@ RUN cd / \
   && export ASAN_OPTIONS=detect_leaks=0 \
   && export CFLAGS="-Wno-error" \
   && auto/configure \
-      --with-http_auth_request_module \
-      --with-compat \
-      --with-debug \
-      # enables grpc
-      --with-http_v2_module \
-      --add-dynamic-module=/opentracing \
+  --with-http_auth_request_module \
+  --with-compat \
+  --with-debug \
+  # enables grpc
+  --with-http_v2_module \
+  --add-dynamic-module=/opentracing \
   && make && make install
 
 CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]

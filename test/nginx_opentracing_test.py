@@ -1,17 +1,19 @@
-import unittest
-import shutil
-import os
-import stat
-import tempfile
-import subprocess
-import time
-import docker
-import json
 import http.client
-import grpc
+import json
+import os
+import shutil
+import stat
+import subprocess
+import tempfile
+import time
+import unittest
+import warnings
+
 import app_pb2 as app_messages
 import app_pb2_grpc as app_service
-import warnings
+import docker
+import grpc
+
 
 def get_docker_client():
     with warnings.catch_warnings():
@@ -25,22 +27,23 @@ def get_docker_client():
 
         return docker.from_env()
 
-class NginxOpenTracingTest(unittest.TestCase):
 
+class NginxOpenTracingTest(unittest.TestCase):
     def setUp(self):
         self.testdir = os.getcwd()
         self.workdir = os.path.join(tempfile.mkdtemp(), "environment")
-        shutil.copytree(os.path.join(os.getcwd(), "environment"),
-                        self.workdir)
+        shutil.copytree(os.path.join(os.getcwd(), "environment"), self.workdir)
         os.chdir(self.workdir)
 
         # Make sure trace output is writable
-        os.chmod(os.path.join(self.workdir, "traces", "nginx.json"),
-                stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        os.chmod(
+            os.path.join(self.workdir, "traces", "nginx.json"),
+            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO,
+        )
 
-        self.environment_handle = subprocess.Popen(["docker-compose", "up"],
-                                                   stdout=subprocess.PIPE,
-                                                   stderr=subprocess.PIPE)
+        self.environment_handle = subprocess.Popen(
+            ["docker-compose", "up"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         self.client = get_docker_client()
         timeout = time.time() + 60
         while len(self.client.containers.list()) != 4:
@@ -52,12 +55,12 @@ class NginxOpenTracingTest(unittest.TestCase):
         # TODO: replace with something better
         time.sleep(2)
 
-        self.conn = http.client.HTTPConnection('localhost', 8080, timeout=5)
-        self.grpcConn = grpc.insecure_channel('localhost:8081')
+        self.conn = http.client.HTTPConnection("localhost", 8080, timeout=5)
+        self.grpcConn = grpc.insecure_channel("localhost:8081")
         try:
             grpc.channel_ready_future(self.grpcConn).result(timeout=10)
         except grpc.FutureTimeoutError:
-            sys.exit('Error connecting to server')
+            sys.exit("Error connecting to server")
         self.running = True
 
     def _logEnvironment(self):
@@ -72,13 +75,19 @@ class NginxOpenTracingTest(unittest.TestCase):
         with open(os.path.join(test_log, "docker_compose_stderr"), "w") as out:
             out.write(str(self.environment_stderr))
 
-        shutil.copyfile(os.path.join(self.workdir, "traces", "nginx.json"),
-                        os.path.join(test_log, "nginx-trace.json"))
+        shutil.copyfile(
+            os.path.join(self.workdir, "traces", "nginx.json"),
+            os.path.join(test_log, "nginx-trace.json"),
+        )
 
-        shutil.copyfile(os.path.join(self.workdir, "logs", "debug.log"),
-                        os.path.join(test_log, "nginx-debug.log"))
-        shutil.copyfile(os.path.join(self.workdir, "logs", "error.log"),
-                        os.path.join(test_log, "nginx-error.log"))
+        shutil.copyfile(
+            os.path.join(self.workdir, "logs", "debug.log"),
+            os.path.join(test_log, "nginx-debug.log"),
+        )
+        shutil.copyfile(
+            os.path.join(self.workdir, "logs", "error.log"),
+            os.path.join(test_log, "nginx-error.log"),
+        )
 
     def tearDown(self):
         self._stopDocker()
@@ -178,8 +187,12 @@ class NginxOpenTracingTest(unittest.TestCase):
         location_span = self.nginx_traces[0]
         # assert tags that should NOT be in this trace
         self.assertEqual(list(location_span["tags"].values()).count("custom_tag_1"), 0)
-        self.assertEqual(list(location_span["tags"].values()).count("second_server_tag"), 0)
-        self.assertEqual(list(location_span["tags"].values()).count("second_server_location_tag"), 0)
+        self.assertEqual(
+            list(location_span["tags"].values()).count("second_server_tag"), 0
+        )
+        self.assertEqual(
+            list(location_span["tags"].values()).count("second_server_location_tag"), 0
+        )
         # assert tags that should be in this trace
         self.assertEqual(location_span["tags"]["first_server_tag"], "dummy1")
         self.assertEqual(location_span["tags"]["custom_tag_2"], "quoted_string")
@@ -202,5 +215,6 @@ class NginxOpenTracingTest(unittest.TestCase):
 
         self.assertEqual(len(self.nginx_traces), 2)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main(verbosity=2)

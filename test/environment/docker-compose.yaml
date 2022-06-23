@@ -30,7 +30,6 @@ services:
       - -g
       - daemon off;
 
-
   backend:
     image: nginx-opentracing-test/backend
     networks:
@@ -70,4 +69,3 @@ services:
 
 networks:
   testnet: {}
-
