@@ -4,7 +4,7 @@ set -x
 set -e
 
 pyenv versions
-pyenv local 3.8.5
+pyenv local 3.10.3
 python --version
 pip --version
 pip install --upgrade pip
