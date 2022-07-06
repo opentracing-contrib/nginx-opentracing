@@ -259,4 +259,4 @@ COPY --from=opentracing-cpp /usr/local/lib/ /usr/local/lib/
 
 RUN ldconfig /usr/local/lib/
 
-STOPSIGNAL SIGTERM
+STOPSIGNAL SIGQUIT
