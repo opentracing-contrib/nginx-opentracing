@@ -1,5 +1,5 @@
 grpcio-tools==1.49.0
 grpcio==1.49.0
 grpcio-reflection==1.48.1
-grpcio-health-checking==1.48.1
+grpcio-health-checking==1.49.0
 grpcio-testing==1.48.1
