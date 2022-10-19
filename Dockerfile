@@ -201,7 +201,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.23.1 as build-nginx-debian
+FROM nginx:1.23.2 as build-nginx-debian
 
 RUN echo "deb-src http://nginx.org/packages/mainline/debian/ bullseye nginx" >> /etc/apt/sources.list \
     && apt-get update \
@@ -209,8 +209,7 @@ RUN echo "deb-src http://nginx.org/packages/mainline/debian/ bullseye nginx" >> 
 
 
 ### Base build image for alpine
-# docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.23.1-alpine AS build-nginx-alpine
+FROM nginx:1.23.2-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre2-dev \
@@ -237,13 +236,12 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-# docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.23.1-alpine as nginx-alpine
+FROM nginx:1.23.2-alpine as nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.23.1 as nginx-debian
+FROM nginx:1.23.2 as nginx-debian
 
 
 ### Build final image
