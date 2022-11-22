@@ -21,7 +21,7 @@ jobs:
       sha_long: ${{ steps.vars.outputs.sha_long }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           fetch-depth: 0
       - name: Get latest tag
@@ -30,7 +30,7 @@ jobs:
           tag=$(git tag --sort=-version:refname | head -n1)
           echo "::set-output name=git_tag::${tag//v}"
       - name: Checkout Repository at ${{ steps.tag.outputs.git_tag }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           ref: refs/tags/v${{ steps.tag.outputs.git_tag }}
       - name: Set Base image version
@@ -63,7 +63,7 @@ jobs:
           echo "::set-output name=tag::${{ needs.variables.outputs.git_tag }}${dist}"
       - name: Check if update available ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@v1
+        uses: lucacome/docker-image-update-checker@93aeebde51b01e63284197bae89f9a1d6dd1921f # v1.1.1
         with:
           base-image: ${{ matrix.base_image.version }}
           image: opentracing/nginx-opentracing:${{ steps.dist.outputs.tag }}
@@ -85,7 +85,7 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
     steps:
       - name: Checkout Repository at ${{ needs.variables.outputs.git_tag }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           ref: refs/tags/v${{ needs.variables.outputs.git_tag }}
         if: ${{ matrix.needs-updating == 'true' }}
@@ -97,22 +97,22 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325 # v2.2.1
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: DockerHub Login
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -121,7 +121,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea # v4.1.1
         with:
           images: |
             opentracing/nginx-opentracing
@@ -137,7 +137,7 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5 # v3.2.0
         with:
           pull: true
           push: true
