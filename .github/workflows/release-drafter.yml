@@ -7,16 +7,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
-permissions:  # added using https://github.com/step-security/secure-workflows
-  contents: read
-
 jobs:
   update_release_draft:
-    permissions:
-      contents: write  # for release-drafter/release-drafter to create a github release
-      pull-requests: write  # for release-drafter/release-drafter to add label to PR
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter@6df64e4ba4842c203c604c1f45246c5863410adb # v5.21.1
+      - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

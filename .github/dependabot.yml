@@ -16,14 +16,3 @@ updates:
     directory: "/test/environment/grpc"
     schedule:
       interval: "daily"
-
-
-  - package-ecosystem: gomod
-    directory: /example/go/otel
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /example/zoo
-    schedule:
-      interval: daily
