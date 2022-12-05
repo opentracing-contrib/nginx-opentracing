@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "devDependencies": {
     "eslint": "^6.2.1",
-    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.18.2"
   },
   "dependencies": {
@@ -17,7 +17,7 @@
     "restler": "^3.4.0",
     "sharp": "^0.17.3",
     "sqlite3": "^3.1.8",
-    "uuid": "^3.0.1",
+    "uuid": "^9.0.0",
     "winston": "^2.3.1"
   }
 }
