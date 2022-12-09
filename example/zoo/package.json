@@ -2,7 +2,7 @@
   "name": "nginx-opentracing-zoo",
   "version": "1.0.0",
   "devDependencies": {
-    "eslint": "^6.2.1",
+    "eslint": "^8.29.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.18.2"
   },
