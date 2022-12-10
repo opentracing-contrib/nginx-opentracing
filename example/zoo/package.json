@@ -7,7 +7,7 @@
     "eslint-plugin-import": "^2.18.2"
   },
   "dependencies": {
-    "commander": "^2.9.0",
+    "commander": "^9.4.1",
     "express": "^4.15.2",
     "express-basic-auth": "^1.0.1",
     "lightstep-tracer": "^0.20.2",
