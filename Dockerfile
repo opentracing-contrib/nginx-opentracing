@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.2.0 AS xx
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.2.1 AS xx
 
 ### Build base image for debian
 FROM --platform=$BUILDPLATFORM debian:bullseye as build-base-debian
