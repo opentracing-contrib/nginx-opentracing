@@ -1,7 +1,7 @@
 FROM ubuntu:23.04
 
 ARG OPENTRACING_CPP_VERSION=v1.6.0
-ARG NGINX_VERSION=1.23.3
+ARG NGINX_VERSION=1.23.4
 
 RUN set -x \
   && apt-get update \
