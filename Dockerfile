@@ -203,7 +203,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 ### Base build image for debian
 FROM nginx:1.23.4 as build-nginx-debian
 
-RUN echo "deb-src http://nginx.org/packages/mainline/debian/ bullseye nginx" >> /etc/apt/sources.list \
+RUN echo "deb-src [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ bullseye nginx" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get build-dep -y nginx
 
