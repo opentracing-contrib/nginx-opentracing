@@ -1,2 +1,2 @@
 flask>=0.12.3
-Flask-API==3.0.post1
+Flask-API==3.1
