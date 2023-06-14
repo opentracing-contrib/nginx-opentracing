@@ -12,7 +12,7 @@ permissions:
 env:
   ACTIONS_RUNNER_DEBUG: true
   ACTIONS_STEP_DEBUG: true
-  
+
 jobs:
   dependabot:
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
         uses: dependabot/fetch-metadata@v1
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-          
+
       - name: Approve a PR
         if: ${{contains(steps.metadata.outputs.directory, '/test')}}
         run: gh pr review --approve "$PR_URL"

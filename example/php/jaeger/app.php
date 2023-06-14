@@ -21,7 +21,7 @@ if (!function_exists('getallheaders')) {
 $config = new Config(
     [
         'sampler' => [
-            'type' => 'const', 
+            'type' => 'const',
             'param' => true,
         ],
         'local_agent' => [
