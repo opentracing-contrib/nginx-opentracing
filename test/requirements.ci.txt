@@ -3,4 +3,4 @@ requests==2.31.0
 websocket-client==1.5.3
 urllib3==2.0.3
 grpcio==1.55.0
-protobuf==4.23.2
+protobuf==4.23.3
