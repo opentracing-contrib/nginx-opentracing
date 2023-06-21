@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-apt-get update 
+apt-get update
 apt-get install --no-install-recommends --no-install-suggests -y \
           software-properties-common
 add-apt-repository -y ppa:ubuntu-toolchain-r/test

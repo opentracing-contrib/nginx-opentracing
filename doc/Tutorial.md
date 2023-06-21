@@ -4,7 +4,7 @@ Virtual Zoo
 In this tutorial, we'll enable an application for OpenTracing and use the
 trace data to guide us in making several optimizations. The application we're
 going to work with is a virtual zoo. Users admit new animals into the zoo by
-filling out a form and submitting a profile picture. 
+filling out a form and submitting a profile picture.
 
 ![alt text](data/Admit.png "Admit New Animal")
 
@@ -16,7 +16,7 @@ page with thumbnail pictures of all the animals organized into a table.
 The application uses NGINX to load-balance between multiple Node.js backends
 and serve static content. When processing a new admittance, a Node.js server
 writes the profile data to a shared sqlite database and resizes the profile
-picture to a common thumbnail size. Here's what the NGINX configuration looks 
+picture to a common thumbnail size. Here's what the NGINX configuration looks
 like:
 
 ```
@@ -65,18 +65,18 @@ http {
       proxy_pass http://backend;
 
       opentracing_propagate_context;
-      
+
       # Redirect to the spash page if the animal was successfully admitted.
       proxy_intercept_errors on;
       error_page 301 302 303 =200 /;
     }
 
     location / {
-      root www; 
+      root www;
     }
 
     location ~ \.jpg$ {
-      # Set the root directory to where the Node.js backend uploads profile 
+      # Set the root directory to where the Node.js backend uploads profile
       # images.
       include image_params;
     }
@@ -104,7 +104,7 @@ uses the name of the first location as the name for the top-level span. We can
 change this behavior by using the directives `opentracing_operation_name` and
 `opentracing_location_operation_name` to set the names of the request and
 location block spans respectively. For
-example, by adding 
+example, by adding
 ```
 http {
 ...
@@ -125,7 +125,7 @@ OpenTracing.
 Enabling OpenTracing for the Backend
 ---------------------------------
 
-When using express with Node.js, OpenTracing can be turn on 
+When using express with Node.js, OpenTracing can be turn on
 by adding tracing middleware to the express app:
 ```JavaScript
 const app = express();
@@ -157,7 +157,7 @@ of its contents to the Node.js servers. Updating NGINX's configuration file to d
       client_max_body_size       1000M;
 
       proxy_pass_request_headers on;
-      proxy_set_header           admit-profile-pic $request_body_file; 
+      proxy_set_header           admit-profile-pic $request_body_file;
       proxy_set_body             off;
       proxy_redirect             off;
       ...

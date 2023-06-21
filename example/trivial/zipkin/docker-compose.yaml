@@ -27,7 +27,7 @@ services:
       - "9001"
     ports:
       - "9001:9001"
-    command: 
+    command:
       - /app/server
       - -collector_host
       - zipkin

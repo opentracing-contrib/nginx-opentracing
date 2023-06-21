@@ -46,7 +46,7 @@ services:
     entrypoint: ./start-backend.sh
 
 volumes:
-  image-volume: 
+  image-volume:
   tmp-volume:
 
 networks:
