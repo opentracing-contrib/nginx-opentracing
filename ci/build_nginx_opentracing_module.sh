@@ -12,4 +12,3 @@ cd nginx-release-${NGINX_VERSION}
   --with-debug \
   --add-dynamic-module="${SRC_DIR}/opentracing"
 make VERBOSE=1
-
