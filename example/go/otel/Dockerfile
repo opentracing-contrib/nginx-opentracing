@@ -10,7 +10,7 @@ COPY . .
 RUN go build -o /app .
 
 FROM scratch AS bin
-ENV OT_COLLECTOR_ADDR="localhost:55680"
+ENV OT_COLLECTOR_ADDR="localhost:4317"
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /app /
 ENTRYPOINT ["/app"]

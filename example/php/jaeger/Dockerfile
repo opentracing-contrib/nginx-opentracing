@@ -7,13 +7,14 @@ RUN set -x \
   && apt-get update \
   && apt-get install --no-install-recommends --no-install-suggests -y \
               ca-certificates \
-              git \
+              git zip unzip libzip-dev \
 # Install php extensions
+  && docker-php-ext-install zip \
   && docker-php-ext-install bcmath \
   && docker-php-ext-install sockets \
 # Install composer
 	&& php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
-	&& php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
+	&& php -r "if (hash_file('SHA384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
 	&& php composer-setup.php \
 	&& php -r "unlink('composer-setup.php');" \
 # Install dependencies

@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1.3
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.0.0-rc.1 AS xx
+ARG BUILD_OS=debian
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.2.1 AS xx
 
-FROM --platform=$BUILDPLATFORM debian:buster as build-base
+### Build base image for debian
+FROM --platform=$BUILDPLATFORM debian:bullseye as build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -10,25 +12,55 @@ RUN apt-get update \
     clang \
     git \
     golang \
-    libprotobuf-dev \
     libcurl4 \
+    libprotobuf-dev \
     libtool \
+    libyaml-cpp-dev \
     libz-dev \
+    lld \
     pkg-config \
     protobuf-compiler \
-    libyaml-cpp-dev \
-    lld \
     wget
-
-ENV CMAKE_VERSION 3.21.2
-RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
-    && sh cmake-linux.sh -- --skip-license --prefix=/usr \
-    && rm cmake-linux.sh
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apt install -y zlib1g-dev xx-cxx-essentials libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev
+RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-dev
+
+
+### Build base image for alpine
+FROM --platform=$BUILDPLATFORM alpine:3.18 as build-base-alpine
+
+RUN apk add --no-cache \
+    alpine-sdk \
+    bash \
+    build-base \
+    clang \
+    gcompat \
+    git \
+    libcurl \
+    lld \
+    protobuf-dev \
+    yaml-cpp-dev \
+    zlib-dev
+
+COPY --from=xx / /
+ARG TARGETPLATFORM
+
+RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-cxx-dev
+
+
+### Build image
+FROM build-base-${BUILD_OS} as build-base
+
+ENV CMAKE_VERSION 3.22.2
+RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
+    && sh cmake-linux.sh -- --skip-license --prefix=/usr \
+    && rm cmake-linux.sh
+
+# XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386.
+ENV XX_CC_PREFER_STATIC_LINKER=1
+
 
 ## Build gRPC
 FROM build-base as grpc
@@ -66,6 +98,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cd opentracing-cpp \
     && mkdir .build && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
+    -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)usr/local \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
@@ -73,6 +106,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
+    && if [ "$(xx-info sysroot)" != "/" ]; then cp -a $(xx-info sysroot)usr/local/lib/libopentracing.so* /usr/local/lib/; fi \
     && xx-verify /usr/local/lib/libopentracing.so
 
 
@@ -81,10 +115,12 @@ FROM opentracing-cpp as zipkin-cpp-opentracing
 ARG ZIPKIN_CPP_VERSION=master
 ARG TARGETPLATFORM
 
-RUN xx-info env && git clone --depth 1 -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
+RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
+    xx-info env && git clone --depth 1 -b $ZIPKIN_CPP_VERSION https://github.com/rnburn/zipkin-cpp-opentracing.git \
     && cd zipkin-cpp-opentracing \
     && mkdir .build && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
+    -DCMAKE_PREFIX_PATH=$(xx-info sysroot)usr/local \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_STATIC_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
@@ -97,7 +133,7 @@ RUN xx-info env && git clone --depth 1 -b $ZIPKIN_CPP_VERSION https://github.com
 
 ### Build Jaeger cpp-client
 FROM opentracing-cpp as jaeger-cpp-client
-ARG JAEGER_CPP_VERSION=v0.8.0
+ARG JAEGER_CPP_VERSION=v0.9.0
 ARG YAML_CPP_VERSION=yaml-cpp-0.7.0
 ARG TARGETPLATFORM
 
@@ -121,10 +157,12 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     && printf "%s\n" "" "set(CMAKE_C_COMPILER clang)"  "set(CMAKE_CXX_COMPILER clang++)" \
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
     "set(CMAKE_C_COMPILER_TARGET $(xx-clang --print-target-triple))" "set(CMAKE_CXX_COMPILER_TARGET $(xx-clang++ --print-target-triple))" \
-    "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" >>  cmake/toolchain.cmake \
+    "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" \
+    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" >>  cmake/toolchain.cmake \
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
+    -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
@@ -151,10 +189,9 @@ ARG TARGETPLATFORM
 
 RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/DataDog/dd-opentracing-cpp.git \
     && cd dd-opentracing-cpp \
-    && sed -i 's/cmake/cmake \$(xx-clang --print-cmake-defines)/I' scripts/install_dependencies.sh \
-    && scripts/install_dependencies.sh not-opentracing not-curl not-zlib \
     && mkdir .build && cd .build \
-    && cmake  $(xx-clang --print-cmake-defines) \
+    && cmake $(xx-clang --print-cmake-defines) \
+    -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
@@ -163,17 +200,29 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     && xx-verify /usr/local/lib/libdd_opentracing_plugin.so
 
 
+### Base build image for debian
+FROM nginx:1.25.1 as build-nginx-debian
+
+RUN echo "deb-src [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ bullseye nginx" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get build-dep -y nginx
+
+
+### Base build image for alpine
+FROM nginx:1.25.1-alpine AS build-nginx-alpine
+RUN apk add --no-cache \
+    build-base \
+    pcre2-dev \
+    zlib-dev
+
+
 ### Build nginx-opentracing modules
-FROM nginx:1.21.3 as build-nginx
+FROM build-nginx-${BUILD_OS} as build-nginx
 
 COPY --from=jaeger-cpp-client /hunter /hunter
 COPY . /src
 
-RUN echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get build-dep -y nginx
-
-RUN curl -sSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
+RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
     && tar zxf release-${NGINX_VERSION}.tar.gz \
     && cd nginx-release-${NGINX_VERSION} \
     && auto/configure \
@@ -182,12 +231,21 @@ RUN curl -sSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}
     --with-cc-opt="-I/hunter/include" \
     --with-ld-opt="-fPIE -fPIC -Wl,-z,relro -Wl,-z,now -L/hunter/lib" \
     --with-debug \
-    && make modules \
+    && make -j$(nproc) modules \
     && cp objs/ngx_http_opentracing_module.so /usr/lib/nginx/modules/
 
 
+### Base image for alpine
+FROM nginx:1.25.1-alpine as nginx-alpine
+RUN apk add --no-cache libstdc++
+
+
+### Base image for debian
+FROM nginx:1.25.1 as nginx-debian
+
+
 ### Build final image
-FROM nginx:1.21.3 as final
+FROM nginx-${BUILD_OS} as final
 
 COPY --from=build-nginx /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
 COPY --from=dd-opentracing-cpp /usr/local/lib/ /usr/local/lib/
@@ -197,4 +255,6 @@ COPY --from=opentracing-cpp /usr/local/lib/ /usr/local/lib/
 # gRPC doesn't seem to be used
 # COPY --from=grpc /usr/local/lib/ /usr/local/lib/
 
-STOPSIGNAL SIGTERM
+RUN ldconfig /usr/local/lib/
+
+STOPSIGNAL SIGQUIT

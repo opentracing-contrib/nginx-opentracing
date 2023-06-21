@@ -1,0 +1,151 @@
+name: Update Docker Images
+
+on:
+  schedule:
+    - cron:  '0 1 * * *'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  variables:
+    name: Get version of base image
+    runs-on: ubuntu-20.04
+    outputs:
+      versions: ${{ steps.version.outputs.matrix }}
+      git_tag: ${{ steps.tag.outputs.git_tag }}
+      docker_platforms: ${{ steps.vars.outputs.docker_platforms }}
+      sha_long: ${{ steps.vars.outputs.sha_long }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Get latest tag
+        id: tag
+        run: |
+          tag=$(git tag --sort=-version:refname | head -n1)
+          echo "::set-output name=git_tag::${tag//v}"
+      - name: Checkout Repository at ${{ steps.tag.outputs.git_tag }}
+        uses: actions/checkout@v3
+        with:
+          ref: refs/tags/v${{ steps.tag.outputs.git_tag }}
+      - name: Set Base image version
+        id: version
+        run: |
+          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" <Dockerfile | awk -F"[ :]" '{print $3}')
+          nginx=library/$(grep -m1 "FROM nginx:" < Dockerfile | awk -F" " '{print $2}')
+          echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}]"
+      - name: Set other variables
+        id: vars
+        run: |
+          echo "::set-output name=docker_platforms::$(grep "PLATFORMS:" .github/workflows/docker.yml | awk -F" " '{print $2}')"
+          echo "::set-output name=sha_long::$(git rev-parse HEAD)"
+
+  check:
+    name: Check if updates are needed
+    runs-on: ubuntu-20.04
+    needs: variables
+    outputs:
+      needs-updating-debian: ${{ steps.var.outputs.debian }}
+      needs-updating-alpine: ${{ steps.var.outputs.alpine }}
+    strategy:
+      matrix:
+        base_image: ${{ fromJson(needs.variables.outputs.versions) }}
+    steps:
+      - name: Build image tag
+        id: dist
+        run: |
+          if [ ${{ matrix.base_image.distro }} == "debian" ]; then dist=""; else dist="-${{ matrix.base_image.distro }}"; fi
+          echo "::set-output name=tag::${{ needs.variables.outputs.git_tag }}${dist}"
+      - name: Check if update available ${{ matrix.base_image.version }}
+        id: update
+        uses: lucacome/docker-image-update-checker@v1
+        with:
+          base-image: ${{ matrix.base_image.version }}
+          image: opentracing/nginx-opentracing:${{ steps.dist.outputs.tag }}
+      - id: var
+        run: |
+          echo "::set-output name=${{ matrix.base_image.distro }}::${{ steps.update.outputs.needs-updating }}"
+
+  build-docker:
+    if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' }}
+    name: Build Docker Image
+    runs-on: ubuntu-20.04
+    needs: [check, variables]
+    strategy:
+      matrix:
+        include:
+          - os: debian
+            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
+          - os: alpine
+            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
+    steps:
+      - name: Checkout Repository at ${{ needs.variables.outputs.git_tag }}
+        uses: actions/checkout@v3
+        with:
+          ref: refs/tags/v${{ needs.variables.outputs.git_tag }}
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Output Variables
+        id: var
+        run: |
+          echo "::set-output name=nginx_version::$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')"
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: DockerHub Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            opentracing/nginx-opentracing
+            ghcr.io/opentracing-contrib/nginx-opentracing
+          flavor: |
+            latest=true
+            suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true
+          tags: |
+            type=raw,value=${{ needs.variables.outputs.git_tag }}
+            type=raw,value=nginx-${{ steps.var.outputs.nginx_version }}
+          labels: |
+            org.opencontainers.image.revision=${{ needs.variables.outputs.sha_long }}
+        if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          pull: true
+          push: true
+          platforms: ${{ needs.variables.outputs.docker_platforms }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.os }}
+          cache-to: type=gha,scope=${{ matrix.os }},mode=max
+          target: final
+          build-args: BUILD_OS=${{ matrix.os }}
+        if: ${{ matrix.needs-updating == 'true' }}

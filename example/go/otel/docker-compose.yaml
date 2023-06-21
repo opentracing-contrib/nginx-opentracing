@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   otel:
-    image: otel/opentelemetry-collector-dev:latest
+    image: otel/opentelemetry-collector:latest
     pull_policy: always
     volumes:
       - ./otel.yml:/conf/otel-collector-config.yml
@@ -13,7 +13,7 @@ services:
     expose:
       # - "6831/udp" # Default endpoint for Jaeger thrift_compact receiver
       - "14268"    # Jaeger http thrift receiver
-      - "55680"    # Default endpoint for OpenTelemetry receiver
+      - "4317"     # Default endpoint for OpenTelemetry receiver
       - "9411"     # Zipkin port
       - "8888"     # Metrics
     ports:
@@ -24,7 +24,7 @@ services:
       - "14268:14268"
 
   nginx:
-    image: opentracing/nginx-opentracing
+    image: opentracing/nginx-opentracing:edge
     restart: on-failure
     depends_on:
       - otel
@@ -72,7 +72,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      OT_COLLECTOR_ADDR: otel:55680
+      OT_COLLECTOR_ADDR: otel:4317
 
 networks:
   example: {}

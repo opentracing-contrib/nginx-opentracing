@@ -33,3 +33,6 @@ __pycache__
 
 # Test
 test-log/
+
+# IDEs
+.vscode

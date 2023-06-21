@@ -12,4 +12,3 @@ if [ -n "$1" ]; then
 else
   docker run -v "$PWD":/src -w /src --privileged -it "$BUILD_IMAGE" /bin/bash -l
 fi
-
