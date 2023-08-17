@@ -11,6 +11,9 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Create/Update Draft
         uses: lucacome/draft-release@v0.2.2
         with:
