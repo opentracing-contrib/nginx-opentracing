@@ -97,7 +97,7 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Docker Buildx
