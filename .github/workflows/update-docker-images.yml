@@ -101,7 +101,7 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: DockerHub Login
