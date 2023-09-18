@@ -21,7 +21,7 @@ jobs:
       sha_long: ${{ steps.vars.outputs.sha_long }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Get latest tag
@@ -30,7 +30,7 @@ jobs:
           tag=$(git tag --sort=-version:refname | head -n1)
           echo "::set-output name=git_tag::${tag//v}"
       - name: Checkout Repository at ${{ steps.tag.outputs.git_tag }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: refs/tags/v${{ steps.tag.outputs.git_tag }}
       - name: Set Base image version
@@ -85,7 +85,7 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
     steps:
       - name: Checkout Repository at ${{ needs.variables.outputs.git_tag }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: refs/tags/v${{ needs.variables.outputs.git_tag }}
         if: ${{ matrix.needs-updating == 'true' }}
