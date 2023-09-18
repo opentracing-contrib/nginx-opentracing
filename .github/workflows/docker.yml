@@ -74,7 +74,7 @@ jobs:
               type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=${{ contains(github.ref, 'refs/tags/') }}
 
         - name: Build (and push if not PR)
-          uses: docker/build-push-action@v4
+          uses: docker/build-push-action@v5
           with:
             pull: true
             load: ${{ github.event_name == 'pull_request' }}
