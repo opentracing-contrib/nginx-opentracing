@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.ref_name }}-ci
+  cancel-in-progress: true
+
+jobs:
+  build-binaries:
+    name: Build Binaries
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        nginx_version:
+          [
+            1.15.12,
+            1.16.1,
+            1.17.10,
+            1.18.0,
+            1.19.10,
+            1.20.2,
+            1.21.6,
+            1.22.1,
+            1.23.4,
+            1.24.0,
+            1.25.0,
+            1.25.1,
+            1.25.2,
+            1.25.3,
+          ]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create/Update Draft
+        uses: lucacome/draft-release@v1.0.1
+        with:
+          minor-label: "enhancement"
+          major-label: "change"
+          publish: ${{ github.ref_type == 'tag' }}
+          collapse-after: 50
+        if: github.event_name != 'pull_request'
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build binary
+        uses: docker/build-push-action@v5
+        with:
+          pull: true
+          push: false
+          file: build/Dockerfile
+          tags: ${{ matrix.nginx_version }}
+          cache-from: type=gha,scope=${{ matrix.nginx_version }}
+          cache-to: type=gha,scope=${{ matrix.nginx_version }},mode=max
+          platforms: linux/amd64,linux/arm64
+          provenance: true
+          target: export
+          build-args: NGINX_VERSION=${{ matrix.nginx_version }}
+          outputs: type=local,dest=out
+
+      - name: Compress output
+        run: |
+          tar -czf linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.tgz -C out/linux_amd64/ ngx_http_opentracing_module.so
+          tar -czf linux-arm64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.tgz -C out/linux_arm64/ ngx_http_opentracing_module.so
+          cp out/linux_amd64/provenance.json linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.provenance.json
+          cp out/linux_arm64/provenance.json linux-arm64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.provenance.json
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: nginx-opentracing-modules-${{ matrix.nginx_version }}
+          path: linux-*-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.*
+
+      - name: Upload binaries on release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref_type == 'tag'
+        run: |
+          gh release upload ${{ github.ref_name }} linux-*-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.* --clobber

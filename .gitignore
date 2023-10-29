@@ -36,3 +36,8 @@ test-log/
 
 # IDEs
 .vscode
+
+# macOS
+.DS_Store
+
+out
