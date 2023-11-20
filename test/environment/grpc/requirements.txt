@@ -1,4 +1,4 @@
-grpcio==1.59.0
+grpcio==1.59.3
 grpcio-health-checking==1.59.0
 grpcio-reflection==1.59.0
 grpcio-testing==1.59.0
