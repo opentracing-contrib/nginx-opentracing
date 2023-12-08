@@ -2,4 +2,4 @@ grpcio==1.60.0
 grpcio-health-checking==1.59.3
 grpcio-reflection==1.59.3
 grpcio-testing==1.59.3
-grpcio-tools==1.59.3
+grpcio-tools==1.60.0
