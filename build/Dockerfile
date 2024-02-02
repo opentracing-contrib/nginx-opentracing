@@ -1,4 +1,4 @@
-FROM ubuntu:23.10 as base
+FROM ubuntu:24.04 as base
 
 RUN apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
