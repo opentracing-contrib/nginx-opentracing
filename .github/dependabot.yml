@@ -24,3 +24,8 @@ updates:
     directory: "/test/environment/grpc"
     schedule:
       interval: "daily"
+    groups:
+      grpc-test:
+        update-types:
+          - "minor"
+          - "patch"

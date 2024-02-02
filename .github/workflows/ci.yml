@@ -53,11 +53,6 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
       - name: Build binary
         uses: docker/build-push-action@v5
         with:
@@ -67,18 +62,18 @@ jobs:
           tags: ${{ matrix.nginx_version }}
           cache-from: type=gha,scope=${{ matrix.nginx_version }}
           cache-to: type=gha,scope=${{ matrix.nginx_version }},mode=max
-          platforms: linux/amd64,linux/arm64
-          provenance: true
+          platforms: linux/amd64
+          provenance: mode=max
+          sbom: true
           target: export
           build-args: NGINX_VERSION=${{ matrix.nginx_version }}
           outputs: type=local,dest=out
 
       - name: Compress output
         run: |
-          tar -czf linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.tgz -C out/linux_amd64/ ngx_http_opentracing_module.so
-          tar -czf linux-arm64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.tgz -C out/linux_arm64/ ngx_http_opentracing_module.so
-          cp out/linux_amd64/provenance.json linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.provenance.json
-          cp out/linux_arm64/provenance.json linux-arm64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.provenance.json
+          tar -czf linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.tgz -C out/ ngx_http_opentracing_module.so
+          cp out/provenance.json linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.provenance.json
+          cp out/sbom.spdx.json linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.sbom.spdx.json
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
