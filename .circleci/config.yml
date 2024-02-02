@@ -39,46 +39,7 @@ jobs:
       - checkout
       - run:
           command: docker build -t opentracing/openresty -f Dockerfile-openresty .
-  module_binaries_opentracing_15:
-    docker:
-      - image: ubuntu:18.04
-    environment:
-      OPENTRACING_VERSION: v1.5.1
-      MODULE_DIR: /workspace/modules
-    steps:
-      - checkout
-      - run: mkdir -p /workspace/modules
-      - run: ./ci/setup_build_environment.sh
-      - run:
-          name: Build modules with opentracing v1.5.1
-          command: ./ci/do_ci.sh module.binaries
-      - store_artifacts:
-          path: /workspace/modules
-      - persist_to_workspace:
-          root: /workspace
-          paths:
-            - modules
-  module_binaries_opentracing_16:
-    docker:
-      - image: ubuntu:18.04
-    environment:
-      OPENTRACING_VERSION: v1.6.0
-      MODULE_DIR: /workspace/modules
-      NAME_SUFFIX: "-ot16"
-    steps:
-      - checkout
-      - run: ./ci/setup_build_environment.sh
-      - attach_workspace:
-          at: /workspace
-      - run:
-          name: Build modules with opentracing v1.6.0
-          command: ./ci/do_ci.sh module.binaries
-      - store_artifacts:
-          path: /workspace/modules
-      - persist_to_workspace:
-          root: /workspace
-          paths:
-            - modules
+
   push_docker_image:
     machine: true
     steps:
@@ -86,18 +47,6 @@ jobs:
       - run:
           command: ./ci/do_ci.sh push_docker_image
 
-  release:
-    docker:
-      - image: ubuntu:18.04
-    environment:
-      MODULE_DIR: /workspace/modules
-    steps:
-      - run: apt-get -qq update; apt-get -y install git ssh
-      - checkout
-      - attach_workspace:
-          at: /workspace
-      - run: ./ci/setup_build_environment.sh
-      - run: ./ci/do_ci.sh release
 
 workflows:
   version: 2
@@ -109,14 +58,6 @@ workflows:
               ignore: /.*/
             tags: &tags
               only: /^v[0-9]+(\.[0-9]+)*$/
-      - release:
-          requires:
-            - module_binaries_opentracing_15
-            - module_binaries_opentracing_16
-          filters:
-            branches:
-              ignore: /.*/
-            tags: *tags
       - system_testing
       - build_gcc48_opentracing_15
       - build_gcc48_opentracing_16:
@@ -125,12 +66,3 @@ workflows:
       - openresty_docker_image:
           requires:
             - system_testing
-      - module_binaries_opentracing_15:
-          filters:
-            tags: *tags
-
-      - module_binaries_opentracing_16:
-          requires:
-            - module_binaries_opentracing_15
-          filters:
-            tags: *tags

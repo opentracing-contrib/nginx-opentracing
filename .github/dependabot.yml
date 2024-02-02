@@ -4,15 +4,28 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+
+  - package-ecosystem: "docker"
+    directory: "/build"
+    schedule:
+      interval: "daily"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: daily
+
   - package-ecosystem: "pip"
     directory: "/test"
     schedule:
       interval: "daily"
+
   - package-ecosystem: "pip"
     directory: "/test/environment/grpc"
     schedule:
       interval: "daily"
+    groups:
+      grpc-test:
+        update-types:
+          - "minor"
+          - "patch"
