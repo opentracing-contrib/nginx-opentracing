@@ -34,6 +34,7 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ubuntu-22.04
+    needs: release-notes
     strategy:
       matrix:
         nginx_version:
