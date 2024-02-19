@@ -124,7 +124,7 @@ jobs:
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
-          name: scan-results
+          name: scan-results-${{ matrix.os }}
           path: |
             ${{ steps.scan.outputs.sarif }}
             *.json
