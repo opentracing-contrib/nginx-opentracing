@@ -1,4 +1,4 @@
-FROM ubuntu:23.10 as base
+FROM debian:stable as base
 
 RUN apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
