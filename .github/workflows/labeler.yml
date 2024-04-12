@@ -12,6 +12,10 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - uses: actions/labeler@v5
+        continue-on-error: true
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"

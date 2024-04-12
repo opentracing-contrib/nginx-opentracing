@@ -12,7 +12,8 @@ chore:
 
 documentation:
   - head-branch: ['^docs/', '^doc/']
-  - changed-files: '**/*.md'
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
 
 dependencies:
   - head-branch: ['^deps/', '^dep/', '^dependabot/', 'pre-commit-ci-update-config']
@@ -20,6 +21,8 @@ dependencies:
 tests:
   - any:
       - head-branch: ['^tests/', '^test/']
-      - changed-files: ['test/**/*']
+      - changed-files:
+        - any-glob-to-any-file: 'test/**/*'
   - all:
-      - changed-files: ['!test/requirements.txt']
+      - changed-files:
+        - all-globs-to-all-files: '!test/requirements.txt'
