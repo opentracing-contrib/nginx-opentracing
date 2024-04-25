@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
+ARG BUILD_NGINX_VERSION=1.25.5
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.4.0 AS xx
 
 ### Build base image for debian
@@ -201,7 +202,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.25.5-bookworm as build-nginx-debian
+FROM nginx:${BUILD_NGINX_VERSION}-bookworm as build-nginx-debian
 
 RUN echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ bookworm nginx" >> /etc/apt/sources.list.d/nginx.list \
     && apt-get update \
@@ -209,7 +210,7 @@ RUN echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http:/
 
 
 ### Base build image for alpine
-FROM nginx:1.25.5-alpine AS build-nginx-alpine
+FROM nginx:${BUILD_NGINX_VERSION}-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre2-dev \
@@ -236,12 +237,12 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-FROM nginx:1.25.5-alpine as nginx-alpine
+FROM nginx:${BUILD_NGINX_VERSION}-alpine as nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.25.5 as nginx-debian
+FROM nginx:${BUILD_NGINX_VERSION}-bookworm as nginx-debian
 
 
 ### Build final image
