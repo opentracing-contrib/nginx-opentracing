@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-ARG BUILD_NGINX_VERSION=1.26.0
+ARG BUILD_NGINX_VERSION=1.26.1
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.4.0 AS xx
 
 ### Build base image for debian
