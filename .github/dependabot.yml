@@ -1,14 +1,10 @@
 version: 2
 updates:
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "**/*"
     schedule:
       interval: daily
-
-  - package-ecosystem: "docker"
-    directory: "/build"
-    schedule:
-      interval: "daily"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -16,16 +12,14 @@ updates:
       interval: daily
 
   - package-ecosystem: "pip"
-    directory: "/test"
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "pip"
-    directory: "/test/environment/grpc"
+    directories:
+      - "**/*"
     schedule:
       interval: "daily"
     groups:
-      grpc-test:
+      grpcio:
+        patterns:
+          - "grpcio*"
         update-types:
           - "minor"
           - "patch"
