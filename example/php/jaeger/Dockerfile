@@ -1,4 +1,4 @@
-FROM php:7-fpm
+FROM php:8-fpm
 
 WORKDIR /var/www/app
 ADD . /var/www/app
