@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:24.04
 # 17.10 doesn't come with latest golang.
 
 WORKDIR /app
