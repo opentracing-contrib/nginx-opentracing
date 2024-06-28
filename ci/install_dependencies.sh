@@ -11,7 +11,7 @@ docker version
 docker-compose version
 
 pyenv versions
-pyenv local 3.10.3
+pyenv local 3.12.4
 python --version
 pip --version
 pip install --upgrade pip
