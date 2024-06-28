@@ -1,10 +1,9 @@
-# syntax=docker/dockerfile:1.3
+# syntax=docker/dockerfile:1.8
 ARG BUILD_OS=debian
-ARG BUILD_NGINX_VERSION=1.27.0
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.4.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:bullseye as build-base-debian
+FROM --platform=$BUILDPLATFORM debian:12 as build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -202,9 +201,10 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:${BUILD_NGINX_VERSION}-bookworm as build-nginx-debian
+FROM nginx:1.27.0 as build-nginx-debian
 
-RUN echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ bookworm nginx" >> /etc/apt/sources.list.d/nginx.list \
+RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
+    && echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ ${DEBIAN_VERSION} nginx" >> /etc/apt/sources.list.d/nginx.list \
     && apt-get update \
     && apt-get build-dep -y nginx
 
@@ -237,12 +237,12 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-FROM nginx:${BUILD_NGINX_VERSION}-alpine as nginx-alpine
+FROM nginx:1.27.0-alpine as nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:${BUILD_NGINX_VERSION}-bookworm as nginx-debian
+FROM nginx:1.27.0 as nginx-debian
 
 
 ### Build final image
