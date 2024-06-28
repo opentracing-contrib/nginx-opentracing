@@ -1,16 +1,5 @@
 version: 2
 jobs:
-  system_testing:
-    machine:
-      image: ubuntu-2204:2022.04.2
-    steps:
-      - checkout
-      - run:
-          name: system.testing
-          command: |
-            ./ci/system_testing.sh
-      - store_artifacts:
-          path: ./test-log
   build_gcc48_opentracing_15:
     docker:
       - image: ubuntu:18.04
@@ -33,36 +22,13 @@ jobs:
       - run: ./ci/install_gcc4.8.sh
       - run: ./ci/install_opentracing.sh
       - run: ./ci/do_ci.sh build
-  openresty_docker_image:
-    machine: true
-    steps:
-      - checkout
-      - run:
-          command: docker build -t opentracing/openresty -f Dockerfile-openresty .
-
-  push_docker_image:
-    machine: true
-    steps:
-      - checkout
-      - run:
-          command: ./ci/do_ci.sh push_docker_image
 
 
 workflows:
   version: 2
   build_test_and_deploy:
     jobs:
-      - push_docker_image:
-          filters:
-            branches:
-              ignore: /.*/
-            tags: &tags
-              only: /^v[0-9]+(\.[0-9]+)*$/
-      - system_testing
       - build_gcc48_opentracing_15
       - build_gcc48_opentracing_16:
           requires:
             - build_gcc48_opentracing_15
-      - openresty_docker_image:
-          requires:
-            - system_testing

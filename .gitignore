@@ -41,3 +41,6 @@ test-log/
 .DS_Store
 
 out
+bin
+lib
+pyvenv.cfg

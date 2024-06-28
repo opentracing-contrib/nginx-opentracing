@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Openresty
 
 on:
   push:
@@ -10,11 +10,8 @@ on:
     branches:
       - master
 
-env:
-  PLATFORMS: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le,linux/s390x"
-
 concurrency:
-  group: ${{ github.ref_name }}-docker
+  group: ${{ github.ref_name }}-docker-openresty
   cancel-in-progress: true
 
 jobs:
@@ -26,26 +23,9 @@ jobs:
         image: registry:2
         ports:
           - 5000:5000
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [debian, alpine]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Output Variables
-        id: var
-        run: |
-          echo "nginx_version=$(grep -m1 'ARG BUILD_NGINX_VERSION=' <Dockerfile | awk -F'[= ]' '{print $3}')" >> $GITHUB_OUTPUT
-
-      - name: Nginx version
-        run: echo "${{ steps.var.outputs.nginx_version }}"
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm,arm64,ppc64le,s390x
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -72,45 +52,41 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            name=opentracing/nginx-opentracing,enable=${{ github.event_name != 'pull_request' }}
-            name=ghcr.io/opentracing-contrib/nginx-opentracing,enable=${{ github.event_name != 'pull_request' }}
-            name=localhost:5000/opentracing/nginx-opentracing
-          flavor: suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true
+            name=opentracing/openresty,enable=${{ github.event_name != 'pull_request' }}
+            name=ghcr.io/opentracing-contrib/openresty,enable=${{ github.event_name != 'pull_request' }}
+            name=localhost:5000/opentracing/openresty
           tags: |
             type=edge
             type=ref,event=pr
             type=semver,pattern={{version}}
-            type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=${{ contains(github.ref, 'refs/tags/') }}
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
+          file: Dockerfile-openresty
           pull: true
           push: true
-          platforms: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le,linux/s390x"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=gha,scope=${{ matrix.os }}
-          cache-to: type=gha,scope=${{ matrix.os }},mode=max
-          target: final
+          cache-from: type=gha,scope=openresty
+          cache-to: type=gha,scope=openresty,mode=max
           sbom: true
           provenance: mode=max
-          build-args: BUILD_OS=${{ matrix.os }}
 
       - name: Inspect SBOM and output manifest
         run: |
-          docker buildx imagetools inspect localhost:5000/opentracing/nginx-opentracing:${{ steps.meta.outputs.version }} --format '{{ json (index .SBOM "linux/amd64").SPDX }}' > sbom.json
-          docker buildx imagetools inspect localhost:5000/opentracing/nginx-opentracing:${{ steps.meta.outputs.version }} --format '{{ json (index .Provenance "linux/amd64").SLSA }}' > provenance.json
-          docker buildx imagetools inspect localhost:5000/opentracing/nginx-opentracing:${{ steps.meta.outputs.version }} --raw
+          docker buildx imagetools inspect localhost:5000/opentracing/openresty:${{ steps.meta.outputs.version }} --format '{{ json .SBOM.SPDX }}' > sbom-openresty.json
+          docker buildx imagetools inspect localhost:5000/opentracing/openresty:${{ steps.meta.outputs.version }} --format '{{ json .Provenance.SLSA }}' > provenance-openresty.json
+          docker buildx imagetools inspect localhost:5000/opentracing/openresty:${{ steps.meta.outputs.version }} --raw
 
       - name: Scan SBOM
         id: scan
         uses: anchore/scan-action@v3
         with:
-          sbom: "sbom.json"
+          sbom: "sbom-openresty.json"
           only-fixed: true
           add-cpes-if-none: true
           fail-build: false
@@ -126,7 +102,7 @@ jobs:
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
-          name: scan-results-${{ matrix.os }}
+          name: scan-results-openresty
           path: |
             ${{ steps.scan.outputs.sarif }}
             *.json

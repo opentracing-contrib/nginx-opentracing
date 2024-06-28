@@ -1,4 +1,3 @@
-version: '3'
 services:
 
   nginx:
@@ -44,7 +43,7 @@ services:
       - "5001:5001"
 
   php_fpm:
-    image: php:7-fpm
+    image: php:8-fpm
     networks:
       testnet:
         aliases:
