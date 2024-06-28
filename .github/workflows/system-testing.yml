@@ -1,0 +1,95 @@
+name: System Testing
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  pull_request:
+    branches:
+      - master
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-system-testing
+  cancel-in-progress: true
+
+jobs:
+  system-testing:
+    name: System Testing
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get vars
+        id: vars
+        run: |
+          # replace with version from Dockerfile when fixed
+          echo "NGINX_VERSION=1.27.0" >> $GITHUB_OUTPUT
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: pip install -r test/requirements.ci.txt
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build nginx
+        uses: docker/build-push-action@v6
+        with:
+          pull: true
+          load: true
+          file: test/Dockerfile-test
+          tags: nginx-opentracing-test/nginx
+          cache-from: type=gha,scope=system-nginx
+          cache-to: type=gha,scope=system-nginx,mode=max
+          build-args: |
+            NGINX_VERSION=${{ steps.vars.outputs.NGINX_VERSION }}
+
+      - name: Build backend
+        uses: docker/build-push-action@v6
+        with:
+          pull: true
+          load: true
+          file: test/Dockerfile-backend
+          context: test
+          tags: nginx-opentracing-test/backend
+          cache-from: type=gha,scope=system-backend
+          cache-to: type=gha,scope=system-backend,mode=max
+
+      - name: Build grpc-backend
+        uses: docker/build-push-action@v6
+        with:
+          pull: true
+          load: true
+          file: test/environment/grpc/Dockerfile
+          context: test/environment/grpc
+          tags: nginx-opentracing-test/grpc-backend
+          cache-from: type=gha,scope=system-grpc-backend
+          cache-to: type=gha,scope=system-grpc-backend,mode=max
+
+      - name: Run Tests
+        run: |
+          mkdir -p test-log
+          python3 nginx_opentracing_test.py
+        env:
+          PYTHONPATH: environment/grpc
+          LOG_DIR: ${{ github.workspace }}/test/test-log
+        working-directory: test
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-log
+          path: ./test/test-log

@@ -42,12 +42,12 @@ class NginxOpenTracingTest(unittest.TestCase):
         )
 
         self.environment_handle = subprocess.Popen(
-            ["docker-compose", "up"],
+            ["docker", "compose", "up", "--wait", "--wait-timeout", "60"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
         self.client = get_docker_client()
-        timeout = time.time() + 60
+        timeout = time.time() + 120
         while len(self.client.containers.list()) != 4:
             if time.time() > timeout:
                 raise TimeoutError()
@@ -107,7 +107,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         if not self.running:
             return
         self.running = False
-        subprocess.check_call(["docker-compose", "down"])
+        subprocess.check_call(["docker", "compose", "down"])
         stdout, stderr = self.environment_handle.communicate()
         self.environment_stdout = stdout
         self.environment_stderr = stderr

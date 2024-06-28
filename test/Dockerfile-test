@@ -1,24 +1,27 @@
 FROM ubuntu:24.04
 
 ARG OPENTRACING_CPP_VERSION=v1.6.0
-ARG NGINX_VERSION=1.27.0
+ARG NGINX_VERSION
 
 RUN set -x \
   && apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends --no-install-suggests -y \
   build-essential \
-  gettext \
+  ca-certificates \
   cmake \
+  curl \
+  gettext \
   git \
   gnupg2 \
-  software-properties-common \
-  curl \
-  python3 \
   jq \
-  ca-certificates \
-  wget \
   libpcre3 libpcre3-dev \
-  zlib1g-dev
+  libssl-dev \
+  python3 \
+  software-properties-common \
+  wget \
+  zlib1g-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 ### Build opentracing-cpp
 RUN cd / \
@@ -32,7 +35,6 @@ RUN cd / \
 COPY ./opentracing /opentracing
 
 ### Build nginx
-RUN apt-get install -y libssl-dev
 RUN cd / \
   && wget -O nginx-release-${NGINX_VERSION}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz \
   && tar zxf nginx-release-${NGINX_VERSION}.tar.gz \

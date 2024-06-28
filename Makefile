@@ -1,18 +1,23 @@
+NGINX_VERSION=1.27.0
+
 .PHONY: docker-image
 docker-image:
-	DOCKER_BUILDKIT=1 docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final .
+	docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final .
 
 .PHONY: docker-image-alpine
 docker-image-alpine:
-	DOCKER_BUILDKIT=1 docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final --build-arg BUILD_OS=alpine .
+	docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final --build-arg BUILD_OS=alpine .
 
 docker-build-binaries:
-	DOCKER_BUILDKIT=1 docker buildx build --build-arg NGINX_VERSION=1.27.0 --platform linux/amd64 -f build/Dockerfile -t nginx-opentracing-binaries --target=export --output "type=local,dest=out" --progress=plain --no-cache --pull .
+	docker buildx build --build-arg NGINX_VERSION=$(NGINX_VERSION) --platform linux/amd64 -f build/Dockerfile -t nginx-opentracing-binaries --target=export --output "type=local,dest=out" --progress=plain --no-cache --pull .
 
 .PHONY: test
 test:
-	./ci/system_testing.sh
+	docker build -t nginx-opentracing-test/nginx -f test/Dockerfile-test . --build-arg NGINX_VERSION=$(NGINX_VERSION)
+	docker build -t nginx-opentracing-test/backend -f test/Dockerfile-backend ./test
+	docker build -t nginx-opentracing-test/grpc-backend -f test/environment/grpc/Dockerfile ./test/environment/grpc
+	cd test && LOG_DIR=$(CURDIR)/test/test-log PYTHONPATH=environment/grpc python3 nginx_opentracing_test.py
 
 .PHONY: clean
 clean:
-	rm -fr test-log
+	rm -fr test/test-log
