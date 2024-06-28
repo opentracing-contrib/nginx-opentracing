@@ -2,7 +2,7 @@ version: 2
 jobs:
   system_testing:
     machine:
-      image: ubuntu-2204:2022.04.2
+      image: default
     steps:
       - checkout
       - run:
