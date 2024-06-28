@@ -21,7 +21,7 @@ ENV CXXFLAGS="-fPIC"
 ENV LDFLAGS="-fPIC"
 
 
-FROM base as opentracing
+FROM base AS opentracing
 ARG OPENTRACING_VERSION=v1.6.0
 
 RUN <<"eot" bash -euo pipefail
@@ -38,7 +38,7 @@ RUN <<"eot" bash -euo pipefail
 eot
 
 
-FROM opentracing as binary
+FROM opentracing AS binary
 ARG NGINX_VERSION
 
 COPY --link opentracing /opentracing
@@ -69,6 +69,6 @@ RUN /usr/bin/g++ -o ngx_http_opentracing_module.so \
     -shared
 
 
-FROM scratch as export
+FROM scratch AS export
 ARG NGINX_VERSION
 COPY --from=binary /nginx-release-${NGINX_VERSION}/ngx_http_opentracing_module.so /

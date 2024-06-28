@@ -3,7 +3,7 @@ ARG BUILD_OS=debian
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.4.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:12 as build-base-debian
+FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -29,7 +29,7 @@ RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-are
 
 
 ### Build base image for alpine
-FROM --platform=$BUILDPLATFORM alpine:3.20 as build-base-alpine
+FROM --platform=$BUILDPLATFORM alpine:3.20 AS build-base-alpine
 
 RUN apk add --no-cache \
     alpine-sdk \
@@ -51,9 +51,9 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 
 
 ### Build image
-FROM build-base-${BUILD_OS} as build-base
+FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION 3.22.2
+ENV CMAKE_VERSION=3.22.2
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
@@ -63,7 +63,7 @@ ENV XX_CC_PREFER_STATIC_LINKER=1
 
 
 ## Build gRPC
-FROM build-base as grpc
+FROM build-base AS grpc
 ARG GRPC_VERSION=v1.40.x
 ARG TARGETPLATFORM
 
@@ -90,7 +90,7 @@ RUN xx-info env && git clone --depth 1 -b $GRPC_VERSION https://github.com/grpc/
 
 
 ### Build opentracing-cpp
-FROM build-base as opentracing-cpp
+FROM build-base AS opentracing-cpp
 ARG OPENTRACING_CPP_VERSION=v1.6.0
 ARG TARGETPLATFORM
 
@@ -111,7 +111,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
 
 
 ### Build zipkin-cpp-opentracing
-FROM opentracing-cpp as zipkin-cpp-opentracing
+FROM opentracing-cpp AS zipkin-cpp-opentracing
 ARG ZIPKIN_CPP_VERSION=master
 ARG TARGETPLATFORM
 
@@ -132,7 +132,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
 
 
 ### Build Jaeger cpp-client
-FROM opentracing-cpp as jaeger-cpp-client
+FROM opentracing-cpp AS jaeger-cpp-client
 ARG JAEGER_CPP_VERSION=v0.9.0
 ARG YAML_CPP_VERSION=yaml-cpp-0.7.0
 ARG TARGETPLATFORM
@@ -183,7 +183,7 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
 
 
 ### Build dd-opentracing-cpp
-FROM opentracing-cpp as dd-opentracing-cpp
+FROM opentracing-cpp AS dd-opentracing-cpp
 ARG DATADOG_VERSION=master
 ARG TARGETPLATFORM
 
@@ -201,7 +201,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.27.0 as build-nginx-debian
+FROM nginx:1.27.0 AS build-nginx-debian
 
 RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
     && echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ ${DEBIAN_VERSION} nginx" >> /etc/apt/sources.list.d/nginx.list \
@@ -210,7 +210,7 @@ RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-releas
 
 
 ### Base build image for alpine
-FROM nginx:${BUILD_NGINX_VERSION}-alpine AS build-nginx-alpine
+FROM nginx:1.27.0-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre2-dev \
@@ -218,7 +218,7 @@ RUN apk add --no-cache \
 
 
 ### Build nginx-opentracing modules
-FROM build-nginx-${BUILD_OS} as build-nginx
+FROM build-nginx-${BUILD_OS} AS build-nginx
 
 COPY --from=jaeger-cpp-client /hunter /hunter
 COPY . /src
@@ -237,16 +237,16 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-FROM nginx:1.27.0-alpine as nginx-alpine
+FROM nginx:1.27.0-alpine AS nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.27.0 as nginx-debian
+FROM nginx:1.27.0 AS nginx-debian
 
 
 ### Build final image
-FROM nginx-${BUILD_OS} as final
+FROM nginx-${BUILD_OS} AS final
 
 COPY --from=build-nginx /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
 COPY --from=dd-opentracing-cpp /usr/local/lib/ /usr/local/lib/
