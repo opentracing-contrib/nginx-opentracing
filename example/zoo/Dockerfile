@@ -1,4 +1,4 @@
-FROM ubuntu:17.10
+FROM ubuntu:24.04
 
 WORKDIR /app
 ADD . /app
