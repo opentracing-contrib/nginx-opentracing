@@ -53,7 +53,7 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.22.2
+ENV CMAKE_VERSION=3.29.6
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
@@ -134,7 +134,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
 ### Build Jaeger cpp-client
 FROM opentracing-cpp AS jaeger-cpp-client
 ARG JAEGER_CPP_VERSION=v0.9.0
-ARG YAML_CPP_VERSION=yaml-cpp-0.7.0
+ARG YAML_CPP_VERSION=0.8.0
 ARG TARGETPLATFORM
 
 # Building yaml-cpp manually because of a bug in jaeger-client-cpp that won't install it
