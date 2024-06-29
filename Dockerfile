@@ -134,7 +134,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
 ### Build Jaeger cpp-client
 FROM opentracing-cpp AS jaeger-cpp-client
 ARG JAEGER_CPP_VERSION=v0.9.0
-ARG YAML_CPP_VERSION=0.8.0
+ARG YAML_CPP_VERSION=yaml-cpp-0.7.0
 ARG TARGETPLATFORM
 
 # Building yaml-cpp manually because of a bug in jaeger-client-cpp that won't install it
