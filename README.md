@@ -1,6 +1,9 @@
 nginx-opentracing
 -----------------
 
+> [!WARNING]
+> NGINX OpenTracing is deprecated. Please use [nginx-datadog](https://github.com/DataDog/nginx-datadog/tree/main).
+
 Enable requests served by nginx for distributed tracing via [The OpenTracing Project](http://opentracing.io).
 
 Dependencies
