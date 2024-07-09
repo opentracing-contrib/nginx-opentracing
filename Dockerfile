@@ -3,13 +3,16 @@ ARG BUILD_OS=debian
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.4.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:11 AS build-base-debian
+FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
     build-essential \
+    binutils-for-host \
+    binutils-aarch64-linux-gnu \
+    binutils-arm-linux-gnueabihf \
     ca-certificates \
-    clang \
+    clang-16 \
     git \
     golang \
     libcurl4 \
@@ -21,6 +24,9 @@ RUN apt-get update \
     pkg-config \
     protobuf-compiler \
     wget
+
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
@@ -53,7 +59,7 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.29.6
+ENV CMAKE_VERSION=3.30.0
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
