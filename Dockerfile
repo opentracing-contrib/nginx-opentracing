@@ -7,11 +7,11 @@ FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
-    build-essential \
-    binutils-for-host \
     binutils-aarch64-linux-gnu \
     binutils-arm-linux-gnueabihf \
+    binutils-for-host \
     binutils-powerpc64le-linux-gnu \
+    build-essential \
     ca-certificates \
     clang-16 \
     git \
@@ -19,6 +19,7 @@ RUN apt-get update \
     libcurl4 \
     libprotobuf-dev \
     libtool \
+    libyaml-cpp-dev \
     libz-dev \
     lld \
     pkg-config \
@@ -47,6 +48,7 @@ RUN apk add --no-cache \
     libcurl \
     lld \
     protobuf-dev \
+    yaml-cpp-dev \
     zlib-dev
 
 COPY --from=xx / /
@@ -139,10 +141,25 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
 ### Build Jaeger cpp-client
 FROM opentracing-cpp AS jaeger-cpp-client
 ARG JAEGER_CPP_VERSION=v0.9.0
+ARG YAML_CPP_VERSION=0.8.0
 ARG TARGETPLATFORM
+
+# Building yaml-cpp manually because of a bug in jaeger-client-cpp that won't install it
+RUN xx-info env && git clone --depth 1 -b $YAML_CPP_VERSION https://github.com/jbeder/yaml-cpp/ && \
+    cd yaml-cpp && mkdir .build && cd .build && \
+    cmake $(xx-clang --print-cmake-defines) \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DYAML_CPP_BUILD_TESTS=OFF \
+    -DYAML_CPP_BUILD_TOOLS=OFF \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON .. \
+    && make -j$(nproc) install \
+    && xx-verify /usr/local/lib/libyaml-cpp.so
 
 RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/jaeger-client-cpp \
     && cd jaeger-client-cpp \
+    && sed -i 's/hunter_add_package(yaml-cpp)/#hunter_add_package(yaml-cpp)/' CMakeLists.txt \
+    && sed -i 's/yaml-cpp::yaml-cpp/yaml-cpp/' CMakeLists.txt \
     # Hunter doesn't read CMake variables, so we need to set them manually
     && printf "%s\n" "" "set(CMAKE_C_COMPILER clang)"  "set(CMAKE_CXX_COMPILER clang++)" \
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
