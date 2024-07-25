@@ -19,7 +19,6 @@ RUN apt-get update \
     libcurl4 \
     libprotobuf-dev \
     libtool \
-    libyaml-cpp-dev \
     libz-dev \
     lld \
     pkg-config \
@@ -32,7 +31,7 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 \
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-dev libyaml-cpp-dev
+RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-dev
 
 
 ### Build base image for alpine
@@ -48,19 +47,18 @@ RUN apk add --no-cache \
     libcurl \
     lld \
     protobuf-dev \
-    yaml-cpp-dev \
     zlib-dev
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-cxx-dev yaml-cpp-dev
+RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc curl-dev msgpack-cxx-dev
 
 
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.30.0
+ENV CMAKE_VERSION=3.30.1
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
@@ -152,14 +150,13 @@ RUN xx-info env && git clone --depth 1 -b $YAML_CPP_VERSION https://github.com/j
     -DCMAKE_BUILD_TYPE=Release \
     -DYAML_CPP_BUILD_TESTS=OFF \
     -DYAML_CPP_BUILD_TOOLS=OFF \
-    -DCMAKE_POSITION_INDEPENDENT_CODE=ON .. \
+    -DYAML_ENABLE_PIC=ON .. \
     && make -j$(nproc) install \
     && xx-verify /usr/local/lib/libyaml-cpp.so
 
 RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/jaeger-client-cpp \
     && cd jaeger-client-cpp \
     && sed -i 's/hunter_add_package(yaml-cpp)/#hunter_add_package(yaml-cpp)/' CMakeLists.txt \
-    && sed -i 's/yaml-cpp::yaml-cpp/yaml-cpp/' CMakeLists.txt \
     # Hunter doesn't read CMake variables, so we need to set them manually
     && printf "%s\n" "" "set(CMAKE_C_COMPILER clang)"  "set(CMAKE_CXX_COMPILER clang++)" \
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
