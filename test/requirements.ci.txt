@@ -1,6 +1,6 @@
 docker==7.1.0
 grpcio==1.65.4
-protobuf==5.27.2
+protobuf==5.27.3
 requests==2.32.3
 urllib3==2.2.2
 websocket-client==1.8.0
