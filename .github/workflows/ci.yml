@@ -52,7 +52,9 @@ jobs:
             1.25.5,
             1.26.0,
             1.26.1,
+            1.26.2,
             1.27.0,
+            1.27.1,
           ]
     steps:
       - name: Checkout Repository
