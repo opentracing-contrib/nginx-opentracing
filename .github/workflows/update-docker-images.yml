@@ -122,8 +122,7 @@ jobs:
         with:
           context: git
           images: |
-            opentracing/nginx-opentracing
-            ghcr.io/opentracing-contrib/nginx-opentracing
+            ghcr.io/OrionSopra/nginx-opentracing
           flavor: |
             latest=true
             suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true

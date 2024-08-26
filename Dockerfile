@@ -205,7 +205,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.27.1 AS build-nginx-debian
+FROM nginx:1.25.5 AS build-nginx-debian
 
 RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
     && echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ ${DEBIAN_VERSION} nginx" >> /etc/apt/sources.list.d/nginx.list \
@@ -214,7 +214,7 @@ RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-releas
 
 
 ### Base build image for alpine
-FROM nginx:1.27.1-alpine AS build-nginx-alpine
+FROM nginx:1.25.5-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre2-dev \
@@ -241,12 +241,12 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-FROM nginx:1.27.1-alpine AS nginx-alpine
+FROM nginx:1.25.5-alpine AS nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.27.1 AS nginx-debian
+FROM nginx:1.25.5 AS nginx-debian
 
 
 ### Build final image
