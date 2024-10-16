@@ -17,7 +17,7 @@ concurrency:
 jobs:
   release-notes:
     name: Create/Update release notes
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
 
   build-binaries:
     name: Build Binaries
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: release-notes
     strategy:
       matrix:
