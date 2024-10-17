@@ -1,28 +1,29 @@
 change:
-  - head-branch: ['^change/']
+  - head-branch: ["^change/"]
 
 enhancement:
-  - head-branch: ['^feature/', '^feat/', '^enhancement/', '^enh/']
+  - head-branch: ["^feature/", "^feat/", "^enhancement/", "^enh/"]
 
 bug:
-  - head-branch: ['^fix/', '^bug/']
+  - head-branch: ["^fix/", "^bug/"]
 
 chore:
-  - head-branch: ['^chore/']
+  - head-branch: ["^chore/"]
 
 documentation:
-  - head-branch: ['^docs/', '^doc/']
+  - head-branch: ["^docs/", "^doc/"]
   - changed-files:
-    - any-glob-to-any-file: '**/*.md'
+      - any-glob-to-any-file: "**/*.md"
 
 dependencies:
-  - head-branch: ['^deps/', '^dep/', '^dependabot/', 'pre-commit-ci-update-config']
+  - head-branch:
+      ["^deps/", "^dep/", "^dependabot/", "pre-commit-ci-update-config"]
 
 tests:
   - any:
-      - head-branch: ['^tests/', '^test/']
+      - head-branch: ["^tests/", "^test/"]
       - changed-files:
-        - any-glob-to-any-file: 'test/**/*'
+          - any-glob-to-any-file: "test/**/*"
   - all:
       - changed-files:
-        - all-globs-to-all-files: '!test/requirements.txt'
+          - all-globs-to-all-files: "!test/requirements.txt"

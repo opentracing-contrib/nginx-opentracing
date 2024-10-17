@@ -19,7 +19,7 @@ writes the profile data to a shared sqlite database and resizes the profile
 picture to a common thumbnail size. Here's what the NGINX configuration looks
 like:
 
-```
+```nginx
 events {}
 
 http {
@@ -89,12 +89,14 @@ Enabling OpenTracing for NGINX
 
 We can tell NGINX to trace every request by adding these two lines to
 `nginx.conf`:
-```
+
+```nginx
 http {
   opentracing_load_tracer /path/to/tracer/plugin /path/to/tracer/config;
   opentracing on;
 ...
 ```
+
 Now, we'll see the following when admitting a new animal into the zoo:
 
 ![alt text](data/nginx-upload-trace1.png "Trace")
@@ -105,13 +107,15 @@ change this behavior by using the directives `opentracing_operation_name` and
 `opentracing_location_operation_name` to set the names of the request and
 location block spans respectively. For
 example, by adding
-```
+
+```nginx
 http {
 ...
     location = /upload/animal {
       opentracing_location_operation_name upload;
     ...
 ```
+
 The trace will change to
 
 ![alt text](data/nginx-upload-trace2.png "Trace")
@@ -127,16 +131,17 @@ Enabling OpenTracing for the Backend
 
 When using express with Node.js, OpenTracing can be turn on
 by adding tracing middleware to the express app:
+
 ```JavaScript
 const app = express();
 app.use(tracingMiddleware.middleware({ tracer }));
 ...
 ```
+
 If tracing is additionally manually added for the database and image
 operations, we'll see the following when uploading:
 
 ![alt text](data/nginx-upload-trace3.png "Trace")
-
 
 Performance Improvements
 ------------------------
@@ -145,10 +150,13 @@ One source of inefficiency we can see from looking at the trace is the file uplo
 for an animal's profile picture. The image is packaged as a component of the request body
 using the multipart/form-data format where it's sent by NGINX to a Node.js server which uses
 [form middleware](https://www.npmjs.com/package/express-formidable) to extract the file
-and write it to disk. As pointed out in this [article](https://coderwall.com/p/swgfvw/nginx-direct-file-upload-without-passing-them-through-backend), there is some unnecessary copying that can
-be eliminated by having NGINX write the file to disk and pass the file's path instead
-of its contents to the Node.js servers. Updating NGINX's configuration file to do this
-```
+and write it to disk. As pointed out in this [article](https://coderwall.com/p/swgfvw/nginx-direct-file-upload-without-passing-them-through-backend),
+there is some unnecessary copying that can be eliminated by having NGINX write the file to disk
+and pass the file's path instead of its contents to the Node.js servers.
+
+Updating NGINX's configuration file to do this
+
+```nginx
     location = /upload/animal {
       ...
       client_body_temp_path      /tmp/;
@@ -162,6 +170,7 @@ of its contents to the Node.js servers. Updating NGINX's configuration file to d
       proxy_redirect             off;
       ...
 ```
+
 the `upload` span now looks like
 
 ![alt text](data/nginx-upload-trace4.png "Trace")

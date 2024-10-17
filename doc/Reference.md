@@ -1,5 +1,6 @@
-Directives
-----------
+# Reference
+
+## Directives
 
 ### `opentracing`
 
@@ -75,7 +76,8 @@ of the span for an NGINX location block.
 - **default**: `on`
 - **context**: `http`, `server`, `location`
 
-Enables or disables using OpenTracing spans from incoming requests as parent for created ones. Might be disabled for security reasons.
+Enables or disables using OpenTracing spans from incoming requests as parent for created ones.
+Might be disabled for security reasons.
 
 ### `opentracing_tag`
 
@@ -85,10 +87,9 @@ Enables or disables using OpenTracing spans from incoming requests as parent for
 Sets a [tag](https://github.com/opentracing/specification/blob/master/specification.md#set-a-span-tag)
 with the given `key` and `value` for an NGINX span.
 
-Variables
----------
+## Variables
 
-### `opentracing_context_`*name*
+### `opentracing_context_`_name_
 
 Expands to the a value of the active span context; the last part of the variable
 name is the span context's header converted to lower case with dashes replaced by

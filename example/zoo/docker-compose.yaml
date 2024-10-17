@@ -1,6 +1,5 @@
-version: '2'
+version: "2"
 services:
-
   nginx:
     image: opentracing/nginx-opentracing
     networks:
