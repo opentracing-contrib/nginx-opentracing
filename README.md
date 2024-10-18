@@ -1,34 +1,40 @@
-nginx-opentracing
------------------
+# NGINX plugin for OpenTracing
+
+[![Docker](https://github.com/opentracing-contrib/nginx-opentracing/actions/workflows/docker.yml/badge.svg)](https://github.com/opentracing-contrib/nginx-opentracing/actions/workflows/docker.yml)
+[![GitHub release (laßtest SemVer)](https://img.shields.io/github/v/release/opentracing-contrib/nginx-opentracing?logo=github&sort=semver)](https://github.com/opentracing-contrib/nginx-opentracing/releases/latest)
+![GitHub all releases](https://img.shields.io/github/downloads/opentracing-contrib/nginx-opentracing/total?logo=github)
+![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/opentracing-contrib/nginx-opentracing/latest/total?sort=semver&logo=github)
+[![Docker Pulls](https://img.shields.io/docker/pulls/opentracing/nginx-opentracing.svg)](https://hub.docker.com/r/opentracing/nginx-opentracing/)
 
 Enable requests served by nginx for distributed tracing via [The OpenTracing Project](http://opentracing.io).
 
-Dependencies
-------------
+## Dependencies
+
 - The [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp)
 - A C++ OpenTracing Tracer. It currently works with
-[Jaeger](https://github.com/jaegertracing/cpp-client),
-[Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing),
-[LightStep](https://github.com/lightstep/lightstep-tracer-cpp), or
-[Datadog](https://github.com/DataDog/dd-opentracing-cpp/).
+  [Jaeger](https://github.com/jaegertracing/cpp-client),
+  [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing),
+  [LightStep](https://github.com/lightstep/lightstep-tracer-cpp), or
+  [Datadog](https://github.com/DataDog/dd-opentracing-cpp/).
 - Source for [Nginx 1.9.13 or later](http://nginx.org/).
 
-Installation
-------------
+## Installation
+
 For `linux-x86_64`, pre-compiled binaries are provided for the supported versions of NGINX.
 These can be dropped into existing NGINX installations provided that NGINX was compiled with
-the `--with-compat` option. See [example/trivial/ubuntu-x86_64](example/trivial/ubuntu-x86_64) for an
-example of how to set it up.
+the `--with-compat` option.
+See [example/trivial/ubuntu-x86_64](example/trivial/ubuntu-x86_64) for an example of how to set it up.
 
-Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker) or
-[built from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
+Otherwise, nginx-opentracing can be used from the [Docker image](https://github.com/opentracing-contrib/nginx-opentracing#docker)
+or [built from source](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source).
 
-Getting Started
----------------
+## Getting Started
+
 First, write a configuration for the tracer used. Below's an example of what
 a Jaeger configuration might look like:
 
 /etc/jaeger-nginx-config.json
+
 ```json
 {
   "service_name": "nginx",
@@ -55,7 +61,8 @@ See the vendor documentation for details on what options are available.
 
 You can then set up NGINX for distributed tracing by adding the following to
 nginx.conf:
-```
+
+```nginx
 # Load the OpenTracing dynamic module.
 load_module modules/ngx_http_opentracing_module.so;
 
@@ -99,8 +106,8 @@ See [Tutorial](doc/Tutorial.md) for a more complete example,
 [Reference](doc/Reference.md) for a list of available OpenTracing-related
 directives.
 
-Docker
-------
+## Docker
+
 A docker image `opentracing/nginx-opentracing` is provided to support using nginx with OpenTracing
 in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/).
 See [here](example/) for examples of how to use it.
@@ -124,18 +131,17 @@ docker build \
 
 Other build arguments
 
-* `OPENTRACING_CPP_VERSION`
-* `JAEGER_CPP_VERSION`
-* `GRPC_VERSION`
+- `OPENTRACING_CPP_VERSION`
+- `JAEGER_CPP_VERSION`
+- `GRPC_VERSION`
 
-Building From Source
---------------------
+## Building From Source
 
-```
-$ tar zxvf nginx-1.9.x.tar.gz
-$ cd nginx-1.9.x
-$ ./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing
-$ make && sudo make install
+```bash
+tar zxvf nginx-1.9.x.tar.gz
+cd nginx-1.9.x
+./configure --add-dynamic-module=/absolute/path/to/nginx-opentracing/opentracing
+make && sudo make install
 ```
 
 You will also need to install a C++ tracer for either
@@ -145,7 +151,7 @@ You will also need to install a C++ tracer for either
 or [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing).
 For linux x86-64, portable binary plugins are available:
 
-```
+```bash
 # Jaeger
 wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/v0.4.2/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
 
@@ -162,11 +168,10 @@ wget -O - https://github.com/DataDog/dd-opentracing-cpp/releases/download/v0.3.0
 Make sure the nginx module for opentracing and a tracer plugin were built against the same version of [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp).
 By default [Opentracing v1.6.0](https://github.com/opentracing/opentracing-cpp/releases/tag/v1.6.0) is used.
 
-Testing
---------
+## Testing
 
 Run tests on local machine requires `pyenv` and tested against version 3.8.5.
 
-```shell
-$ make test
+```bash
+make test
 ```
