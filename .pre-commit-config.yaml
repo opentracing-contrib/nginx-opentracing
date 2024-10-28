@@ -30,7 +30,7 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.18.0
+    rev: v3.19.0
     hooks:
       - id: pyupgrade
 
@@ -45,7 +45,7 @@ repos:
       - id: black
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.21.1
+    rev: v8.21.2
     hooks:
       - id: gitleaks
 
