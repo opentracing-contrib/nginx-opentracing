@@ -12,7 +12,7 @@ defaults:
 jobs:
   variables:
     name: Get version of base image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     outputs:
       versions: ${{ steps.version.outputs.matrix }}
       git_tag: ${{ steps.tag.outputs.git_tag }}
@@ -44,7 +44,7 @@ jobs:
 
   check:
     name: Check if updates are needed
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: variables
     outputs:
       needs-updating-debian: ${{ steps.var.outputs.debian }}
@@ -71,7 +71,7 @@ jobs:
   build-docker:
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' }}
     name: Build Docker Image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [check, variables]
     strategy:
       matrix:
