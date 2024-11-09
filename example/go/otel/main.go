@@ -15,13 +15,13 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
-	"go.opentelemetry.io/otel/label"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -66,14 +66,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tracer := otel.Tracer("basic")
 
-	commonLabels := []label.KeyValue{
-		label.String("span.kind", "server"),
-		label.String("http.method", "GET"),
-		label.String("http.route", "/"),
+	commonLabels := []attribute.KeyValue{
+		attribute.String("span.kind", "server"),
+		attribute.String("http.method", http.MethodGet),
+		attribute.String("http.route", "/"),
 	}
 
 	ctx, span := tracer.Start(
-		r.Context(),
+		ctx,
 		endpoint,
 		trace.WithAttributes(commonLabels...))
 	defer span.End()
@@ -107,19 +107,19 @@ func handler(w http.ResponseWriter, r *http.Request) {
 // metric providers.
 func initProvider(service_name, collector_address string) (func(), error) {
 	log.Println("Initialize tracing...")
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-	driver := otlpgrpc.NewDriver(
-		otlpgrpc.WithInsecure(),
-		otlpgrpc.WithEndpoint(collector_address),
-		// otlpgrpc.WithDialOption(grpc.WithBlock()), // useful for testing
-	)
 	// If the OpenTelemetry Collector is running on a local cluster (minikube or
 	// microk8s), it should be accessible through the NodePort service at the
 	// `localhost:30080` address. Otherwise, replace `localhost` with the
 	// address of your cluster. If you run the app inside k8s, then you can
 	// probably connect directly to the service through dns
-	exp, err := otlp.NewExporter(ctx, driver)
+	exp, err := otlptracegrpc.New(
+		ctx,
+		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint(collector_address),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create exporter")
 	}
@@ -136,7 +136,7 @@ func initProvider(service_name, collector_address string) (func(), error) {
 
 	bsp := sdktrace.NewBatchSpanProcessor(exp)
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithConfig(sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
 	)

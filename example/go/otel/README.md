@@ -19,7 +19,7 @@ make docker.build
 From the current directory
 
 ```shell
-docker-compose up --build
+docker compose up --build
 ```
 
 Send requests to the app:
