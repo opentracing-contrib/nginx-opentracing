@@ -10,7 +10,7 @@
     "commander": "^9.4.1",
     "express": "^4.21.1",
     "express-basic-auth": "^1.2.1",
-    "lightstep-tracer": "^0.20.2",
+    "lightstep-tracer": "^0.34.0",
     "opentracing": "0.14.7",
     "pug": "^2.0.0-beta.12",
     "request": "^2.88.2",
