@@ -13,7 +13,7 @@
     "lightstep-tracer": "^0.20.2",
     "opentracing": "0.14.7",
     "pug": "^2.0.0-beta.12",
-    "request": "^2.81.0",
+    "request": "^2.88.2",
     "restler": "^3.4.0",
     "sharp": "^0.17.3",
     "sqlite3": "^3.1.8",
