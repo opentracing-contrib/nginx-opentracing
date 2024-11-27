@@ -12,7 +12,7 @@
     "express-basic-auth": "^1.2.1",
     "lightstep-tracer": "^0.34.0",
     "opentracing": "0.14.7",
-    "pug": "^2.0.4",
+    "pug": "^3.0.3",
     "request": "^2.88.2",
     "restler": "^3.4.0",
     "sharp": "^0.33.5",
