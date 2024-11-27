@@ -4,20 +4,20 @@
   "devDependencies": {
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.31.0"
   },
   "dependencies": {
-    "commander": "^9.4.1",
-    "express": "^4.15.2",
-    "express-basic-auth": "^1.0.1",
-    "lightstep-tracer": "^0.20.2",
+    "commander": "^9.5.0",
+    "express": "^4.21.1",
+    "express-basic-auth": "^1.2.1",
+    "lightstep-tracer": "^0.34.0",
     "opentracing": "0.14.7",
-    "pug": "^2.0.0-beta.12",
-    "request": "^2.81.0",
+    "pug": "^3.0.3",
+    "request": "^2.88.2",
     "restler": "^3.4.0",
-    "sharp": "^0.17.3",
-    "sqlite3": "^3.1.8",
-    "uuid": "^9.0.0",
-    "winston": "^2.3.1"
+    "sharp": "^0.33.5",
+    "sqlite3": "^3.1.13",
+    "uuid": "^9.0.1",
+    "winston": "^2.4.7"
   }
 }
