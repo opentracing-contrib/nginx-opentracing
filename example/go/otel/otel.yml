@@ -5,6 +5,7 @@ receivers:
       grpc:
   jaeger:
     protocols:
+      grpc:
       # 14268    - used by nginx via jaeger-config.json
       thrift_http:
       # 6831/UDP - not used but specified in jaeger-config.json
@@ -14,14 +15,11 @@ receivers:
 processors:
   batch:
 exporters:
-  jaeger:
-    endpoint: jaeger:14250
-    insecure: true
-  logging:
-    loglevel: info
+  otlp/jaeger:
+    endpoint: jaeger:4317
 service:
   pipelines:
     traces:
       receivers: [otlp, jaeger, zipkin]
       processors: [batch]
-      exporters: [logging, jaeger]
+      exporters: [debug, otlp/jaeger]

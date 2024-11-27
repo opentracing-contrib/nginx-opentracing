@@ -1,37 +1,15 @@
-version: '3.9'
 services:
   otel:
-    image: otel/opentelemetry-collector:latest
-    pull_policy: always
+    image: otel/opentelemetry-collector-contrib:0.113.0
     volumes:
-      - ./otel.yml:/conf/otel-collector-config.yml
-    command: /otel --config=/conf/otel-collector-config.yml
-    networks:
-      example:
-        aliases:
-          - otel
-    expose:
-      # - "6831/udp" # Default endpoint for Jaeger thrift_compact receiver
-      - "14268"    # Jaeger http thrift receiver
-      - "4317"     # Default endpoint for OpenTelemetry receiver
-      - "9411"     # Zipkin port
-      - "8888"     # Metrics
-    ports:
-      - "55680:55680"
-      - "9411:9411"
-      # - "6831:6831/udp"
-      - "8888:8888"
-      - "14268:14268"
+      - ./otel.yml:/etc/otelcol/config.yaml
 
   nginx:
     image: opentracing/nginx-opentracing:edge
+    pull_policy: always
     restart: on-failure
     depends_on:
       - otel
-    networks:
-      example:
-        aliases:
-          - nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./jaeger-config.json:/etc/jaeger-config.json
@@ -44,35 +22,21 @@ services:
       - "8082:8082"
 
   jaeger:
-    image: jaegertracing/all-in-one
+    image: jaegertracing/all-in-one:1.62.0
     environment:
-      - COLLECTOR_ZIPKIN_HTTP_PORT=19411
-    pull_policy: always
-    networks:
-      example:
-        aliases:
-          - jaeger
-    expose:
-      - "16686"
-      - "14250"
+      - LOG_LEVEL=debug
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
     ports:
       - "16686:16686"
-      - "14250:14250"
 
-  app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
-    networks:
-      example:
-        aliases:
-          - web
-    expose:
-      - "8080"
-    ports:
-      - "8080:8080"
     environment:
       OT_COLLECTOR_ADDR: otel:4317
+    ports:
+      - "8080:8080"
 
 networks:
   example: {}
