@@ -1,4 +1,4 @@
-name: "Pull Request Labeler"
+name: Pull Request Labeler
 on:
   - pull_request_target
 
@@ -12,10 +12,16 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            labeler.yml
+          sparse-checkout-cone-mode: false
+          repository: opentracing-contrib/common
 
       - uses: actions/labeler@v5
         continue-on-error: true
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          sync-labels: true
+          configuration-path: labeler.yml
