@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.12
 ARG BUILD_OS=debian
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.5.0 AS xx
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.6.1 AS xx
 
 ### Build base image for debian
 FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
