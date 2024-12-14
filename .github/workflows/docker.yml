@@ -108,7 +108,7 @@ jobs:
 
       - name: Scan SBOM
         id: scan
-        uses: anchore/scan-action@v5
+        uses: anchore/scan-action@v6
         with:
           sbom: "sbom.json"
           only-fixed: true
