@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       registry:
-        image: registry:2
+        image: registry:3
         ports:
           - 5000:5000
     strategy:
