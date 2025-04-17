@@ -78,7 +78,10 @@ ngx_array_t* discover_span_context_keys(ngx_pool_t* pool, ngx_log_t* log,
   for (auto key : keys) {
     auto element =
         static_cast<opentracing::string_view*>(ngx_array_push(result));
-    *element = key;
+    if (element == nullptr) {
+      throw std::bad_alloc{};
+    }
+      *element = key;
   }
   return result;
 }
