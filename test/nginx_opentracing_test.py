@@ -14,13 +14,13 @@ import app_pb2 as app_messages
 import app_pb2_grpc as app_service
 import docker
 import grpc
-from absl import logging
-
 try:
-    # Initialize the abseil logging system - this prevents the "WARNING: All log messages..." message
-    logging.set_verbosity(logging.INFO)
-    logging.use_absl_handler()
+    from absl import logging as absl_logging
+    # Prevent noisy "All log messages ..." banner
+    absl_logging.set_verbosity(absl_logging.INFO)
+    absl_logging.use_absl_handler()
 except ImportError:
+    # absl is optional – continue with stdlib logging defaults
     pass
 
 
@@ -131,10 +131,9 @@ class NginxOpenTracingTest(unittest.TestCase):
             self.grpcConn = grpc.insecure_channel("localhost:8081")
             try:
                 grpc.channel_ready_future(self.grpcConn).result(timeout=10)
-            except grpc.FutureTimeoutError:
-                raise RuntimeError("Error connecting to gRPC server")
+            except grpc.FutureTimeoutError as err:
+                raise RuntimeError("Error connecting to gRPC server") from err
         return self.grpcConn
-
     def tearDown(self):
         self._stopDocker()
         logdir = None
@@ -267,18 +266,10 @@ class NginxOpenTracingTest(unittest.TestCase):
         app = app_service.AppStub(grpc_conn)
         try:
             app.CheckTraceHeader(app_messages.Empty())
-        except Exception as e:
-            # Close the connection before allowing any exceptions to propagate
-            if self.grpcConn:
+        finally:
+            if self.grpcConn is not None:
                 self.grpcConn.close()
                 self.grpcConn = None
-            raise
-
-        # Explicitly close the connection before stopping Docker
-        if self.grpcConn:
-            self.grpcConn.close()
-            self.grpcConn = None
-
         self._stopEnvironment()
         self.assertEqual(len(self.nginx_traces), 2)
 
