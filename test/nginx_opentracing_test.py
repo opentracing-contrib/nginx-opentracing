@@ -4,7 +4,6 @@ import os
 import shutil
 import stat
 import subprocess
-import sys
 import tempfile
 import time
 import unittest
@@ -14,16 +13,6 @@ import app_pb2 as app_messages
 import app_pb2_grpc as app_service
 import docker
 import grpc
-
-try:
-    from absl import logging as absl_logging
-
-    # Prevent noisy "All log messages ..." banner
-    absl_logging.set_verbosity(absl_logging.INFO)
-    absl_logging.use_absl_handler()
-except ImportError:
-    # absl is optional – continue with stdlib logging defaults
-    pass
 
 
 def get_docker_client():
@@ -98,7 +87,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                 time.sleep(0.5)
             except docker.errors.APIError as e:
                 if time.time() > timeout:
-                    raise TimeoutError(f"Docker API error: {str(e)}")
+                    raise TimeoutError(f"Docker API error: {str(e)}") from e
                 time.sleep(0.5)
 
     def _logEnvironment(self):
