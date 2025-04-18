@@ -13,9 +13,9 @@ docker-build-binaries:
 
 .PHONY: test
 test:
-	docker build -t nginx-opentracing-test/nginx -f test/Dockerfile-test . --build-arg NGINX_VERSION=$(NGINX_VERSION)
-	docker build -t nginx-opentracing-test/backend -f test/Dockerfile-backend ./test
-	docker build -t nginx-opentracing-test/grpc-backend -f test/environment/grpc/Dockerfile ./test/environment/grpc
+	docker build -t nginx-opentracing-test/nginx -f test/Dockerfile-test . --build-arg NGINX_VERSION=$(NGINX_VERSION) --load
+	docker build -t nginx-opentracing-test/backend -f test/Dockerfile-backend ./test --load
+	docker build -t nginx-opentracing-test/grpc-backend -f test/environment/grpc/Dockerfile ./test/environment/grpc --load
 	cd test && LOG_DIR=$(CURDIR)/test/test-log PYTHONPATH=environment/grpc python3 nginx_opentracing_test.py
 
 .PHONY: clean
