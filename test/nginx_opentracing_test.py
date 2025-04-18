@@ -4,6 +4,7 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -13,6 +14,14 @@ import app_pb2 as app_messages
 import app_pb2_grpc as app_service
 import docker
 import grpc
+from absl import logging
+
+try:
+    # Initialize the abseil logging system - this prevents the "WARNING: All log messages..." message
+    logging.set_verbosity(logging.INFO)
+    logging.use_absl_handler()
+except ImportError:
+    pass
 
 
 def get_docker_client():
@@ -47,23 +56,48 @@ class NginxOpenTracingTest(unittest.TestCase):
             stderr=subprocess.PIPE,
         )
         self.client = get_docker_client()
-        timeout = time.time() + 120
-        while len(self.client.containers.list()) != 4:
-            if time.time() > timeout:
-                raise TimeoutError()
-            time.sleep(0.001)
+        self.wait_for_containers()
 
         # Wait so that backend can come up.
         # TODO: replace with something better
         time.sleep(5)
 
         self.conn = http.client.HTTPConnection("localhost", 8080, timeout=5)
-        self.grpcConn = grpc.insecure_channel("localhost:8081")
-        try:
-            grpc.channel_ready_future(self.grpcConn).result(timeout=10)
-        except grpc.FutureTimeoutError:
-            sys.exit("Error connecting to server")
+
+        # Only create the gRPC connection when needed, not during setup
+        self.grpcConn = None
         self.running = True
+
+    def wait_for_containers(self, expected_containers=None):
+        if expected_containers is None:
+            expected_containers = ["nginx", "backend", "php_fpm", "grpc"]
+
+        timeout = time.time() + 120
+        while True:
+            try:
+                containers = {c.name: c.status for c in self.client.containers.list()}
+
+                # Check if each expected container name is a substring of any running container
+                ready = all(
+                    any(
+                        expected in name and status == "running"
+                        for name, status in containers.items()
+                    )
+                    for expected in expected_containers
+                )
+
+                if ready:
+                    break
+
+                if time.time() > timeout:
+                    raise TimeoutError(
+                        f"Containers not ready in time. Current containers: {containers}"
+                    )
+                time.sleep(0.5)
+            except docker.errors.APIError as e:
+                if time.time() > timeout:
+                    raise TimeoutError(f"Docker API error: {str(e)}")
+                time.sleep(0.5)
 
     def _logEnvironment(self):
         logdir = os.environ["LOG_DIR"]
@@ -91,6 +125,16 @@ class NginxOpenTracingTest(unittest.TestCase):
             os.path.join(test_log, "nginx-error.log"),
         )
 
+    def _setup_grpc(self):
+        """Set up gRPC connection only when needed"""
+        if self.grpcConn is None:
+            self.grpcConn = grpc.insecure_channel("localhost:8081")
+            try:
+                grpc.channel_ready_future(self.grpcConn).result(timeout=10)
+            except grpc.FutureTimeoutError:
+                raise RuntimeError("Error connecting to gRPC server")
+        return self.grpcConn
+
     def tearDown(self):
         self._stopDocker()
         logdir = None
@@ -101,9 +145,17 @@ class NginxOpenTracingTest(unittest.TestCase):
         os.chdir(self.testdir)
         self.client.close()
         self.conn.close()
-        self.grpcConn.close()
+
+        # Only close gRPC if it was created
+        if self.grpcConn:
+            self.grpcConn.close()
 
     def _stopDocker(self):
+        # Close any active gRPC connection before Docker operations that might fork
+        if self.grpcConn is not None:
+            self.grpcConn.close()
+            self.grpcConn = None
+
         if not self.running:
             return
         self.running = False
@@ -210,11 +262,24 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.assertEqual(len(self.nginx_traces), 2)
 
     def testGrpcPropagation(self):
-        app = app_service.AppStub(self.grpcConn)
-        app.CheckTraceHeader(app_messages.Empty())
+        # Set up gRPC just for this test
+        grpc_conn = self._setup_grpc()
+        app = app_service.AppStub(grpc_conn)
+        try:
+            app.CheckTraceHeader(app_messages.Empty())
+        except Exception as e:
+            # Close the connection before allowing any exceptions to propagate
+            if self.grpcConn:
+                self.grpcConn.close()
+                self.grpcConn = None
+            raise
+
+        # Explicitly close the connection before stopping Docker
+        if self.grpcConn:
+            self.grpcConn.close()
+            self.grpcConn = None
 
         self._stopEnvironment()
-
         self.assertEqual(len(self.nginx_traces), 2)
 
 
