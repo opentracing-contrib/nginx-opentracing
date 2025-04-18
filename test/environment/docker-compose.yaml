@@ -1,6 +1,7 @@
 services:
 
   nginx:
+    container_name: nginx
     image: nginx-opentracing-test/nginx
     networks:
       testnet:
@@ -30,6 +31,7 @@ services:
       - daemon off;
 
   backend:
+    container_name: backend
     image: nginx-opentracing-test/backend
     networks:
       testnet:
@@ -43,6 +45,7 @@ services:
       - "5001:5001"
 
   php_fpm:
+    container_name: php_fpm
     image: php:8-fpm
     networks:
       testnet:
@@ -56,6 +59,7 @@ services:
       - "9000:9000"
 
   grpc_backend:
+    container_name: grpc_backend
     image: nginx-opentracing-test/grpc-backend
     networks:
       testnet:

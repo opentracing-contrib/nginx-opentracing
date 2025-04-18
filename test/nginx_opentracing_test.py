@@ -61,19 +61,17 @@ class NginxOpenTracingTest(unittest.TestCase):
 
     def wait_for_containers(self, expected_containers=None):
         if expected_containers is None:
-            expected_containers = ["nginx", "backend", "php_fpm", "grpc"]
+            expected_containers = ["nginx", "backend", "php_fpm", "grpc_backend"]
 
         timeout = time.time() + 120
         while True:
             try:
-                containers = {c.name: c.status for c in self.client.containers.list()}
+                containers = {
+                    c.name: c.status for c in self.client.containers.list(all=True)
+                }
 
-                # Check if each expected container name is a substring of any running container
                 ready = all(
-                    any(
-                        expected in name and status == "running"
-                        for name, status in containers.items()
-                    )
+                    containers.get(expected) == "running"
                     for expected in expected_containers
                 )
 
