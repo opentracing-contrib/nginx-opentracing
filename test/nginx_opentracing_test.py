@@ -14,8 +14,10 @@ import app_pb2 as app_messages
 import app_pb2_grpc as app_service
 import docker
 import grpc
+
 try:
     from absl import logging as absl_logging
+
     # Prevent noisy "All log messages ..." banner
     absl_logging.set_verbosity(absl_logging.INFO)
     absl_logging.use_absl_handler()
@@ -134,6 +136,7 @@ class NginxOpenTracingTest(unittest.TestCase):
             except grpc.FutureTimeoutError as err:
                 raise RuntimeError("Error connecting to gRPC server") from err
         return self.grpcConn
+
     def tearDown(self):
         self._stopDocker()
         logdir = None
