@@ -136,7 +136,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.conn.close()
 
         # Only close gRPC if it was created
-        if self.grpcConn:
+        if self.grpcConn is not None:
             self.grpcConn.close()
 
     def _stopDocker(self):
