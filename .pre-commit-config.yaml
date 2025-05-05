@@ -45,7 +45,7 @@ repos:
       - id: black
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.3
+    rev: v8.25.1
     hooks:
       - id: gitleaks
 
@@ -55,6 +55,6 @@ repos:
       - id: markdownlint-cli2
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.0
+    rev: v1.37.1
     hooks:
       - id: yamllint
