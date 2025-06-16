@@ -58,7 +58,7 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.30.1
+ENV CMAKE_VERSION=3.31.8
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
