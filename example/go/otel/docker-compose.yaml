@@ -22,7 +22,7 @@ services:
       - "8082:8082"
 
   jaeger:
-    image: jaegertracing/all-in-one:1.70.0
+    image: jaegertracing/all-in-one:1.71.0
     environment:
       - LOG_LEVEL=debug
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
