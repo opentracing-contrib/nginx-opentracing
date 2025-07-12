@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@v1.2.3
+        uses: lucacome/draft-release@v1.2.4
         with:
           minor-label: "enhancement"
           major-label: "change"
