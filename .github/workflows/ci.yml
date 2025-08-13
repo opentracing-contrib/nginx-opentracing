@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Create/Update Draft
         uses: lucacome/draft-release@v1.2.4
@@ -64,7 +64,7 @@ jobs:
           ]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v3
