@@ -36,6 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: release-notes
     strategy:
+      fail-fast: false
       matrix:
         nginx_version:
           [
