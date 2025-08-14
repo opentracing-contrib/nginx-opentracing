@@ -1,6 +1,6 @@
 services:
   otel:
-    image: otel/opentelemetry-collector-contrib:0.130.0
+    image: otel/opentelemetry-collector-contrib:0.132.2
     volumes:
       - ./otel.yml:/etc/otelcol/config.yaml
 
@@ -22,7 +22,7 @@ services:
       - "8082:8082"
 
   jaeger:
-    image: jaegertracing/all-in-one:1.71.0
+    image: jaegertracing/all-in-one:1.72.0
     environment:
       - LOG_LEVEL=debug
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
