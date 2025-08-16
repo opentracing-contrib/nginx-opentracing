@@ -110,7 +110,7 @@ directives.
 
 A docker image `opentracing/nginx-opentracing` is provided to support using nginx with OpenTracing
 in a manner analogous to the [nginx Docker image](https://hub.docker.com/_/nginx/).
-See [here](example/) for examples of how to use it.
+See [examples](example/) of how to use it.
 
 Additionally, custom images can be built by running
 

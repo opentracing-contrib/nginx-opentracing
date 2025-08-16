@@ -184,4 +184,4 @@ like after having made both of these changes:
 
 ![alt text](data/nginx-upload-trace5.png "Trace")
 
-The full source code can be viewed [here](../example/zoo).
+The full source code can be viewed in the [example](../example/zoo).
