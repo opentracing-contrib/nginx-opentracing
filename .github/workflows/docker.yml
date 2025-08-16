@@ -10,9 +10,6 @@ on:
     branches:
       - master
 
-env:
-  PLATFORMS: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le,linux/s390x"
-
 concurrency:
   group: ${{ github.ref_name }}-docker
   cancel-in-progress: true
@@ -32,7 +29,7 @@ jobs:
         os: [debian, alpine]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Output Variables
         id: var
@@ -89,7 +86,7 @@ jobs:
         with:
           pull: true
           push: true
-          platforms: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le,linux/s390x"
+          platforms: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
