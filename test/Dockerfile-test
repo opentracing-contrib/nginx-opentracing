@@ -14,7 +14,7 @@ RUN set -x \
   git \
   gnupg2 \
   jq \
-  libpcre3 libpcre3-dev \
+  libpcre2-posix3 libpcre2-dev \
   libssl-dev \
   python3 \
   software-properties-common \

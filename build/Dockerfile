@@ -13,7 +13,7 @@ RUN apt-get update && \
     libtool \
     ssh \
     wget \
-    libpcre3 libpcre3-dev \
+    libpcre2-posix3 libpcre2-dev \
     zlib1g-dev
 
 ENV CFLAGS="-fPIC"
