@@ -84,7 +84,7 @@ jobs:
 
       - name: Scan SBOM
         id: scan
-        uses: anchore/scan-action@v6
+        uses: anchore/scan-action@v7
         with:
           sbom: "sbom-openresty.json"
           only-fixed: true
