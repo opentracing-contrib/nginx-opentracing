@@ -13,7 +13,7 @@ RUN apt-get update \
     binutils-powerpc64le-linux-gnu \
     build-essential \
     ca-certificates \
-    clang-16 \
+    clang-17 \
     git \
     golang \
     libcurl4 \
@@ -25,13 +25,13 @@ RUN apt-get update \
     protobuf-compiler \
     wget
 
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 \
-    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-dev
+RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-cxx-dev
 
 
 ### Build base image for alpine
@@ -58,7 +58,7 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.31.8
+ENV CMAKE_VERSION=3.31.9
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
