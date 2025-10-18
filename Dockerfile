@@ -3,7 +3,7 @@ ARG BUILD_OS=debian
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.9.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
+FROM --platform=$BUILDPLATFORM debian:13 AS build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
