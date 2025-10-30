@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@v2.0.0
+        uses: lucacome/draft-release@v2.0.1
         with:
           minor-label: "enhancement"
           major-label: "change"
@@ -86,7 +86,7 @@ jobs:
           cp out/sbom.spdx.json linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.sbom.spdx.json
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nginx-opentracing-modules-${{ matrix.nginx_version }}
           path: linux-*-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.*

@@ -87,7 +87,7 @@ jobs:
         working-directory: test
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: test-log
