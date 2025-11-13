@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.19
+# syntax=docker/dockerfile:1.20
 ARG BUILD_OS=debian
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.8.0 AS xx
 
