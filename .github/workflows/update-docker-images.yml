@@ -19,7 +19,7 @@ jobs:
       docker_platforms: ${{ steps.vars.outputs.docker_platforms }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Get latest tag
@@ -28,7 +28,7 @@ jobs:
           tag=$(git tag --sort=-version:refname | head -n1)
           echo "git_tag=${tag//v}" >> $GITHUB_OUTPUT
       - name: Checkout Repository at ${{ steps.tag.outputs.git_tag }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: refs/tags/v${{ steps.tag.outputs.git_tag }}
       - name: Set Base image version
@@ -82,7 +82,7 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
     steps:
       - name: Checkout Repository at ${{ needs.variables.outputs.git_tag }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: refs/tags/v${{ needs.variables.outputs.git_tag }}
         if: ${{ matrix.needs-updating == 'true' }}
