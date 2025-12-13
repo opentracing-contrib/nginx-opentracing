@@ -120,7 +120,7 @@ jobs:
         if: always()
 
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         continue-on-error: true
         with:
           name: scan-results-${{ matrix.os }}
