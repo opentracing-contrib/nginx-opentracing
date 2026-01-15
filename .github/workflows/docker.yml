@@ -84,7 +84,7 @@ jobs:
         with:
           pull: true
           push: true
-          platforms: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le"
+          platforms: "linux/amd64,linux/arm64,linux/ppc64le,linux/riscv64"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
