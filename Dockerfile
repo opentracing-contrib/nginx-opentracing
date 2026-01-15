@@ -260,7 +260,7 @@ FROM nginx:1.29.4 AS nginx-debian
 FROM nginx-${BUILD_OS} AS final
 
 COPY --from=build-nginx /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
-COPY --from=dd-opentracing-cpp /usr/local/lib/ /usr/local/lib/
+# COPY --from=dd-opentracing-cpp /usr/local/lib/ /usr/local/lib/
 COPY --from=jaeger-cpp-client /usr/local/lib/ /usr/local/lib/
 COPY --from=zipkin-cpp-opentracing /usr/local/lib/ /usr/local/lib/
 COPY --from=opentracing-cpp /usr/local/lib/ /usr/local/lib/
