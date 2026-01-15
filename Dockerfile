@@ -13,7 +13,7 @@ RUN apt-get update \
     binutils-powerpc64le-linux-gnu \
     build-essential \
     ca-certificates \
-    clang-17 \
+    clang \
     git \
     golang \
     libcurl4 \
@@ -25,13 +25,13 @@ RUN apt-get update \
     protobuf-compiler \
     wget
 
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
-    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
+# RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
+#     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-cxx-dev
+RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc6-dev libmsgpack-cxx-dev
 
 
 ### Build base image for alpine
@@ -105,6 +105,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)usr/local \
     -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_CXX_STANDARD=17 \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
     -DBUILD_MOCKTRACER=OFF \
@@ -129,6 +130,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_STATIC_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_CXX_STANDARD=17 \
     -DBUILD_PLUGIN=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
@@ -150,6 +152,7 @@ RUN xx-info env && git init yaml-cpp && cd yaml-cpp && \
     cmake $(xx-clang --print-cmake-defines) \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_CXX_STANDARD=17 \
     -DYAML_CPP_BUILD_TESTS=OFF \
     -DYAML_CPP_BUILD_TOOLS=OFF \
     -DYAML_ENABLE_PIC=ON .. \
@@ -170,6 +173,7 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_CXX_STANDARD=17 \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
     -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
@@ -199,6 +203,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
