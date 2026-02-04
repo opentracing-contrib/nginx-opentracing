@@ -2,7 +2,7 @@ module github.com/opentracing-contrib/nginx-opentracing/example/go/otel
 
 go 1.24.0
 
-toolchain go1.24.12
+toolchain go1.25.6
 
 require (
 	github.com/pkg/errors v0.9.1
