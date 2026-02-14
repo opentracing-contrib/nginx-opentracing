@@ -2,7 +2,7 @@ NGINX_VERSION=$(shell grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print 
 
 .PHONY: docker-image
 docker-image:
-	docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final .
+	docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final . --load
 
 .PHONY: docker-image-alpine
 docker-image-alpine:
