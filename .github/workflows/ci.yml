@@ -85,7 +85,7 @@ jobs:
           cp out/sbom.spdx.json linux-amd64-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.sbom.spdx.json
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nginx-opentracing-modules-${{ matrix.nginx_version }}
           path: linux-*-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.*
