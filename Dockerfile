@@ -60,10 +60,6 @@ RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/downloa
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
 
-# XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386.
-# ENV XX_CC_PREFER_STATIC_LINKER=1
-
-
 ## Build gRPC
 FROM build-base AS grpc
 ARG GRPC_VERSION=v1.40.x
