@@ -25,9 +25,6 @@ RUN apt-get update \
     protobuf-compiler \
     wget
 
-# RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
-#     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
-
 COPY --from=xx / /
 ARG TARGETPLATFORM
 

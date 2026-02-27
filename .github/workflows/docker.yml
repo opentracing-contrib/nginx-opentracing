@@ -84,7 +84,7 @@ jobs:
         with:
           pull: true
           push: true
-          platforms: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le"
+          platforms: "linux/arm,linux/amd64,linux/arm64,linux/ppc64le,linux/s390x"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
