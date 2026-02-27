@@ -25,9 +25,6 @@ RUN apt-get update \
     protobuf-compiler \
     wget
 
-# RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
-#     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
-
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
@@ -62,10 +59,6 @@ ENV CMAKE_VERSION=3.31.10
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
-
-# XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386.
-# ENV XX_CC_PREFER_STATIC_LINKER=1
-
 
 ## Build gRPC
 FROM build-base AS grpc
@@ -133,6 +126,9 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
     -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_PLUGIN=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
     && xx-verify /usr/local/lib/libzipkin_opentracing_plugin.so
@@ -211,6 +207,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
     -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
     && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
