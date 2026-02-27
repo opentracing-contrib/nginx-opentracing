@@ -168,7 +168,7 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     "set(CMAKE_C_COMPILER_TARGET $(xx-clang --print-target-triple))" "set(CMAKE_CXX_COMPILER_TARGET $(xx-clang++ --print-target-triple))" \
     "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" \
     "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" \
-    "set(CMAKE_EXE_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_SHARED_LINKER_FLAGS \"-fuse-ld=lld\")" >>  cmake/toolchain.cmake \
+    "set(CMAKE_EXE_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_SHARED_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_MODULE_LINKER_FLAGS \"-fuse-ld=lld\")" >>  cmake/toolchain.cmake \
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
@@ -177,6 +177,7 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
     -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
     -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
