@@ -205,6 +205,8 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     -DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
     && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
