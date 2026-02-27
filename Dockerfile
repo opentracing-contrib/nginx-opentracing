@@ -3,7 +3,7 @@ ARG BUILD_OS=debian
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.9.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
+FROM --platform=$BUILDPLATFORM debian:13 AS build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -13,7 +13,7 @@ RUN apt-get update \
     binutils-powerpc64le-linux-gnu \
     build-essential \
     ca-certificates \
-    clang-16 \
+    clang \
     git \
     golang \
     libcurl4 \
@@ -25,13 +25,13 @@ RUN apt-get update \
     protobuf-compiler \
     wget
 
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 \
-    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
+# RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
+#     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
 
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-dev
+RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc6-dev libmsgpack-cxx-dev
 
 
 ### Build base image for alpine
@@ -58,13 +58,13 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.31.8
+ENV CMAKE_VERSION=3.31.10
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
 
 # XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386.
-ENV XX_CC_PREFER_STATIC_LINKER=1
+# ENV XX_CC_PREFER_STATIC_LINKER=1
 
 
 ## Build gRPC
@@ -105,6 +105,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)usr/local \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
     -DBUILD_MOCKTRACER=OFF \
@@ -129,6 +130,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_STATIC_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_PLUGIN=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
@@ -150,6 +152,7 @@ RUN xx-info env && git init yaml-cpp && cd yaml-cpp && \
     cmake $(xx-clang --print-cmake-defines) \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DYAML_CPP_BUILD_TESTS=OFF \
     -DYAML_CPP_BUILD_TOOLS=OFF \
     -DYAML_ENABLE_PIC=ON .. \
@@ -164,12 +167,17 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
     "set(CMAKE_C_COMPILER_TARGET $(xx-clang --print-target-triple))" "set(CMAKE_CXX_COMPILER_TARGET $(xx-clang++ --print-target-triple))" \
     "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" \
-    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" >>  cmake/toolchain.cmake \
+    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" \
+    "set(CMAKE_EXE_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_SHARED_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_MODULE_LINKER_FLAGS \"-fuse-ld=lld\")" >>  cmake/toolchain.cmake \
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
     -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
@@ -199,7 +207,10 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
     && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
