@@ -105,7 +105,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)usr/local \
     -DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
     -DBUILD_MOCKTRACER=OFF \
@@ -130,7 +130,7 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_STATIC_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_PLUGIN=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_TESTING=OFF .. \
@@ -152,7 +152,7 @@ RUN xx-info env && git init yaml-cpp && cd yaml-cpp && \
     cmake $(xx-clang --print-cmake-defines) \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD=17 \
     -DYAML_CPP_BUILD_TESTS=OFF \
     -DYAML_CPP_BUILD_TOOLS=OFF \
     -DYAML_ENABLE_PIC=ON .. \
@@ -167,13 +167,16 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
     "set(CMAKE_C_COMPILER_TARGET $(xx-clang --print-target-triple))" "set(CMAKE_CXX_COMPILER_TARGET $(xx-clang++ --print-target-triple))" \
     "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" \
-    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" >>  cmake/toolchain.cmake \
+    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" \
+    "set(CMAKE_EXE_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_SHARED_LINKER_FLAGS \"-fuse-ld=lld\")" >>  cmake/toolchain.cmake \
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
     -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
@@ -203,7 +206,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
     -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
