@@ -41,7 +41,7 @@ jobs:
         run: pip install -r test/requirements.ci.txt
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build nginx
         uses: docker/build-push-action@v6
