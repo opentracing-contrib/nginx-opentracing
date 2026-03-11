@@ -64,7 +64,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             name=opentracing/nginx-opentracing,enable=${{ github.event_name != 'pull_request' }}
