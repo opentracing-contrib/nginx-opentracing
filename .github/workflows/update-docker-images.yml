@@ -94,7 +94,7 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Docker Buildx
@@ -118,7 +118,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           context: git
           images: |
