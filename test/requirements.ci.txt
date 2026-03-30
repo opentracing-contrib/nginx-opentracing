@@ -1,5 +1,5 @@
 docker==7.1.0
-grpcio==1.78.1
+grpcio==1.80.0
 protobuf==7.34.1
 requests==2.33.0
 urllib3==2.6.3
