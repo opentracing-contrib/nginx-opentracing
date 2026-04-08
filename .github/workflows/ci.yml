@@ -83,7 +83,6 @@ jobs:
           tags: ${{ matrix.nginx_version }}
           cache-from: type=gha,scope=${{ matrix.nginx_version }}-${{ steps.arch.outputs.arch }},mode=max
           cache-to: type=gha,scope=${{ matrix.nginx_version }}-${{ steps.arch.outputs.arch }},mode=max
-          # platforms: linux/${{ steps.arch.outputs.arch }}
           provenance: mode=max
           sbom: true
           target: export
