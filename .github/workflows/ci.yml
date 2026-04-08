@@ -81,7 +81,7 @@ jobs:
           push: false
           file: build/Dockerfile
           tags: ${{ matrix.nginx_version }}
-          cache-from: type=gha,scope=${{ matrix.nginx_version }}-${{ steps.arch.outputs.arch }},mode=max
+          cache-from: type=gha,scope=${{ matrix.nginx_version }}-${{ steps.arch.outputs.arch }}
           cache-to: type=gha,scope=${{ matrix.nginx_version }}-${{ steps.arch.outputs.arch }},mode=max
           provenance: mode=max
           sbom: true
