@@ -72,7 +72,7 @@ jobs:
       - name: Get architecture
         id: arch
         run: |
-          if [ "$(uname -m)" = "x86_64" ]; then echo "arch=amd64" >> $GITHUB_OUTPUT; else echo "arch=arm64" >> "$GITHUB_OUTPUT"; fi
+          if [ "$(uname -m)" = "x86_64" ]; then echo "arch=amd64" >> "$GITHUB_OUTPUT"; else echo "arch=arm64" >> "$GITHUB_OUTPUT"; fi
 
       - name: Build binary
         uses: docker/build-push-action@v7
