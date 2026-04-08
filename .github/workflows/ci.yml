@@ -99,12 +99,12 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: nginx-opentracing-modules-${{ matrix.nginx_version }}
-          path: linux-*-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.*
+          name: nginx-opentracing-modules-${{ matrix.nginx_version }}-${{ steps.arch.outputs.arch }}
+          path: linux-${{ steps.arch.outputs.arch }}-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.*
 
       - name: Upload binaries on release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.ref_type == 'tag'
         run: |
-          gh release upload ${{ github.ref_name }} linux-*-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.* --clobber
+          gh release upload ${{ github.ref_name }} linux-${{ steps.arch.outputs.arch }}-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.* --clobber
