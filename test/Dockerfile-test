@@ -29,6 +29,7 @@ RUN cd / \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
   -DBUILD_TESTING=OFF .. \
   && make && make install
 
