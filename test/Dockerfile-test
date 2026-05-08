@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG OPENTRACING_CPP_VERSION=v1.6.0
 ARG NGINX_VERSION
@@ -29,6 +29,7 @@ RUN cd / \
   && cd opentracing-cpp \
   && mkdir .build && cd .build \
   && cmake -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
   -DBUILD_TESTING=OFF .. \
   && make && make install
 
