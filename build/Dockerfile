@@ -1,4 +1,4 @@
-FROM debian:trixie-20260610 AS base
+FROM debian:trixie AS base
 
 RUN apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
