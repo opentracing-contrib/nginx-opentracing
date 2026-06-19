@@ -105,6 +105,9 @@ ngx_int_t add_variables(ngx_conf_t* cf) noexcept {
   auto opentracing_context_var = ngx_http_add_variable(
       cf, &opentracing_context,
       NGX_HTTP_VAR_NOCACHEABLE | NGX_HTTP_VAR_NOHASH | NGX_HTTP_VAR_PREFIX);
+  if (opentracing_context_var == nullptr) {
+      return NGX_ERROR;
+  }
   opentracing_context_var->get_handler = expand_opentracing_context_variable;
   opentracing_context_var->data = 0;
 
@@ -112,6 +115,10 @@ ngx_int_t add_variables(ngx_conf_t* cf) noexcept {
       to_ngx_str(opentracing_binary_context_variable_name);
   auto opentracing_binary_context_var = ngx_http_add_variable(
       cf, &opentracing_binary_context, NGX_HTTP_VAR_NOCACHEABLE);
+  if (opentracing_binary_context_var == nullptr) {
+    return NGX_ERROR;
+  }
+
   opentracing_binary_context_var->get_handler =
       expand_opentracing_binary_context_variable;
   opentracing_binary_context_var->data = 0;
