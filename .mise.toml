@@ -1,0 +1,35 @@
+[tools]
+hk = "1.48.0"
+pkl = "0.31.1"
+actionlint = "1.7.12"
+yamllint = "1.38.0"
+markdownlint-cli2 = "0.22.1"
+gitleaks = "8.30.1"
+editorconfig-checker = "3.7.0"
+uv = "0.11.23"
+"pipx:isort" = "8.0.1"
+"pipx:psf/black" = "26.5.1"
+"pipx:codespell" = "2.4.2"
+"pipx:ruff" = "0.15.18"
+"pipx:cpplint" = "2.0.2"
+
+[tasks.lint]
+alias = "l"
+description = "Lint the codebase"
+run = "hk check --all"
+
+[tasks.format]
+alias = "fmt"
+description = "Format the codebase"
+run = "hk fix --all"
+
+[tasks.postlint]
+description = "Run post-lint checks"
+run = "git diff --exit-code"
+
+[settings]
+idiomatic_version_file_enable_tools = ["python"]
+experimental = true
+
+[deps.pip]
+auto = true

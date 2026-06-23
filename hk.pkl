@@ -1,0 +1,96 @@
+amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtins.pkl"
+
+exclude = List(".agents", ".claude", ".hk", "**/*pb2*")
+
+
+local linters = new Mapping<String, Step> {
+    ["trailing-whitespace"] = (Builtins.trailing_whitespace)
+    ["end-of-file-fixer"] = (Builtins.newlines)
+    ["check-yaml"] = (Builtins.yamllint)
+    ["check-ast"] = (Builtins.python_check_ast)
+    ["check-executables-have-shebangs"] = (Builtins.check_executables_have_shebangs)
+    ["check-symlinks"] = (Builtins.check_symlinks)
+    ["check-json"] = (Builtins.jq)
+    ["mixed-line-ending"] = (Builtins.mixed_line_ending)
+    ["fix-byte-order-marker"] = (Builtins.byte_order_marker)
+    ["ruff"] = (Builtins.ruff) {
+      batch = true
+    }
+    ["ruff_format"] = (Builtins.ruff_format) {
+      depends = "ruff"
+    }
+    ["black"] = (Builtins.black) {
+      depends = "ruff_format"
+    }
+    ["isort"] = (Builtins.isort) {
+      depends = "black"
+    }
+    ["yamllint"] = (Builtins.yamllint)
+    ["markdownlint"] {
+      glob = List("**/*.md")
+      check = "markdownlint-cli2 {{files}}"
+      fix = "markdownlint-cli2 --fix {{files}}"
+    }
+    ["codespell"] {
+      check =
+      "codespell --ignore-words-list=commitish --quiet-level=7 {{files}}"
+      fix =
+      "codespell --ignore-words-list=commitish --quiet-level=7 --write-changes {{files}}"
+    }
+
+}
+
+local precommit = new Mapping<String, Step> {
+  ["detect-private-key"] = (Builtins.detect_private_key)
+  ["check-added-large-files"] = (Builtins.check_added_large_files)
+  ["check-merge-conflict"] = (Builtins.check_merge_conflict)
+  ["no-commit-to-branch"] = (Builtins.no_commit_to_branch)
+  ["gitleaks"] = (Builtins.gitleaks) {
+    args = List("--staged", "--pre-commit")
+  }
+}
+
+local checkers = new Mapping<String, Step> {
+  ["check-case-conflict"] = Builtins.check_case_conflict
+  ["editorconfig-checker"] = Builtins.editorconfig_checker
+}
+
+
+hooks {
+    ["pre-commit"] {
+        fix = true
+        stash = "git"
+        steps {
+          ["linters"] = new Group {
+            steps = linters
+          }
+          ["checkers"] = new Group {
+            steps = checkers
+          }
+          ["postlint"] {
+            check = "mise run postlint"
+            exclusive = true
+          }
+          ["precommit"] = new Group {
+            steps = precommit
+          }
+        }
+    }
+    ["check"] {
+        steps {
+          ["linters"] = new Group {
+            steps = linters
+          }
+          ["checkers"] = new Group {
+            steps = checkers
+          }
+        }
+    }
+    ["fix"] {
+        fix = true
+        steps {
+            ...linters
+        }
+    }
+}
