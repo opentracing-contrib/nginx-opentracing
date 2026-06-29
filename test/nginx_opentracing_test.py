@@ -126,7 +126,6 @@ class NginxOpenTracingTest(unittest.TestCase):
 
     def tearDown(self):
         self._stopDocker()
-        logdir = None
 
         if "LOG_DIR" in os.environ:
             self._logEnvironment()
