@@ -1,6 +1,6 @@
 services:
   otel:
-    image: otel/opentelemetry-collector-contrib:0.155.0
+    image: otel/opentelemetry-collector-contrib:0.156.0
     volumes:
       - ./otel.yml:/etc/otelcol/config.yaml
 
