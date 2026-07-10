@@ -21,3 +21,6 @@ test:
 .PHONY: clean
 clean:
 	rm -fr test/test-log
+
+lint:
+	mise run lint

@@ -66,7 +66,7 @@ http {
 
       opentracing_propagate_context;
 
-      # Redirect to the spash page if the animal was successfully admitted.
+      # Redirect to the splash page if the animal was successfully admitted.
       proxy_intercept_errors on;
       error_page 301 302 303 =200 /;
     }

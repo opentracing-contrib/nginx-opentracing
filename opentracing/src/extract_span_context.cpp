@@ -58,7 +58,7 @@ std::unique_ptr<opentracing::SpanContext> extract_span_context(
     return nullptr;
   }
   ngx_log_debug1(NGX_LOG_DEBUG_HTTP, request->connection->log, 0,
-                 "extraced opentracing span context from request %p", request);
+                 "extracted opentracing span context from request %p", request);
   return std::move(*span_context_maybe);
 }
 }  // namespace ngx_opentracing

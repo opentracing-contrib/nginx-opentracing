@@ -118,7 +118,7 @@ char *add_opentracing_tag(ngx_conf_t *cf, ngx_array_t *tags, ngx_str_t key,
 // used for propagation need to be discovered before this directive is called.
 // (See set_tracer below).
 //
-// This approach was dicussed here
+// This approach was discussed here
 //     http://mailman.nginx.org/pipermail/nginx-devel/2018-March/011008.html
 char *propagate_opentracing_context(ngx_conf_t *cf, ngx_command_t * /*command*/,
                                     void * /*conf*/) noexcept try {
