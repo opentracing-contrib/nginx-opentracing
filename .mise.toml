@@ -1,5 +1,5 @@
 [tools]
-hk = "1.50.0"
+hk = "1.51.0"
 pkl = "0.32.0"
 actionlint = "1.7.12"
 yamllint = "1.38.0"
