@@ -9,7 +9,7 @@ editorconfig-checker = "3.8.0"
 uv = "0.11.28"
 "pipx:isort" = "8.0.1"
 "pipx:psf/black" = "26.5.1"
-"pipx:codespell" = "2.4.2"
+"pipx:codespell" = "2.4.3"
 "pipx:ruff" = "0.15.21"
 
 [tasks.lint]
