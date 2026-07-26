@@ -1,6 +1,6 @@
 [tools]
 hk = "1.53.0"
-pkl = "0.32.0"
+pkl = "0.32.1"
 actionlint = "1.7.12"
 yamllint = "1.38.0"
 markdownlint-cli2 = "0.23.1"
