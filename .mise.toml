@@ -10,7 +10,7 @@ uv = "0.12.1"
 "pipx:isort" = "8.0.1"
 "pipx:psf/black" = "26.5.1"
 "pipx:codespell" = "2.4.3"
-"pipx:ruff" = "0.15.22"
+"pipx:ruff" = "0.16.1"
 
 [tasks.lint]
 alias = "l"
