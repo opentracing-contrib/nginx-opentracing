@@ -85,7 +85,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                 time.sleep(0.5)
             except docker.errors.APIError as e:
                 if time.time() > timeout:
-                    raise TimeoutError(f"Docker API error: {str(e)}") from e
+                    raise TimeoutError(f"Docker API error: {e!s}") from e
                 time.sleep(0.5)
 
     def _logEnvironment(self):
