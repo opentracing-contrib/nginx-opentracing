@@ -1,7 +1,7 @@
-amends "package://github.com/jdx/hk/releases/download/v1.51.0/hk@1.51.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.51.0/hk@1.51.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v1.54.1/hk@1.54.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.54.1/hk@1.54.1#/Builtins.pkl"
 
-exclude = List(".agents", ".claude", ".hk", "**/*pb2*")
+exclude = List(".agents", ".claude", ".hk", "**/*pb2*", "**/go.sum", "**/go.mod")
 
 
 local linters = new Mapping<String, Step> {
