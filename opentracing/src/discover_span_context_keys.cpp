@@ -81,7 +81,7 @@ ngx_array_t* discover_span_context_keys(ngx_pool_t* pool, ngx_log_t* log,
     if (element == nullptr) {
       throw std::bad_alloc{};
     }
-      *element = key;
+    *element = key;
   }
   return result;
 }

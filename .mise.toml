@@ -11,6 +11,7 @@ uv = "0.12.5"
 "pipx:psf/black" = "26.5.1"
 "pipx:codespell" = "2.4.3"
 "pipx:ruff" = "0.16.3"
+clang-format = "22.1.8"
 
 [tasks.lint]
 alias = "l"
