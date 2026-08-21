@@ -32,16 +32,18 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent, void *child)
 
 using namespace ngx_opentracing;
 
-// When OpenTracing is used with Lua, some of the objects generated (e.g. spans, etc) may not
-// be finalized until after opentracing_exit_worker is called. If we dlclose, the tracing library
-// there, then we can segfault if those destructors invoke code that has been unloaded. See
+// When OpenTracing is used with Lua, some of the objects generated (e.g. spans,
+// etc) may not be finalized until after opentracing_exit_worker is called. If
+// we dlclose, the tracing library there, then we can segfault if those
+// destructors invoke code that has been unloaded. See
 // https://github.com/opentracing/lua-bridge-tracer/issues/6
 //
-// As a solution, we use a plain pointer and never free and instead rely on the OS to clean up the
-// resources when the process exits. This is a pattern proposed on
+// As a solution, we use a plain pointer and never free and instead rely on the
+// OS to clean up the resources when the process exits. This is a pattern
+// proposed on
 // https://google.github.io/styleguide/cppguide.html#Static_and_Global_Variables
-static const opentracing::DynamicTracingLibraryHandle*
-    opentracing_library_handle;
+static const opentracing::DynamicTracingLibraryHandle
+    *opentracing_library_handle;
 
 //------------------------------------------------------------------------------
 // kDefaultOpentracingTags
@@ -305,32 +307,34 @@ static char *merge_opentracing_loc_conf(ngx_conf_t *, void *parent,
     std::unordered_map<std::string, opentracing_tag_t> merged_tags;
 
     for (ngx_uint_t i = 0; i < prev->tags->nelts; i++) {
-      opentracing_tag_t* tag = &((opentracing_tag_t*)prev->tags->elts)[i];
+      opentracing_tag_t *tag = &((opentracing_tag_t *)prev->tags->elts)[i];
       std::string key;
-      key.assign(reinterpret_cast<const char*>(tag->key_script.pattern_.data), tag->key_script.pattern_.len);
+      key.assign(reinterpret_cast<const char *>(tag->key_script.pattern_.data),
+                 tag->key_script.pattern_.len);
       merged_tags[key] = *tag;
     }
 
     for (ngx_uint_t i = 0; i < conf->tags->nelts; i++) {
-      opentracing_tag_t* tag = &((opentracing_tag_t*)conf->tags->elts)[i];
+      opentracing_tag_t *tag = &((opentracing_tag_t *)conf->tags->elts)[i];
       std::string key;
-      key.assign(reinterpret_cast<const char*>(tag->key_script.pattern_.data), tag->key_script.pattern_.len);
+      key.assign(reinterpret_cast<const char *>(tag->key_script.pattern_.data),
+                 tag->key_script.pattern_.len);
       merged_tags[key] = *tag;
     }
 
     ngx_uint_t index = 0;
-    for (const auto& kv : merged_tags) {
+    for (const auto &kv : merged_tags) {
       if (index == conf->tags->nelts) {
-        opentracing_tag_t* tag = (opentracing_tag_t*)ngx_array_push(conf->tags);
+        opentracing_tag_t *tag =
+            (opentracing_tag_t *)ngx_array_push(conf->tags);
 
         if (!tag) {
-          return (char*)NGX_CONF_ERROR;
+          return (char *)NGX_CONF_ERROR;
         }
 
         *tag = kv.second;
-      }
-      else {
-        opentracing_tag_t* tag = (opentracing_tag_t*)conf->tags->elts;
+      } else {
+        opentracing_tag_t *tag = (opentracing_tag_t *)conf->tags->elts;
         tag[index] = kv.second;
       }
 

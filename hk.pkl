@@ -26,6 +26,7 @@ local linters = new Mapping<String, Step> {
     ["isort"] = (Builtins.isort) {
       depends = "black"
     }
+    ["actionlint"] = (Builtins.actionlint)
     ["yamllint"] = (Builtins.yamllint)
     ["markdownlint"] {
       glob = List("**/*.md")
@@ -38,6 +39,7 @@ local linters = new Mapping<String, Step> {
       fix =
       "codespell --ignore-words-list=commitish --quiet-level=7 --write-changes {{files}}"
     }
+    ["clang-format"] = (Builtins.clang_format)
 
 }
 

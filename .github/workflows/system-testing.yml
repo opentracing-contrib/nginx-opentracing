@@ -22,14 +22,11 @@ jobs:
   system-testing:
     name: System Testing
     runs-on: ubuntu-24.04
+    env:
+      nginx-version: 1.31.4 # renovate: datasource=docker depName=nginx
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
-
-      - name: Get vars
-        id: vars
-        run: |
-          echo "nginx_version=$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')" >> $GITHUB_OUTPUT
 
       - name: Setup Python
         uses: actions/setup-python@v7
@@ -53,7 +50,7 @@ jobs:
           cache-from: type=gha,scope=system-nginx
           cache-to: type=gha,scope=system-nginx,mode=max
           build-args: |
-            NGINX_VERSION=${{ steps.vars.outputs.nginx_version }}
+            NGINX_VERSION=${{ env.nginx-version }}
 
       - name: Build backend
         uses: docker/build-push-action@v7
