@@ -87,7 +87,7 @@ jobs:
           target: final
           sbom: true
           provenance: mode=max
-          build-args: BUILD_OS=${{ matrix.os }} NGINX_VERSION=${{ env.nginx-version }}
+          build-args: BUILD_OS=${{ matrix.os }}
 
       - name: Inspect SBOM and output manifest
         run: |
