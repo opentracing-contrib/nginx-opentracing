@@ -23,7 +23,7 @@ jobs:
     name: System Testing
     runs-on: ubuntu-24.04
     env:
-      nginx-version: 1.31.4 # renovate: datasource=docker depName=nginx
+      nginx-version: 1.31.5 # renovate: datasource=docker depName=nginx
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
