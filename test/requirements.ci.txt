@@ -3,4 +3,4 @@ grpcio==1.83.0
 protobuf==7.36.1
 requests==2.34.2
 urllib3==2.7.0
-websocket-client==1.9.1
+websocket-client==1.9.2
