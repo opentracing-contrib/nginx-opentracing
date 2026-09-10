@@ -10,7 +10,7 @@ uv = "0.12.13"
 "pipx:isort" = "9.0.1"
 "pipx:psf/black" = "26.5.1"
 "pipx:codespell" = "2.4.3"
-"pipx:ruff" = "0.16.6"
+"pipx:ruff" = "0.16.7"
 clang-format = "23.1.1"
 
 [tasks.lint]
