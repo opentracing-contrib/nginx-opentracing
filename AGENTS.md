@@ -6,14 +6,22 @@ These instructions apply to the entire repository.
 
 ## Repository overview
 
-- `opentracing/`: NGINX OpenTracing module sources (`src/`), build config (`config`, `config.make`).
-- `test/`: Docker-based integration test environment and the Python test runner.
-- `example/`: end-to-end examples for the Jaeger, Zipkin, Datadog, OpenTelemetry,
-  and LightStep tracers, from Go, PHP, Lua, and Zoo.
+- `opentracing/`: NGINX OpenTracing module sources (`src/` – 25 C++ files),
+  build config (`config`, `config.make`).
+- `test/`: Docker-based integration test environment (`Dockerfile-test`,
+  `Dockerfile-backend`, `environment/grpc`) and Python runner
+  (`nginx_opentracing_test.py`).
+- `example/`: end-to-end examples for Jaeger, Zipkin, Datadog, OpenTelemetry,
+  and LightStep – Go (`go/`), PHP (`php/`), Lua (`lua/`), Zoo (`zoo/`), trivial
+  (`trivial/ubuntu-x86_64`).
 - `doc/`: user-facing documentation (Tutorial.md, Reference.md, images in `data/`).
-- `build/`: Docker build assets for producing binary artifacts.
-- `Dockerfile`: multi-stage build (Debian + Alpine variants via build args).
-- `Dockerfile-openresty`: OpenResty Docker image build.
+- `build/`: Docker build asset for portable binaries (`build/Dockerfile`,
+  `scratch` `export` stage → `ngx_http_opentracing_module.so`).
+- `Dockerfile`: multi-stage build (Debian default, Alpine via
+  `BUILD_OS=alpine`; args `OPENTRACING_CPP_VERSION`, `JAEGER_CPP_VERSION`,
+  `GRPC_VERSION`, `ZIPKIN_CPP_VERSION`, `DATADOG_VERSION`).
+- `Dockerfile-openresty`: OpenResty image build (module via
+  `--add-dynamic-module=/src/opentracing`).
 
 ### Key config files
 
@@ -32,59 +40,77 @@ These instructions apply to the entire repository.
 - Keep changes focused and avoid touching example or test assets unless the task requires it.
 - Update documentation when behavior, commands, or supported workflows change.
 - Prefer existing Make and `mise` tasks over ad hoc commands.
-- Run `mise deps` before first use to install tooling.
+- Run `mise install` (or `mise deps` – CI entrypoint, also installs pip deps via `uv`)
+  before first use to install tooling.
 
 ## Build, test, and lint
 
-- Install repository tooling with `mise deps`.
-- Lint the repository with `mise run lint --no-progress` or `make lint`.
-- Auto-fix formatting with `mise run format` when needed.
-- Run the integration test suite with `make test`.
+- Install repository tooling with `mise deps` (CI) or `mise install`.
+- Lint the repository with `mise run lint --no-progress` (`hk check --all`) or
+  `make lint`.
+- Auto-fix formatting with `mise run format` (`hk fix --all`) when needed.
+- Run the integration test suite with `make test` (builds `test/Dockerfile-test`,
+  `test/Dockerfile-backend`, `test/environment/grpc/Dockerfile` and runs
+  `nginx_opentracing_test.py` with `LOG_DIR=test/test-log`).
 - Build the main Docker image with `make docker-image`.
 - Build the Alpine variant with `make docker-image-alpine`.
-- Build binary artifacts with `make docker-build-binaries`.
+- Build portable binary artifacts with `make docker-build-binaries`
+  (`build/Dockerfile`, `--platform linux/amd64`, output `out/`).
+- Clean test logs with `make clean`.
 
 ### Lint pipeline
 
-`mise run lint` runs `hk check --all`, which executes these linters in order:
+`mise run lint` runs `hk check --all`, which executes the `linters` group from
+`hk.pkl:7-46`. `mise run format` runs `hk fix --all` to auto-fix fixable steps.
 
-1. **trailing-whitespace** -- removes trailing whitespace.
-2. **end-of-file-fixer** -- ensures final newline.
-3. **check-yaml** -- validates YAML via yamllint.
-4. **check-ast** -- validates Python AST.
-5. **check-executables-have-shebangs** -- checks shebangs on executables.
+1. **actionlint** -- validates GitHub Actions workflows.
+2. **check-ast** -- validates Python AST.
+3. **check-executables-have-shebangs** -- checks shebangs on executables.
+4. **check-json** -- validates JSON via jq.
+5. **check-shebang-scripts-are-executable** -- ensures shebang scripts are executable.
 6. **check-symlinks** -- validates symlinks.
-7. **check-json** -- validates JSON via jq.
-8. **mixed-line-ending** -- normalizes line endings.
-9. **fix-byte-order-marker** -- removes BOMs.
-10. **ruff** -- Python linter (batch mode).
-11. **ruff_format** -- Python formatter (depends on ruff).
-12. **black** -- Python formatter (depends on ruff_format).
-13. **isort** -- Python import sorter (depends on black).
-14. **actionlint** -- GitHub Actions workflow linter.
-15. **yamllint** -- YAML linter.
-16. **markdownlint** -- Markdown linter (`**/*.md`, via markdownlint-cli2).
-17. **codespell** -- spell checker (ignores "commitish").
-18. **clang-format** -- C++/JavaScript formatter (Google-based style).
+7. **clang-format** -- C++/JavaScript formatter (Google-based style).
+8. **destroyed-symlinks** -- detects broken symlinks.
+9. **end-of-file-fixer** -- ensures final newline.
+10. **fix-byte-order-marker** -- removes BOMs.
+11. **fix-smart-quotes** -- fixes smart quotes.
+12. **mixed-line-ending** -- normalizes line endings.
+13. **pkl-lint** -- formats PKL via `pkl_format`.
+14. **trailing-whitespace** -- removes trailing whitespace.
+15. **yamllint** -- validates YAML.
+16. **check-case-conflict** -- detects filename case conflicts.
+17. **editorconfig-checker** -- validates against `.editorconfig`.
+18. **ruff** -- Python linter (batch mode).
+19. **ruff_format** -- Python formatter (depends on ruff).
+20. **black** -- Python formatter (depends on ruff_format).
+21. **isort** -- Python import sorter (depends on black).
+22. **markdownlint** -- Markdown linter (`**/*.md`, via markdownlint-cli2).
+23. **codespell** -- spell checker (ignores "commitish").
 
-Additional checkers: `check-case-conflict`, `editorconfig-checker`.
+Pre-commit (`git commit` after `hk install`) runs the `pre-commit` hook
+(`hk.pkl:56-71`): the `linters` group plus:
 
-Pre-commit hooks: `detect-private-key`, `check-added-large-files`,
-`check-merge-conflict`, `no-commit-to-branch`, `gitleaks`.
+- **postlint** -- `mise run postlint` (`git diff --exit-code`, `exclusive = true`)
+  ensures auto-fixers left no diff.
+- **precommit** group (`hk.pkl:48-54`): `detect-private-key`,
+  `check-added-large-files`, `check-merge-conflict`, `no-commit-to-branch`,
+  `betterleaks`.
 
-After linting, `mise run postlint` runs `git diff --exit-code` to ensure no
-uncommitted changes were introduced by auto-fixers.
+`hk check` / `hk fix` without `--all` operate on changed files only.
 
 ## Code style
 
 - **C++/JavaScript**: Google-based style via `.clang-format` (80-col,
   2-space indent, attached braces, sorted includes).
-  Format with `clang-format -i`.
+  Format with `clang-format -i` or `mise run format`.
 - **Python**: 4-space indent. Lint and format via the ruff/black/isort
   pipeline (run through `mise run lint` or `mise run format`).
-- **Markdown**: dash-style bullets, 120-char line limit (code blocks and tables exempt). Lint via markdownlint-cli2.
+- **Markdown**: dash-style bullets, 120-char line limit (code blocks and tables exempt).
+  Lint via markdownlint-cli2.
 - **YAML**: 120-char max line length. Lint via yamllint.
-- **All files**: UTF-8, LF line endings, trailing whitespace trimmed (see `.editorconfig`).
+- **PKL**: formatted via `pkl-lint` (`pkl_format`).
+- **All files**: UTF-8, LF line endings, trailing whitespace trimmed, final
+  newline (see `.editorconfig`).
 - **Makefile**: tab indentation.
 
 ## Editing guidance
@@ -100,12 +126,14 @@ uncommitted changes were introduced by auto-fixers.
 
 ## Validation expectations
 
-- For documentation-only changes, run Markdown lint against the touched files: `mise run lint` or `markdownlint-cli2 <files>`.
-- For code or configuration changes, run the smallest relevant existing lint/build/test commands before finishing.
-- For C++ changes, run `clang-format -i` on modified files and verify
-  no diff.
+- For documentation-only changes, run Markdown lint against the touched files:
+  `mise run lint` or `markdownlint-cli2 <files>`.
+- For code or configuration changes, run the smallest relevant existing
+  lint/build/test commands before finishing.
+- For C++ changes, run `clang-format -i` on modified files (or `mise run format`)
+  and verify no diff.
 - For Python changes, the ruff/black/isort pipeline runs as part of `mise run lint`.
-- CI (`.github/workflows/lint.yml`) runs the same `mise run lint`,
-  `actionlint`, and `markdownlint-cli2` checks, so lint locally before
-  pushing.
+- CI (`.github/workflows/lint.yml`) runs three jobs – `checks`
+  (`mise run lint --no-progress`), `actionlint` (reviewdog), and `markdown-lint`
+  (markdownlint-cli2) – so lint locally before pushing.
 - Review diffs for accidental secrets or generated artifacts before committing.
