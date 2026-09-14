@@ -1,98 +1,86 @@
-amends "package://github.com/jdx/hk/releases/download/v1.54.1/hk@1.54.1#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.54.1/hk@1.54.1#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pkl"
+
+import "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Builtins.pkl"
 
 exclude = List(".agents", ".claude", ".hk", "**/*pb2*", "**/go.sum", "**/go.mod")
 
-
 local linters = new Mapping<String, Step> {
-    ["trailing-whitespace"] = (Builtins.trailing_whitespace)
-    ["end-of-file-fixer"] = (Builtins.newlines)
-    ["check-yaml"] = (Builtins.yamllint)
-    ["check-ast"] = (Builtins.python_check_ast)
-    ["check-executables-have-shebangs"] = (Builtins.check_executables_have_shebangs)
-    ["check-symlinks"] = (Builtins.check_symlinks)
-    ["check-json"] = (Builtins.jq)
-    ["mixed-line-ending"] = (Builtins.mixed_line_ending)
-    ["fix-byte-order-marker"] = (Builtins.byte_order_marker)
-    ["ruff"] = (Builtins.ruff) {
-      batch = true
-    }
-    ["ruff_format"] = (Builtins.ruff_format) {
-      depends = "ruff"
-    }
-    ["black"] = (Builtins.black) {
-      depends = "ruff_format"
-    }
-    ["isort"] = (Builtins.isort) {
-      depends = "black"
-    }
-    ["actionlint"] = (Builtins.actionlint)
-    ["yamllint"] = (Builtins.yamllint)
-    ["markdownlint"] {
-      glob = List("**/*.md")
-      check = "markdownlint-cli2 {{files}}"
-      fix = "markdownlint-cli2 --fix {{files}}"
-    }
-    ["codespell"] {
-      check =
-      "codespell --ignore-words-list=commitish --quiet-level=7 {{files}}"
-      fix =
-      "codespell --ignore-words-list=commitish --quiet-level=7 --write-changes {{files}}"
-    }
-    ["clang-format"] = (Builtins.clang_format)
-
+  ["actionlint"] = Builtins.actionlint
+  ["check-ast"] = Builtins.python_check_ast
+  ["check-executables-have-shebangs"] = Builtins.check_executables_have_shebangs
+  ["check-json"] = Builtins.jq
+  ["check-shebang-scripts-are-executable"] = Builtins.check_shebang_scripts_are_executable
+  ["check-symlinks"] = Builtins.check_symlinks
+  ["clang-format"] = Builtins.clang_format
+  ["destroyed-symlinks"] = Builtins.destroyed_symlinks
+  ["end-of-file-fixer"] = Builtins.newlines
+  ["fix-byte-order-marker"] = Builtins.byte_order_marker
+  ["fix-smart-quotes"] = Builtins.fix_smart_quotes
+  ["mixed-line-ending"] = Builtins.mixed_line_ending
+  ["pkl-lint"] = Builtins.pkl_format
+  ["trailing-whitespace"] = Builtins.trailing_whitespace
+  ["yamllint"] = Builtins.yamllint
+  ["check-case-conflict"] = Builtins.check_case_conflict
+  ["editorconfig-checker"] = Builtins.editorconfig_checker
+  ["ruff"] = (Builtins.ruff) {
+    batch = true
+  }
+  ["ruff_format"] = (Builtins.ruff_format) {
+    depends = "ruff"
+  }
+  ["black"] = (Builtins.black) {
+    depends = "ruff_format"
+  }
+  ["isort"] = (Builtins.isort) {
+    depends = "black"
+  }
+  ["markdownlint"] {
+    glob = List("**/*.md")
+    check = "markdownlint-cli2 {{files}}"
+    fix = "markdownlint-cli2 --fix {{files}}"
+  }
+  ["codespell"] {
+    check = "codespell --ignore-words-list=commitish --quiet-level=7 {{files}}"
+    fix = "codespell --ignore-words-list=commitish --quiet-level=7 --write-changes {{files}}"
+  }
 }
 
 local precommit = new Mapping<String, Step> {
-  ["detect-private-key"] = (Builtins.detect_private_key)
-  ["check-added-large-files"] = (Builtins.check_added_large_files)
-  ["check-merge-conflict"] = (Builtins.check_merge_conflict)
-  ["no-commit-to-branch"] = (Builtins.no_commit_to_branch)
+  ["detect-private-key"] = Builtins.detect_private_key
+  ["check-added-large-files"] = Builtins.check_added_large_files
+  ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["no-commit-to-branch"] = Builtins.no_commit_to_branch
   ["gitleaks"] = (Builtins.gitleaks) {
     args = List("--staged", "--pre-commit")
   }
 }
 
-local checkers = new Mapping<String, Step> {
-  ["check-case-conflict"] = Builtins.check_case_conflict
-  ["editorconfig-checker"] = Builtins.editorconfig_checker
-}
-
-
 hooks {
-    ["pre-commit"] {
-        fix = true
-        stash = "git"
-        steps {
-          ["linters"] = new Group {
-            steps = linters
-          }
-          ["checkers"] = new Group {
-            steps = checkers
-          }
-          ["postlint"] {
-            check = "mise run postlint"
-            exclusive = true
-          }
-          ["precommit"] = new Group {
-            steps = precommit
-          }
-        }
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps {
+      ["linters"] = new Group {
+        steps = linters
+      }
+      ["postlint"] {
+        check = "mise run postlint"
+        exclusive = true
+      }
+      ["precommit"] = new Group {
+        steps = precommit
+      }
     }
-    ["check"] {
-        steps {
-          ["linters"] = new Group {
-            steps = linters
-          }
-          ["checkers"] = new Group {
-            steps = checkers
-          }
-        }
+  }
+  ["check"] {
+    steps {
+      ...linters
     }
-    ["fix"] {
-        fix = true
-        steps {
-            ...linters
-        }
+  }
+  ["fix"] {
+    fix = true
+    steps {
+      ...linters
     }
+  }
 }
