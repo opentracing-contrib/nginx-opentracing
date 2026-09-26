@@ -5,7 +5,7 @@
 "pipx:psf/black" = "26.5.1"
 "pipx:ruff" = "0.16.8"
 betterleaks = "1.8.1"
-clang-format = "23.1.1"
+clang-format = "23.1.2"
 editorconfig-checker = "4.0.2"
 hk = "2.0.1"
 markdownlint-cli2 = "0.23.3"
