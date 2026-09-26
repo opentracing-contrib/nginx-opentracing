@@ -3,7 +3,7 @@
 "pipx:codespell" = "2.4.3"
 "pipx:isort" = "9.0.1"
 "pipx:psf/black" = "26.5.1"
-"pipx:ruff" = "0.16.8"
+"pipx:ruff" = "0.16.9"
 betterleaks = "1.8.1"
 clang-format = "23.1.1"
 editorconfig-checker = "4.0.2"
