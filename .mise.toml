@@ -10,7 +10,7 @@ editorconfig-checker = "4.0.2"
 hk = "2.0.1"
 markdownlint-cli2 = "0.23.3"
 pkl = "0.32.1"
-uv = "0.12.17"
+uv = "0.12.19"
 yamllint = "1.38.0"
 
 [tasks.lint]
