@@ -1,7 +1,7 @@
 [tools]
 "github:kjanat/actionlint" = "1.17.0"
 "pipx:codespell" = "2.4.3"
-"pipx:isort" = "9.0.1"
+"pipx:isort" = "9.0.2"
 "pipx:psf/black" = "26.5.1"
 "pipx:ruff" = "0.16.9"
 betterleaks = "1.8.1"
