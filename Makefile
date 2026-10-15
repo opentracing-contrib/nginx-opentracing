@@ -1,5 +1,5 @@
 # renovate: datasource=docker depName=nginx
-NGINX_VERSION = 1.31.6
+NGINX_VERSION = 1.31.7
 
 .PHONY: docker-image
 docker-image:
