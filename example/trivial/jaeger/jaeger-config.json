@@ -1,11 +1,11 @@
 {
-  "service_name": "nginx",
   "reporter": {
-    "logSpans": true,
-    "localAgentHostPort": "jaeger:6831"
+    "localAgentHostPort": "jaeger:6831",
+    "logSpans": true
   },
   "sampler": {
-    "type": "const",
-    "param": "1"
-  }
+    "param": "1",
+    "type": "const"
+  },
+  "service_name": "nginx"
 }

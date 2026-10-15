@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.28
 ARG BUILD_OS=debian
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.9.0 AS xx
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.10.0 AS xx
 
 ### Build base image for debian
 FROM --platform=$BUILDPLATFORM debian:13.7 AS build-base-debian
@@ -215,7 +215,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.31.6 AS build-nginx-debian
+FROM nginx:1.31.7 AS build-nginx-debian
 
 RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
     && echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ ${DEBIAN_VERSION} nginx" >> /etc/apt/sources.list.d/nginx.list \
@@ -224,7 +224,7 @@ RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-releas
 
 
 ### Base build image for alpine
-FROM nginx:1.31.6-alpine AS build-nginx-alpine
+FROM nginx:1.31.7-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre2-dev \
@@ -251,12 +251,12 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-FROM nginx:1.31.6-alpine AS nginx-alpine
+FROM nginx:1.31.7-alpine AS nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.31.6 AS nginx-debian
+FROM nginx:1.31.7 AS nginx-debian
 
 
 ### Build final image
