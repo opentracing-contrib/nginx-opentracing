@@ -1,27 +1,31 @@
-amends "package://github.com/jdx/hk/releases/download/v2.6.0/hk@2.6.0#/Config.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.7.0/hk@2.7.0#/Config.pkl"
 
-import "package://github.com/jdx/hk/releases/download/v2.6.0/hk@2.6.0#/Builtins.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.7.0/hk@2.7.0#/Builtins.pkl"
 
 exclude = List(".agents", ".claude", ".hk", "**/*pb2*", "**/go.sum", "**/go.mod")
 
 local linters = new Mapping<String, Step> {
   ["actionlint"] = Builtins.actionlint
   ["check-ast"] = Builtins.python_check_ast
+  ["check-case-conflict"] = Builtins.check_case_conflict
   ["check-executables-have-shebangs"] = Builtins.check_executables_have_shebangs
   ["check-json"] = Builtins.jq
   ["check-shebang-scripts-are-executable"] = Builtins.check_shebang_scripts_are_executable
   ["check-symlinks"] = Builtins.check_symlinks
   ["clang-format"] = Builtins.clang_format
   ["destroyed-symlinks"] = Builtins.destroyed_symlinks
+  ["editorconfig-checker"] = Builtins.editorconfig_checker
   ["end-of-file-fixer"] = Builtins.newlines
   ["fix-byte-order-marker"] = Builtins.byte_order_marker
   ["fix-smart-quotes"] = Builtins.fix_smart_quotes
+  ["knip"] = Builtins.knip
+  ["mise"] = Builtins.mise
   ["mixed-line-ending"] = Builtins.mixed_line_ending
   ["pkl-lint"] = Builtins.pkl_format
+  ["sort-package-json"] = Builtins.sort_package_json
   ["trailing-whitespace"] = Builtins.trailing_whitespace
-  ["yamllint"] = Builtins.yamllint
-  ["check-case-conflict"] = Builtins.check_case_conflict
-  ["editorconfig-checker"] = Builtins.editorconfig_checker
+  ["typos"] = Builtins.typos
+  ["yamllint"] = Builtins.ryl
   ["ruff"] = (Builtins.ruff) {
     batch = true
   }
@@ -46,11 +50,11 @@ local linters = new Mapping<String, Step> {
 }
 
 local precommit = new Mapping<String, Step> {
-  ["detect-private-key"] = Builtins.detect_private_key
+  ["betterleaks"] = Builtins.betterleaks
   ["check-added-large-files"] = Builtins.check_added_large_files
   ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["detect-private-key"] = Builtins.detect_private_key
   ["no-commit-to-branch"] = Builtins.no_commit_to_branch
-  ["betterleaks"] = Builtins.betterleaks
 }
 
 hooks {
