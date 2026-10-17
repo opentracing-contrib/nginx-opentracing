@@ -29,7 +29,7 @@ class NgxHeaderCarrierReader : public opentracing::HTTPHeadersReader {
     for_each<ngx_table_elt_t>(
         request_->headers_in.headers, [&](const ngx_table_elt_t &header) {
           if (!result) return;
-          auto key = string_view{reinterpret_cast<char *>(header.lowercase_key),
+          auto key = string_view{reinterpret_cast<char *>(header.lowcase_key),
                                  header.key.len};
           auto value = string_view{reinterpret_cast<char *>(header.value.data),
                                    header.value.len};
