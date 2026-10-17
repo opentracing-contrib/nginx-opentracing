@@ -36,16 +36,17 @@ jobs:
         run: |
           mise run lint --no-progress
 
-  actionlint:
-    name: Actionlint
+  jactionlint:
+    name: jactionlint
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
-
-      - uses: reviewdog/action-actionlint@v1
         with:
-          actionlint_flags: -shellcheck ""
+          persist-credentials: false
+
+      - name: Run jactionlint
+        uses: jdx/jactionlint@v2.2.0
 
   markdown-lint:
     name: Markdown Lint
