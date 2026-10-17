@@ -1,4 +1,4 @@
-version: '2'
+version: "2"
 services:
 
   nginx:
@@ -13,7 +13,7 @@ services:
     expose:
       - "8080"
     ports:
-      - "8080:8080"
+      - 8080:8080
 
   app-service:
     build:
@@ -26,19 +26,19 @@ services:
     expose:
       - "9001"
     ports:
-      - "9001:9001"
+      - 9001:9001
     command:
       - /app/server
 
   dd-agent:
-    image: 'datadog/agent'
+    image: datadog/agent
     volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock:ro'
-      - '/proc/:/host/proc/:ro'
-      - '/sys/fs/cgroup/:/host/sys/fs/cgroup:ro'
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
     environment:
-      - 'DD_API_KEY=YOUR_KEY_HERE'
-      - 'DD_APM_ENABLED=true'
+      - DD_API_KEY=YOUR_KEY_HERE
+      - DD_APM_ENABLED=true
     networks:
       trivial_example:
         aliases:
@@ -46,7 +46,7 @@ services:
     expose:
       - "8126"
     ports:
-      - "8126:8126"
+      - 8126:8126
 
 networks:
   trivial_example: {}

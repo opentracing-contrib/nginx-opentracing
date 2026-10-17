@@ -4,7 +4,6 @@ exclude-from-file = [".gitignore"]
 yaml = [
     "*.yaml",
     "*.yml",
-    ".yamllint",
 ]
 
 [lint.rules]
@@ -25,7 +24,6 @@ key-ordering = "disable"
 new-line-at-end-of-file = "enable"
 new-lines = "enable"
 octal-values = "disable"
-quoted-strings = "disable"
 trailing-spaces = "enable"
 
 [lint.rules.comments]
@@ -44,3 +42,11 @@ level = "warning"
 
 [lint.rules.comments-indentation]
 level = "warning"
+
+[format]
+quote-style = "double"
+
+[lint.rules.quoted-strings]
+quote-type = "double"
+required = "only-when-needed"
+allow-quoted-quotes = true

@@ -9,34 +9,48 @@ defaults:
   run:
     shell: bash
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   variables:
     name: Get version of base image
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     outputs:
       versions: ${{ steps.version.outputs.matrix }}
       git_tag: ${{ steps.tag.outputs.git_tag }}
       docker_platforms: ${{ steps.vars.outputs.docker_platforms }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
+
       - name: Get latest tag
         id: tag
         run: |
           tag=$(git tag --sort=-version:refname | head -n1)
           echo "git_tag=${tag//v}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout Repository at ${{ steps.tag.outputs.git_tag }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           ref: refs/tags/v${{ steps.tag.outputs.git_tag }}
+
       - name: Set Base image version
         id: version
         run: |
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" <Dockerfile | awk -F"[ :]" '{print $3}')
           nginx=library/$(grep -m1 "FROM nginx:" < Dockerfile | awk -F" " '{print $2}')
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}]" >> "$GITHUB_OUTPUT"
+
       - name: Set other variables
         id: vars
         run: |
@@ -45,6 +59,7 @@ jobs:
   check:
     name: Check if updates are needed
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     needs: variables
     outputs:
       needs-updating-debian: ${{ steps.var.outputs.debian }}
@@ -58,12 +73,14 @@ jobs:
         run: |
           if [ ${{ matrix.base_image.distro }} == "debian" ]; then dist=""; else dist="-${{ matrix.base_image.distro }}"; fi
           echo "tag=${{ needs.variables.outputs.git_tag }}${dist}" >> "$GITHUB_OUTPUT"
+
       - name: Check if update available ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@v3
+        uses: lucacome/docker-image-update-checker@v3.1.0
         with:
           base-image: ${{ matrix.base_image.version }}
           image: opentracing/nginx-opentracing:${{ steps.dist.outputs.tag }}
+
       - id: var
         run: |
           echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> "$GITHUB_OUTPUT"
@@ -72,7 +89,12 @@ jobs:
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' }}
     name: Build Docker Image
     runs-on: ubuntu-26.04
+    timeout-minutes: 10
     needs: [check, variables]
+    permissions:
+      contents: read
+      security-events: write
+      packages: write
     strategy:
       matrix:
         include:
@@ -82,8 +104,9 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
     steps:
       - name: Checkout Repository at ${{ needs.variables.outputs.git_tag }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           ref: refs/tags/v${{ needs.variables.outputs.git_tag }}
         if: ${{ matrix.needs-updating == 'true' }}
 
@@ -94,22 +117,22 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@v4.4.0
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.4.1
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: DockerHub Login
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.6.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -118,7 +141,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v6.2.0
         with:
           context: git
           images: |
@@ -133,7 +156,7 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: Build and push
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.4.0
         with:
           pull: true
           push: true

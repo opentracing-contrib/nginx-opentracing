@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jdx/jactionlint/main/schema/jactionlint-config.json
+profile: default
+online: true
+
+rules:
+  missing-timeout:
+    default-minutes: 10
+
+ignores:
+  - rule: cache-poisoning
+    file: .github/workflows/*.yml
+  - rule: dangerous-triggers
+    file: .github/workflows/labeler.yml
+  - rule: concurrency-cancels-release
+    file: .github/workflows/*.yml
+  - rule: unpinned-images
+    file: .github/workflows/*.yml
+  - rule: excessive-permissions
+    file: .github/workflows/scorecard.yml

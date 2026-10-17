@@ -1,15 +1,13 @@
-amends "package://github.com/jdx/hk/releases/download/v2.7.0/hk@2.7.0#/Config.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.8.0/hk@2.8.0#/Config.pkl"
 
-import "package://github.com/jdx/hk/releases/download/v2.7.0/hk@2.7.0#/Builtins.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.8.0/hk@2.8.0#/Builtins.pkl"
 
 exclude = List(".agents", ".claude", ".hk", "**/*pb2*", "**/go.sum", "**/go.mod")
 
 local linters = new Mapping<String, Step> {
-  ["actionlint"] = Builtins.actionlint
   ["check-ast"] = Builtins.python_check_ast
   ["check-case-conflict"] = Builtins.check_case_conflict
   ["check-executables-have-shebangs"] = Builtins.check_executables_have_shebangs
-  ["check-json"] = Builtins.jq
   ["check-shebang-scripts-are-executable"] = Builtins.check_shebang_scripts_are_executable
   ["check-symlinks"] = Builtins.check_symlinks
   ["clang-format"] = Builtins.clang_format
@@ -18,14 +16,18 @@ local linters = new Mapping<String, Step> {
   ["end-of-file-fixer"] = Builtins.newlines
   ["fix-byte-order-marker"] = Builtins.byte_order_marker
   ["fix-smart-quotes"] = Builtins.fix_smart_quotes
+  ["jactionlint"] = Builtins.jactionlint
   // ["knip"] = Builtins.knip
   ["mise"] = Builtins.mise
   ["mixed-line-ending"] = Builtins.mixed_line_ending
   ["pkl-lint"] = Builtins.pkl_format
-  // ["sort-package-json"] = Builtins.sort_package_json
+  ["ryl_format"] = Builtins.ryl_format
+  ["ryl_markdown_format"] = Builtins.ryl_markdown_format
+  ["ryl_markdown"] = Builtins.ryl_markdown
+  ["ryl"] = Builtins.ryl
+  ["sort-package-json"] = Builtins.sort_package_json
   ["trailing-whitespace"] = Builtins.trailing_whitespace
   ["typos"] = Builtins.typos
-  ["yamllint"] = Builtins.ryl
   ["ruff"] = (Builtins.ruff) {
     batch = true
   }
@@ -46,6 +48,9 @@ local linters = new Mapping<String, Step> {
   ["codespell"] {
     check = "codespell --ignore-words-list=commitish --quiet-level=7 {{files}}"
     fix = "codespell --ignore-words-list=commitish --quiet-level=7 --write-changes {{files}}"
+  }
+  ["check-json"] = (Builtins.jq) {
+    exclude = List("package.json")
   }
 }
 
