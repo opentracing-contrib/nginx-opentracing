@@ -195,7 +195,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.assertEqual(request_span["operation_name"], "/subrequest")
         self.assertEqual(request_span["tags"]["http.status_code"], 200)
 
-    def testInternalRediect(self):
+    def testInternalRedirect(self):
         self.conn.request("GET", "/internal-redirect")
         response = self.conn.getresponse()
         self.assertEqual(response.status, 200)

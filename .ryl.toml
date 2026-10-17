@@ -1,0 +1,46 @@
+exclude-from-file = [".gitignore"]
+
+[files]
+yaml = [
+    "*.yaml",
+    "*.yml",
+    ".yamllint",
+]
+
+[lint.rules]
+anchors = "enable"
+braces = "enable"
+brackets = "enable"
+colons = "enable"
+commas = "enable"
+document-end = "disable"
+document-start = "disable"
+empty-lines = "enable"
+empty-values = "disable"
+float-values = "disable"
+hyphens = "enable"
+indentation = "enable"
+key-duplicates = "enable"
+key-ordering = "disable"
+new-line-at-end-of-file = "enable"
+new-lines = "enable"
+octal-values = "disable"
+quoted-strings = "disable"
+trailing-spaces = "enable"
+
+[lint.rules.comments]
+level = "warning"
+min-spaces-from-content = 1
+
+[lint.rules.line-length]
+ignore = """
+.github/
+"""
+max = 120
+
+[lint.rules.truthy]
+check-keys = false
+level = "warning"
+
+[lint.rules.comments-indentation]
+level = "warning"
