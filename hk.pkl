@@ -1,6 +1,6 @@
-amends "package://github.com/jdx/hk/releases/download/v2.6.0/hk@2.6.0#/Config.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.7.0/hk@2.7.0#/Config.pkl"
 
-import "package://github.com/jdx/hk/releases/download/v2.6.0/hk@2.6.0#/Builtins.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.7.0/hk@2.7.0#/Builtins.pkl"
 
 exclude = List(".agents", ".claude", ".hk", "**/*pb2*", "**/go.sum", "**/go.mod")
 
@@ -18,10 +18,14 @@ local linters = new Mapping<String, Step> {
   ["fix-byte-order-marker"] = Builtins.byte_order_marker
   ["fix-smart-quotes"] = Builtins.fix_smart_quotes
   ["jactionlint"] = Builtins.jactionlint
+  // ["knip"] = Builtins.knip
+  ["mise"] = Builtins.mise
   ["mixed-line-ending"] = Builtins.mixed_line_ending
   ["pkl-lint"] = Builtins.pkl_format
+  // ["sort-package-json"] = Builtins.sort_package_json
   ["trailing-whitespace"] = Builtins.trailing_whitespace
-  ["yamllint"] = Builtins.yamllint
+  ["typos"] = Builtins.typos
+  ["yamllint"] = Builtins.ryl
   ["ruff"] = (Builtins.ruff) {
     batch = true
   }
@@ -46,11 +50,11 @@ local linters = new Mapping<String, Step> {
 }
 
 local precommit = new Mapping<String, Step> {
-  ["detect-private-key"] = Builtins.detect_private_key
+  ["betterleaks"] = Builtins.betterleaks
   ["check-added-large-files"] = Builtins.check_added_large_files
   ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["detect-private-key"] = Builtins.detect_private_key
   ["no-commit-to-branch"] = Builtins.no_commit_to_branch
-  ["betterleaks"] = Builtins.betterleaks
 }
 
 hooks {
