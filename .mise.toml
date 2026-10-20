@@ -14,7 +14,7 @@ hk = "2.7.0"
 markdownlint-cli2 = "0.23.3"
 pkl = "0.32.1"
 typos = "1.51.1"
-uv = "0.13.1"
+uv = "0.13.3"
 yamllint = "1.38.0"
 
 [tasks.lint]
