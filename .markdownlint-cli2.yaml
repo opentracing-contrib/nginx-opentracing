@@ -12,7 +12,7 @@ config:
 
 # Define glob expressions to ignore
 ignores:
-  - ".github/"
+  - .github/
 
 # Fix any fixable errors
 fix: true

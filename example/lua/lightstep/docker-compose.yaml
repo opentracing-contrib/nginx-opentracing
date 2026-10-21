@@ -1,4 +1,4 @@
-version: '2'
+version: "2"
 services:
 
   nginx:
@@ -16,7 +16,7 @@ services:
     expose:
       - "8080"
     ports:
-      - "8080:8080"
+      - 8080:8080
     entrypoint: ./start-nginx.sh
 
 networks:
