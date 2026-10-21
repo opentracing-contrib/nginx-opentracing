@@ -90,6 +90,11 @@ jobs:
     name: Build Docker Image
     runs-on: ubuntu-26.04
     timeout-minutes: 90
+    services:
+      registry:
+        image: registry:3
+        ports:
+          - 5000:5000
     needs: [check, variables]
     permissions:
       contents: read
@@ -122,6 +127,8 @@ jobs:
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v4.4.1
+        with:
+          driver-opts: network=host
         if: ${{ matrix.needs-updating == 'true' }}
 
       - name: DockerHub Login
@@ -147,6 +154,7 @@ jobs:
           images: |
             opentracing/nginx-opentracing
             ghcr.io/opentracing-contrib/nginx-opentracing
+            localhost:5000/opentracing/nginx-opentracing
           flavor: |
             latest=true
             suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true
