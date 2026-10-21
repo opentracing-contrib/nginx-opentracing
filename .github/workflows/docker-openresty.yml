@@ -28,6 +28,8 @@ jobs:
         ports:
           - 5000:5000
     permissions:
+      contents: read
+      packages: write
       security-events: write
     steps:
       - name: Checkout Repository
