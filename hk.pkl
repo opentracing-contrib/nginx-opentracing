@@ -50,7 +50,7 @@ local linters = new Mapping<String, Step> {
     fix = "codespell --ignore-words-list=commitish --quiet-level=7 --write-changes {{files}}"
   }
   ["check-json"] = (Builtins.jq) {
-    exclude = List("package.json")
+    exclude = List("**/package.json")
   }
 }
 
