@@ -25,7 +25,7 @@ jobs:
   system-testing:
     name: System Testing
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 60
     env:
       nginx-version: 1.31.7  # renovate: datasource=docker depName=nginx
     steps:

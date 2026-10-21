@@ -42,7 +42,7 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 30
     needs: release-notes
     permissions:
       contents: write

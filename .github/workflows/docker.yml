@@ -21,7 +21,7 @@ jobs:
   build-docker:
     name: Build Docker Image
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 90
     services:
       registry:
         image: registry:3
