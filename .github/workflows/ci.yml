@@ -64,7 +64,8 @@ jobs:
             1.31.4,
             1.31.5,
             1.31.6,
-            1.31.7
+            1.31.7,
+            1.31.8
           ]
     steps:
       - name: Checkout Repository
