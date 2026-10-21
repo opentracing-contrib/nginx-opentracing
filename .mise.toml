@@ -1,5 +1,5 @@
 [tools]
-"aqua:owenlamont/ryl" = "0.25.1"
+"aqua:owenlamont/ryl" = "0.26.0"
 "github:kjanat/actionlint" = "1.17.0"
 "npm:knip" = "6.41.0"
 "npm:sort-package-json" = "4.1.0"
