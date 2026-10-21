@@ -89,7 +89,7 @@ jobs:
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' }}
     name: Build Docker Image
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 90
     needs: [check, variables]
     permissions:
       contents: read
@@ -154,6 +154,8 @@ jobs:
             type=raw,value=${{ needs.variables.outputs.git_tag }}
             type=raw,value=nginx-${{ steps.var.outputs.nginx_version }}
         if: ${{ matrix.needs-updating == 'true' }}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push
         uses: docker/build-push-action@v7.4.0
@@ -163,8 +165,43 @@ jobs:
           platforms: ${{ needs.variables.outputs.docker_platforms }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha,scope=${{ matrix.os }}
           cache-to: type=gha,scope=${{ matrix.os }},mode=max
           target: final
+          sbom: true
+          provenance: mode=max
           build-args: BUILD_OS=${{ matrix.os }}
         if: ${{ matrix.needs-updating == 'true' }}
+
+      - name: Inspect SBOM and output manifest
+        run: |
+          docker buildx imagetools inspect localhost:5000/opentracing/nginx-opentracing:${{ steps.meta.outputs.version }} --format '{{ json (index .SBOM "linux/amd64").SPDX }}' > sbom.json
+          docker buildx imagetools inspect localhost:5000/opentracing/nginx-opentracing:${{ steps.meta.outputs.version }} --format '{{ json (index .Provenance "linux/amd64").SLSA }}' > provenance.json
+          docker buildx imagetools inspect localhost:5000/opentracing/nginx-opentracing:${{ steps.meta.outputs.version }} --raw
+
+      - name: Scan SBOM
+        id: scan
+        uses: anchore/scan-action@v7.4.0
+        with:
+          sbom: sbom.json
+          only-fixed: true
+          add-cpes-if-none: true
+          fail-build: false
+
+      - name: Upload scan result to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4.39.0
+        continue-on-error: true
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+        if: always()
+
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v7.0.2
+        continue-on-error: true
+        with:
+          name: scan-results-${{ matrix.os }}
+          path: |
+            ${{ steps.scan.outputs.sarif }}
+            *.json
+        if: always()

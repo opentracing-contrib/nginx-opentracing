@@ -53,11 +53,14 @@ workflows:
         - 'docker/setup-buildx-action@v4.4.1'
     '.github/workflows/update-docker-images.yml':
         - 'actions/checkout@v7.0.1'
+        - 'actions/upload-artifact@v7.0.2'
+        - 'anchore/scan-action@v7.4.0'
         - 'docker/build-push-action@v7.4.0'
         - 'docker/login-action@v4.6.0'
         - 'docker/metadata-action@v6.2.0'
         - 'docker/setup-buildx-action@v4.4.1'
         - 'docker/setup-qemu-action@v4.4.0'
+        - 'github/codeql-action@v4.39.0'
         - 'lucacome/docker-image-update-checker@v3.1.0'
 dependencies:
     'actions/checkout@v4.2.2':
