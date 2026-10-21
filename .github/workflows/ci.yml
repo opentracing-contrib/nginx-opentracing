@@ -45,7 +45,7 @@ jobs:
     timeout-minutes: 30
     needs: release-notes
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -88,11 +88,8 @@ jobs:
 
       - name: Get vars
         id: vars
-        env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
           if [ "$(uname -m)" = "x86_64" ]; then echo "arch=amd64" >> "$GITHUB_OUTPUT"; else echo "arch=arm64" >> "$GITHUB_OUTPUT"; fi
-          if [ "${{ github.ref_type }}" = "tag" ]; then echo "ref_name=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"; fi
 
       - name: Build binary
         uses: docker/build-push-action@v7.4.0
@@ -121,9 +118,26 @@ jobs:
           name: nginx-opentracing-modules-${{ matrix.nginx_version }}-${{ steps.vars.outputs.arch }}
           path: linux-${{ steps.vars.outputs.arch }}-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.*
 
+  release-binaries:
+    name: Upload Binaries on Release
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    needs: build-binaries
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: nginx-opentracing-modules-*
+          path: dist
+          merge-multiple: true
+
       - name: Upload binaries on release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: github.ref_type == 'tag'
+          GH_REPO: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          gh release upload ${{ steps.vars.outputs.ref_name }} linux-${{ steps.vars.outputs.arch }}-nginx-${{ matrix.nginx_version }}-ngx_http_module.so.* --clobber
+          gh release upload "$REF_NAME" dist/* --clobber
