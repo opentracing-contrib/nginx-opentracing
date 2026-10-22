@@ -39,7 +39,7 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'davidanson/markdownlint-cli2-action@v24.2.0'
         - 'jdx/jactionlint@v2.3.0'
-        - 'jdx/mise-action@v5.2.0'
+        - 'jdx/mise-action@v5.2.2'
     '.github/workflows/scorecard.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
@@ -140,9 +140,9 @@ dependencies:
         repo_id: 1404951382
         uses:
             - 'github/codeql-action@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2'
-    'jdx/mise-action@v5.2.0':
-        ref: 'v5.2.0'
-        commit: 'sha1-9b200bcecbfd6303e69a4a261b2e09e3757440a7'
+    'jdx/mise-action@v5.2.2':
+        ref: 'v5.2.2'
+        commit: 'sha1-8418fedb1110381a0d3ba51a7a415d7c1b884550'
         owner_id: 216188
         repo_id: 738284564
     'lucacome/docker-image-update-checker@v3.1.2':
