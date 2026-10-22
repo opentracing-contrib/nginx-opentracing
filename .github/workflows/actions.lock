@@ -42,7 +42,7 @@ workflows:
         - 'jdx/mise-action@v5.2.0'
     '.github/workflows/scorecard.yml':
         - 'actions/checkout@v7.0.1'
-        - 'actions/upload-artifact@v4.6.1'
+        - 'actions/upload-artifact@v4.6.2'
         - 'github/codeql-action@v4.39.1'
         - 'ossf/scorecard-action@v2.4.1'
     '.github/workflows/system-testing.yml':
@@ -83,9 +83,9 @@ dependencies:
         commit: 'sha1-5fda3b95a4ea91299a34e894583c3862153e4b97'
         owner_id: 44036562
         repo_id: 192625525
-    'actions/upload-artifact@v4.6.1':
-        ref: 'v4.6.1'
-        commit: 'sha1-4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1'
+    'actions/upload-artifact@v4.6.2':
+        ref: 'v4.6.2'
+        commit: 'sha1-ea165f8d65b6e75b540449e92b4886f43607fa02'
         owner_id: 44036562
         repo_id: 192625955
     'actions/upload-artifact@v7.0.2':
