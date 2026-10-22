@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     env:
-      nginx-version: 1.31.7  # renovate: datasource=docker depName=nginx
+      nginx-version: 1.31.8  # renovate: datasource=docker depName=nginx
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7.0.1
