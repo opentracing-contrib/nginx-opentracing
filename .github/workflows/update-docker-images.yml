@@ -190,7 +190,7 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Scan SBOM
         id: scan
-        uses: anchore/scan-action@v7.4.0
+        uses: anchore/scan-action@v7.4.2
         with:
           sbom: sbom.json
           only-fixed: true
