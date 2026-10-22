@@ -41,7 +41,7 @@ workflows:
         - 'jdx/jactionlint@v2.2.0'
         - 'jdx/mise-action@v5.2.0'
     '.github/workflows/scorecard.yml':
-        - 'actions/checkout@v4.2.2'
+        - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v4.6.1'
         - 'github/codeql-action@v4.39.1'
         - 'ossf/scorecard-action@v2.4.1'
@@ -63,11 +63,6 @@ workflows:
         - 'github/codeql-action@v4.39.1'
         - 'lucacome/docker-image-update-checker@v3.1.0'
 dependencies:
-    'actions/checkout@v4.2.2':
-        ref: 'v4.2.2'
-        commit: 'sha1-11bd71901bbe5b1630ceea73d27597364c9af683'
-        owner_id: 44036562
-        repo_id: 197814629
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
