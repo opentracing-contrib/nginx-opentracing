@@ -61,7 +61,7 @@ workflows:
         - 'docker/setup-buildx-action@v4.4.1'
         - 'docker/setup-qemu-action@v4.4.0'
         - 'github/codeql-action@v4.39.1'
-        - 'lucacome/docker-image-update-checker@v3.1.0'
+        - 'lucacome/docker-image-update-checker@v3.1.2'
 dependencies:
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
@@ -145,9 +145,9 @@ dependencies:
         commit: 'sha1-9b200bcecbfd6303e69a4a261b2e09e3757440a7'
         owner_id: 216188
         repo_id: 738284564
-    'lucacome/docker-image-update-checker@v3.1.0':
-        ref: 'v3.1.0'
-        commit: 'sha1-3233adf42bb1dddf92f18cf024a8e202dbeaa9b3'
+    'lucacome/docker-image-update-checker@v3.1.2':
+        ref: 'v3.1.2'
+        commit: 'sha1-958e0b396cd5227e7da180826286ef48c20296f9'
         owner_id: 603885
         repo_id: 386746156
     'lucacome/draft-release@v2.2.2':
