@@ -14,7 +14,7 @@ jactionlint = "2.2.0"
 markdownlint-cli2 = "0.24.0"
 pkl = "0.32.1"
 typos = "1.51.1"
-uv = "0.13.3"
+uv = "0.13.4"
 yamllint = "1.38.0"
 
 [tasks.lint]
