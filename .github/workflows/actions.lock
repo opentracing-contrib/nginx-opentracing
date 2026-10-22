@@ -12,7 +12,7 @@ workflows:
         - 'lucacome/draft-release@v2.2.2'
     '.github/workflows/codeql-analysis.yml':
         - 'actions/checkout@v7.0.1'
-        - 'github/codeql-action@v4.39.0'
+        - 'github/codeql-action@v4.39.1'
     '.github/workflows/docker-openresty.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
@@ -21,7 +21,7 @@ workflows:
         - 'docker/login-action@v4.6.0'
         - 'docker/metadata-action@v6.2.0'
         - 'docker/setup-buildx-action@v4.4.1'
-        - 'github/codeql-action@v4.39.0'
+        - 'github/codeql-action@v4.39.1'
     '.github/workflows/docker.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
@@ -31,7 +31,7 @@ workflows:
         - 'docker/metadata-action@v6.2.0'
         - 'docker/setup-buildx-action@v4.4.1'
         - 'docker/setup-qemu-action@v4.4.0'
-        - 'github/codeql-action@v4.39.0'
+        - 'github/codeql-action@v4.39.1'
     '.github/workflows/labeler.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/labeler@v7.0.0'
@@ -43,7 +43,7 @@ workflows:
     '.github/workflows/scorecard.yml':
         - 'actions/checkout@v4.2.2'
         - 'actions/upload-artifact@v4.6.1'
-        - 'github/codeql-action@v3.39.1'
+        - 'github/codeql-action@v4.39.1'
         - 'ossf/scorecard-action@v2.4.1'
     '.github/workflows/system-testing.yml':
         - 'actions/checkout@v7.0.1'
@@ -60,7 +60,7 @@ workflows:
         - 'docker/metadata-action@v6.2.0'
         - 'docker/setup-buildx-action@v4.4.1'
         - 'docker/setup-qemu-action@v4.4.0'
-        - 'github/codeql-action@v4.39.0'
+        - 'github/codeql-action@v4.39.1'
         - 'lucacome/docker-image-update-checker@v3.1.0'
 dependencies:
     'actions/checkout@v4.2.2':
@@ -138,14 +138,9 @@ dependencies:
         commit: 'sha1-2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2'
         owner_id: 9919
         repo_id: 259445878
-    'github/codeql-action@v3.39.1':
-        ref: 'v3.39.1'
-        commit: 'sha1-4bfa242aa49c5f7c6770b98670d354a7dfac05f8'
-        owner_id: 9919
-        repo_id: 259445878
-    'github/codeql-action@v4.39.0':
-        ref: 'v4.39.0'
-        commit: 'sha1-6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee'
+    'github/codeql-action@v4.39.1':
+        ref: 'v4.39.1'
+        commit: 'sha1-9b3254085494b55a0f7c4c2b3d2d52cc712ce370'
         owner_id: 9919
         repo_id: 259445878
     'jdx/jactionlint@v2.2.0':
