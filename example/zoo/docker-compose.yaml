@@ -18,7 +18,7 @@ services:
     expose:
       - "8080"
     ports:
-      - "8080:8080"
+      - 8080:8080
     entrypoint: ./start-nginx.sh
 
   backend:
@@ -39,9 +39,9 @@ services:
       - "3002"
       - "3003"
     ports:
-      - "3001:3001"
-      - "3002:3002"
-      - "3003:3003"
+      - 3001:3001
+      - 3002:3002
+      - 3003:3003
     entrypoint: ./start-backend.sh
 
 volumes:
