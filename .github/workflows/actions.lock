@@ -9,7 +9,7 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'docker/build-push-action@v7.4.0'
         - 'docker/setup-buildx-action@v4.4.1'
-        - 'lucacome/draft-release@v2.2.2'
+        - 'lucacome/draft-release@v2.2.3'
     '.github/workflows/codeql-analysis.yml':
         - 'actions/checkout@v7.0.1'
         - 'github/codeql-action@v4.39.1'
@@ -150,9 +150,9 @@ dependencies:
         commit: 'sha1-958e0b396cd5227e7da180826286ef48c20296f9'
         owner_id: 603885
         repo_id: 386746156
-    'lucacome/draft-release@v2.2.2':
-        ref: 'v2.2.2'
-        commit: 'sha1-5bc11f2401bad413a67299dcc857b50ff0d80b12'
+    'lucacome/draft-release@v2.2.3':
+        ref: 'v2.2.3'
+        commit: 'sha1-08f1af054ed446630440d177e1015a517500e97c'
         owner_id: 603885
         repo_id: 578721235
     'ossf/scorecard-action@v2.5.0':
