@@ -1,6 +1,6 @@
 [tools]
 "aqua:owenlamont/ryl" = "0.26.1"
-"npm:knip" = "6.42.1"
+"npm:knip" = "6.43.0"
 "npm:sort-package-json" = "4.1.0"
 "pipx:codespell" = "2.4.3"
 "pipx:isort" = "9.0.2"
