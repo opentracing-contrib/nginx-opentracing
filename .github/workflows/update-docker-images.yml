@@ -76,7 +76,7 @@ jobs:
 
       - name: Check if update available ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@v3.1.2
+        uses: lucacome/docker-image-update-checker@v3.1.3
         with:
           base-image: ${{ matrix.base_image.version }}
           image: opentracing/nginx-opentracing:${{ steps.dist.outputs.tag }}
