@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   triage:
+    name: triage
     permissions:
       contents: read
       pull-requests: write
