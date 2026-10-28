@@ -37,7 +37,7 @@ workflows:
         - 'actions/labeler@v7.0.0'
     '.github/workflows/lint.yml':
         - 'actions/checkout@v7.0.1'
-        - 'davidanson/markdownlint-cli2-action@v24.2.0'
+        - 'davidanson/markdownlint-cli2-action@v25.0.0'
         - 'jdx/jactionlint@v2.3.0'
         - 'jdx/mise-action@v5.2.4'
     '.github/workflows/scorecard.yml':
@@ -93,9 +93,9 @@ dependencies:
         commit: 'sha1-27805bf3b4e84b4a5c980df22ed233c00390a439'
         owner_id: 16208487
         repo_id: 212692077
-    'davidanson/markdownlint-cli2-action@v24.2.0':
-        ref: 'v24.2.0'
-        commit: 'sha1-21c1be1b93ad9ed58fa840aacc3f279cde2a72ff'
+    'davidanson/markdownlint-cli2-action@v25.0.0':
+        ref: 'v25.0.0'
+        commit: 'sha1-696eb3f2509270d7b882d2aa68347bc676e7af34'
         owner_id: 1828270
         repo_id: 329203602
     'docker/build-push-action@v7.4.0':
