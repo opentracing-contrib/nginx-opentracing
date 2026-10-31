@@ -1,5 +1,5 @@
 [tools]
-"aqua:owenlamont/ryl" = "0.26.1"
+"aqua:owenlamont/ryl" = "0.27.0"
 "npm:knip" = "6.43.0"
 "npm:sort-package-json" = "4.1.0"
 "pipx:codespell" = "2.4.3"
