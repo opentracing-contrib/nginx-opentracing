@@ -1,4 +1,5 @@
-NGINX_VERSION=$(shell grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $$3}')
+# renovate: datasource=docker depName=nginx
+NGINX_VERSION = 1.31.8
 
 .PHONY: docker-image
 docker-image:
@@ -21,3 +22,6 @@ test:
 .PHONY: clean
 clean:
 	rm -fr test/test-log
+
+lint:
+	mise run lint

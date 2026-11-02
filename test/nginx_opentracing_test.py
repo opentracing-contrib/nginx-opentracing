@@ -85,7 +85,7 @@ class NginxOpenTracingTest(unittest.TestCase):
                 time.sleep(0.5)
             except docker.errors.APIError as e:
                 if time.time() > timeout:
-                    raise TimeoutError(f"Docker API error: {str(e)}") from e
+                    raise TimeoutError(f"Docker API error: {e!s}") from e
                 time.sleep(0.5)
 
     def _logEnvironment(self):
@@ -126,7 +126,6 @@ class NginxOpenTracingTest(unittest.TestCase):
 
     def tearDown(self):
         self._stopDocker()
-        logdir = None
 
         if "LOG_DIR" in os.environ:
             self._logEnvironment()
@@ -196,7 +195,7 @@ class NginxOpenTracingTest(unittest.TestCase):
         self.assertEqual(request_span["operation_name"], "/subrequest")
         self.assertEqual(request_span["tags"]["http.status_code"], 200)
 
-    def testInternalRediect(self):
+    def testInternalRedirect(self):
         self.conn.request("GET", "/internal-redirect")
         response = self.conn.getresponse()
         self.assertEqual(response.status, 200)

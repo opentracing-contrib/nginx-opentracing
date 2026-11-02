@@ -1,6 +1,6 @@
 {
-  "service": "nginx",
-  "operation_name_override": "nginx.handle",
   "agent_host": "dd-agent",
-  "agent_port": 8126
+  "agent_port": 8126,
+  "operation_name_override": "nginx.handle",
+  "service": "nginx"
 }

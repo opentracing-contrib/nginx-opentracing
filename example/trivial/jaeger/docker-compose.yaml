@@ -1,4 +1,4 @@
-version: '2'
+version: "2"
 services:
 
   nginx:
@@ -13,7 +13,7 @@ services:
     expose:
       - "8080"
     ports:
-      - "8080:8080"
+      - 8080:8080
 
   app-service:
     build:
@@ -26,7 +26,7 @@ services:
     expose:
       - "9001"
     ports:
-      - "9001:9001"
+      - 9001:9001
     command:
       - /app/server
       - -collector_host
@@ -44,8 +44,8 @@ services:
       - "9411"
       - "16686"
     ports:
-      - "9411:9411"
-      - "16686:16686"
+      - 9411:9411
+      - 16686:16686
 
 networks:
   trivial_example: {}

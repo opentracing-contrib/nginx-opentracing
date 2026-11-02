@@ -5,6 +5,7 @@
 ![GitHub all releases](https://img.shields.io/github/downloads/opentracing-contrib/nginx-opentracing/total?logo=github)
 ![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/opentracing-contrib/nginx-opentracing/latest/total?sort=semver&logo=github)
 [![Docker Pulls](https://img.shields.io/docker/pulls/opentracing/nginx-opentracing.svg)](https://hub.docker.com/r/opentracing/nginx-opentracing/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/opentracing-contrib/nginx-opentracing/badge)](https://scorecard.dev/viewer/?uri=github.com/opentracing-contrib/nginx-opentracing)
 
 Enable requests served by nginx for distributed tracing via [The OpenTracing Project](http://opentracing.io).
 
@@ -116,17 +117,17 @@ Additionally, custom images can be built by running
 
 ```bash
 docker build \
-       -t opentracing-contrib/nginx-opentracing:latest \
-       .
+      -t opentracing-contrib/nginx-opentracing:latest \
+      .
 ```
 
 and arguments to tweak the versions used can be provided with
 
 ```bash
 docker build \
-       -t opentracing-contrib/nginx-opentracing:latest \
-       --build-arg OPENTRACING_CPP_VERSION=master \
-       .
+      -t opentracing-contrib/nginx-opentracing:latest \
+      --build-arg OPENTRACING_CPP_VERSION=master \
+      .
 ```
 
 Other build arguments

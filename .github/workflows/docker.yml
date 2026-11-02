@@ -5,59 +5,61 @@ on:
     branches:
       - master
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - v[0-9]+.[0-9]+.[0-9]+
   pull_request:
     branches:
       - master
 
 concurrency:
-  group: ${{ github.ref_name }}-docker
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build-docker:
     name: Build Docker Image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
     services:
       registry:
         image: registry:3
         ports:
           - 5000:5000
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
     strategy:
       fail-fast: false
       matrix:
         os: [debian, alpine]
+    env:
+      nginx-version: 1.31.8  # renovate: datasource=docker depName=nginx
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
-
-      - name: Output Variables
-        id: var
-        run: |
-          echo "nginx_version=$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')" >> $GITHUB_OUTPUT
-
-      - name: Nginx version
-        run: echo "${{ steps.var.outputs.nginx_version }}"
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm,ppc64le,s390x
+        uses: docker/setup-qemu-action@v4.4.0
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4.4.1
         with:
           driver-opts: network=host
 
       - name: DockerHub Login
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4.7.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: github.event_name != 'pull_request'
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -66,7 +68,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6.2.0
         with:
           images: |
             name=opentracing/nginx-opentracing,enable=${{ github.event_name != 'pull_request' }}
@@ -77,17 +79,16 @@ jobs:
             type=edge
             type=ref,event=pr
             type=semver,pattern={{version}}
-            type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=${{ contains(github.ref, 'refs/tags/') }}
+            type=raw,value=nginx-${{ env.nginx-version }},enable=${{ contains(github.ref, 'refs/tags/') }}
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push
-        uses: docker/build-push-action@v6
-        id: build
+        uses: docker/build-push-action@v7.4.0
         with:
           pull: true
           push: true
-          platforms: "linux/arm,linux/amd64,linux/ppc64le"
+          platforms: linux/arm,linux/amd64,linux/ppc64le,linux/s390x
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -106,22 +107,22 @@ jobs:
 
       - name: Scan SBOM
         id: scan
-        uses: anchore/scan-action@v7
+        uses: anchore/scan-action@v7.4.2
         with:
-          sbom: "sbom.json"
+          sbom: sbom.json
           only-fixed: true
           add-cpes-if-none: true
           fail-build: false
 
       - name: Upload scan result to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.39.1
         continue-on-error: true
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
         if: always()
 
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7.0.2
         continue-on-error: true
         with:
           name: scan-results-${{ matrix.os }}

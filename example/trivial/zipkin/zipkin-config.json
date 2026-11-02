@@ -1,4 +1,4 @@
 {
-  "service_name": "nginx",
-  "collector_host": "zipkin"
+  "collector_host": "zipkin",
+  "service_name": "nginx"
 }

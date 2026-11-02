@@ -1,9 +1,9 @@
-# syntax=docker/dockerfile:1.19
+# syntax=docker/dockerfile:1.28
 ARG BUILD_OS=debian
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.8.0 AS xx
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.10.0 AS xx
 
 ### Build base image for debian
-FROM --platform=$BUILDPLATFORM debian:12 AS build-base-debian
+FROM --platform=$BUILDPLATFORM debian:13.7 AS build-base-debian
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -13,7 +13,7 @@ RUN apt-get update \
     binutils-powerpc64le-linux-gnu \
     build-essential \
     ca-certificates \
-    clang-16 \
+    clang \
     git \
     golang \
     libcurl4 \
@@ -25,17 +25,14 @@ RUN apt-get update \
     protobuf-compiler \
     wget
 
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 \
-    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
-
 COPY --from=xx / /
 ARG TARGETPLATFORM
 
-RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc-dev libmsgpack-dev
+RUN xx-apt install -y xx-cxx-essentials zlib1g-dev libcurl4-openssl-dev libc-ares-dev libre2-dev libssl-dev libc6-dev libmsgpack-cxx-dev
 
 
 ### Build base image for alpine
-FROM --platform=$BUILDPLATFORM alpine:3.22 AS build-base-alpine
+FROM --platform=$BUILDPLATFORM alpine:3.24 AS build-base-alpine
 
 RUN apk add --no-cache \
     alpine-sdk \
@@ -58,14 +55,10 @@ RUN xx-apk add --no-cache xx-cxx-essentials openssl-dev zlib-dev zlib libgcc cur
 ### Build image
 FROM build-base-${BUILD_OS} AS build-base
 
-ENV CMAKE_VERSION=3.31.8
+ENV CMAKE_VERSION=3.31.10
 RUN wget -q -O cmake-linux.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(arch).sh" \
     && sh cmake-linux.sh -- --skip-license --prefix=/usr \
     && rm cmake-linux.sh
-
-# XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386.
-ENV XX_CC_PREFER_STATIC_LINKER=1
-
 
 ## Build gRPC
 FROM build-base AS grpc
@@ -105,6 +98,7 @@ RUN xx-info env && git clone --depth 1 -b $OPENTRACING_CPP_VERSION https://githu
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_INSTALL_PREFIX=$(xx-info sysroot)usr/local \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_STATIC_LIBS=ON \
     -DBUILD_MOCKTRACER=OFF \
@@ -129,8 +123,12 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_STATIC_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DBUILD_PLUGIN=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
     && xx-verify /usr/local/lib/libzipkin_opentracing_plugin.so
@@ -139,15 +137,18 @@ RUN [ "$(xx-info vendor)" = "alpine" ] && export QEMU_LD_PREFIX=/$(xx-info); \
 ### Build Jaeger cpp-client
 FROM opentracing-cpp AS jaeger-cpp-client
 ARG JAEGER_CPP_VERSION=v0.9.0
-ARG YAML_CPP_VERSION=0.8.0
+ARG YAML_CPP_VERSION=89ff142b991af432b5d7a7cee55282f082a7e629
 ARG TARGETPLATFORM
 
 # Building yaml-cpp manually because of a bug in jaeger-client-cpp that won't install it
-RUN xx-info env && git clone --depth 1 -b $YAML_CPP_VERSION https://github.com/jbeder/yaml-cpp/ && \
-    cd yaml-cpp && mkdir .build && cd .build && \
+RUN xx-info env && git init yaml-cpp && cd yaml-cpp && \
+    git fetch --depth 1 https://github.com/jbeder/yaml-cpp.git $YAML_CPP_VERSION && \
+    git checkout FETCH_HEAD && \
+    mkdir .build && cd .build && \
     cmake $(xx-clang --print-cmake-defines) \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DYAML_CPP_BUILD_TESTS=OFF \
     -DYAML_CPP_BUILD_TOOLS=OFF \
     -DYAML_ENABLE_PIC=ON .. \
@@ -162,12 +163,17 @@ RUN git clone --depth 1 -b $JAEGER_CPP_VERSION https://github.com/jaegertracing/
     "set(CMAKE_ASM_COMPILER clang)" "set(PKG_CONFIG_EXECUTABLE  $(xx-clang --print-prog-name=pkg-config))" \
     "set(CMAKE_C_COMPILER_TARGET $(xx-clang --print-target-triple))" "set(CMAKE_CXX_COMPILER_TARGET $(xx-clang++ --print-target-triple))" \
     "set(CMAKE_ASM_COMPILER_TARGET $(xx-clang --print-target-triple))" \
-    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" >>  cmake/toolchain.cmake \
+    "set(CMAKE_INSTALL_PREFIX $(xx-info sysroot)usr/local)" \
+    "set(CMAKE_EXE_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_SHARED_LINKER_FLAGS \"-fuse-ld=lld\")" "set(CMAKE_MODULE_LINKER_FLAGS \"-fuse-ld=lld\")" >>  cmake/toolchain.cmake \
     && mkdir .build \
     && cd .build \
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING=OFF \
     -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
@@ -197,7 +203,11 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
     && cmake $(xx-clang --print-cmake-defines) \
     -DCMAKE_PREFIX_PATH=$(xx-info sysroot) \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" \
     -DBUILD_TESTING=OFF .. \
     && make -j$(nproc) install \
     && ln -s /usr/local/lib/libdd_opentracing.so /usr/local/lib/libdd_opentracing_plugin.so \
@@ -205,7 +215,7 @@ RUN xx-info env && git clone --depth 1 -b $DATADOG_VERSION https://github.com/Da
 
 
 ### Base build image for debian
-FROM nginx:1.29.3 AS build-nginx-debian
+FROM nginx:1.31.8 AS build-nginx-debian
 
 RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
     && echo "deb-src [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/debian/ ${DEBIAN_VERSION} nginx" >> /etc/apt/sources.list.d/nginx.list \
@@ -214,7 +224,7 @@ RUN DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-releas
 
 
 ### Base build image for alpine
-FROM nginx:1.29.3-alpine AS build-nginx-alpine
+FROM nginx:1.31.8-alpine AS build-nginx-alpine
 RUN apk add --no-cache \
     build-base \
     pcre2-dev \
@@ -241,12 +251,12 @@ RUN curl -fsSL -O https://github.com/nginx/nginx/archive/release-${NGINX_VERSION
 
 
 ### Base image for alpine
-FROM nginx:1.29.3-alpine AS nginx-alpine
+FROM nginx:1.31.8-alpine AS nginx-alpine
 RUN apk add --no-cache libstdc++
 
 
 ### Base image for debian
-FROM nginx:1.29.3 AS nginx-debian
+FROM nginx:1.31.8 AS nginx-debian
 
 
 ### Build final image

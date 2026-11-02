@@ -23,8 +23,8 @@ services:
       - "8080"
       - "8081"
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - 8080:8080
+      - 8081:8081
     command:
       - /usr/local/nginx/sbin/nginx
       - -g
@@ -42,7 +42,7 @@ services:
     expose:
       - "5001"
     ports:
-      - "5001:5001"
+      - 5001:5001
 
   php_fpm:
     container_name: php_fpm
@@ -56,7 +56,7 @@ services:
     expose:
       - "9000"
     ports:
-      - "9000:9000"
+      - 9000:9000
 
   grpc_backend:
     container_name: grpc_backend
@@ -68,7 +68,7 @@ services:
     expose:
       - "50051"
     ports:
-      - "50051:50051"
+      - 50051:50051
 
 networks:
   testnet: {}

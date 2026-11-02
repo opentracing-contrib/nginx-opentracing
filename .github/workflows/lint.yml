@@ -1,0 +1,74 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  checks:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Mise
+        uses: jdx/mise-action@v5.2.4
+
+      - name: Install dependencies
+        run: |
+          mise deps
+
+      - name: Run lint
+        run: |
+          mise run lint --no-progress
+
+  jactionlint:
+    name: jactionlint
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run jactionlint
+        uses: jdx/jactionlint@v2.3.0
+        with:
+          advanced-security: true
+
+  markdown-lint:
+    name: Markdown Lint
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: DavidAnson/markdownlint-cli2-action@v25.0.0
+        with:
+          config: .markdownlint-cli2.yaml
+          globs: "**/*.md"
+          fix: false
