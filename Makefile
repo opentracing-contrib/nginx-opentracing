@@ -3,7 +3,7 @@ NGINX_VERSION = 1.31.8
 
 .PHONY: docker-image
 docker-image:
-	docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final .
+	docker build -f Dockerfile -t opentracing-contrib/nginx-opentracing --target final . --load
 
 .PHONY: docker-image-alpine
 docker-image-alpine:
