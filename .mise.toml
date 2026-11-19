@@ -13,7 +13,7 @@ hk = "2.13.0"
 jactionlint = "2.6.0"
 markdownlint-cli2 = "0.24.1"
 pkl = "0.33.1"
-typos = "1.51.1"
+typos = "1.52.2"
 uv = "0.13.9"
 yamllint = "1.38.0"
 
