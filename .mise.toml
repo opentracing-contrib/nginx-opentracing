@@ -6,7 +6,7 @@
 "pipx:isort" = "9.0.2"
 "pipx:psf/black" = "26.10.1"
 "pipx:ruff" = "0.17.5"
-betterleaks = "1.9.0"
+betterleaks = "1.10.1"
 clang-format = "23.1.4"
 editorconfig-checker = "4.0.2"
 hk = "2.10.0"
