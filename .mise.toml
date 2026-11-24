@@ -9,7 +9,7 @@
 betterleaks = "1.10.1"
 clang-format = "23.1.6"
 editorconfig-checker = "4.0.2"
-hk = "2.13.0"
+hk = "2.14.0"
 jactionlint = "2.6.0"
 markdownlint-cli2 = "0.24.2"
 pkl = "0.33.1"
